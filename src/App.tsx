@@ -84,6 +84,54 @@ export default function App() {
   const [isSmartOSWizardOpen, setIsSmartOSWizardOpen] = useState(false);
   const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false);
 
+  // Hook de sincronização de dados com as APIs reais do backend (FastAPI)
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const resClientes = await fetch('http://localhost:8000/clientes');
+        if (resClientes.ok) {
+          const data = await resClientes.json();
+          const mappedClients: Client[] = data.map((c: any) => ({
+            id: c.id,
+            name: c.nome,
+            phone: c.telefone || '',
+            email: c.email || '',
+            cpf: c.cpf,
+            unreadCount: 0,
+            avatar: '',
+            isAiHandled: false,
+            lastInteraction: 'Agora mesmo',
+            notes: ''
+          }));
+          if (mappedClients.length > 0) {
+            setClients(mappedClients);
+          }
+        }
+
+        const resProdutos = await fetch('http://localhost:8000/produtos');
+        if (resProdutos.ok) {
+          const data = await resProdutos.json();
+          const mappedFrames: Frame[] = data
+            .filter((p: any) => p.categoria === 'armacoes')
+            .map((p: any) => ({
+              id: p.id,
+              brand: p.nome,
+              model: p.descricao || '',
+              price: parseFloat(p.preco_venda),
+              stock: p.estoque_atual,
+              image: ''
+            }));
+          if (mappedFrames.length > 0) {
+            setFrames(mappedFrames);
+          }
+        }
+      } catch (err) {
+        console.warn("Conexão offline ou backend não iniciado. Utilizando dados mockados padrão.", err);
+      }
+    }
+    loadData();
+  }, []);
+
   const handleAddProfessional = (newProf: Professional) => {
     setProfessionals((prev) => [newProf, ...prev]);
   };

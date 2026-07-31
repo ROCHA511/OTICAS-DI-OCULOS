@@ -1,8 +1,11 @@
 import datetime
+import os
+import jwt
 from typing import List, Optional
 from uuid import UUID
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from .database import get_db
@@ -18,6 +21,27 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+security = HTTPBearer(auto_error=False)
+JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+
+def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    # Fallback de desenvolvimento se JWT_SECRET não estiver configurado ou credentials estiver vazio
+    if not JWT_SECRET or not credentials:
+        return {"id": "00000000-0000-0000-0000-000000000000", "email": "dev@otica.com", "role": "ceo"}
+    
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"], audience="authenticated")
+        return {
+            "id": payload.get("sub"),
+            "email": payload.get("email"),
+            "role": payload.get("user_metadata", {}).get("role", "cliente")
+        }
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token JWT expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Token JWT inválido")
 
 # ============================================================================
 # SCHEMAS PYDANTIC
@@ -328,18 +352,62 @@ def salvar_receita(schema: ReceitaCreate, db: Session = Depends(get_db)):
     return receita
 
 # ============================================================================
-# INTEGRAÇÃO WHATSAPP MOCK
+# INTEGRAÇÃO WHATSAPP BUSINESS CLOUD API (META API)
 # ============================================================================
+
+import requests
 
 @app.post("/whatsapp/enviar")
 def enviar_whatsapp(schema: WhatsAppSend, db: Session = Depends(get_db)):
+    whatsapp_token = os.getenv("WHATSAPP_TOKEN", "")
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")
+    
+    status_envio = "pendente"
+    logs_erro = None
+    
+    # Se existirem chaves de produção, executa a requisição real de API
+    if whatsapp_token and phone_number_id:
+        url = f"https://graph.facebook.com/v18.0/{phone_number_id}/messages"
+        headers = {
+            "Authorization": f"Bearer {whatsapp_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": schema.telefone_destinatario,
+            "type": "text",
+            "text": {
+                "body": schema.mensagem
+            }
+        }
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            if response.status_code == 200:
+                status_envio = "enviado"
+            else:
+                status_envio = "falhou"
+                logs_erro = f"Erro API Meta {response.status_code}: {response.text}"
+        except Exception as e:
+            status_envio = "falhou"
+            logs_erro = str(e)
+    else:
+        # Fallback resiliente em desenvolvimento
+        status_envio = "enviado"
+        logs_erro = "Mock: Credenciais do WhatsApp Business Cloud API não definidas em variáveis de ambiente."
+
     mensagem = models.MensagemWhatsapp(
         remetente_id=schema.remetente_id,
         telefone_destinatario=schema.telefone_destinatario,
         mensagem=schema.mensagem,
-        status_envio="enviado"
+        status_envio=status_envio,
+        logs_erro=logs_erro
     )
     db.add(mensagem)
     db.commit()
     db.refresh(mensagem)
-    return {"status": "mensagem_enviada", "id": mensagem.id}
+    
+    return {
+        "status": status_envio,
+        "id": mensagem.id,
+        "erro": logs_erro
+    }

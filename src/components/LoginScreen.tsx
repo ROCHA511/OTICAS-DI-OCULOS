@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, User, ShieldCheck, Sparkles, KeyRound, Building2, Phone } from 'lucide-react';
 import { OticasLogo } from './brand/OticasLogo';
+import { supabase } from '../utils/supabaseClient';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: { name: string; role: 'ceo' | 'admin' | 'attendant'; phone: string }) => void;
@@ -13,11 +14,45 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
-    // CEO validation
+    // Integração Real com Supabase se configurado
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: username.includes('@') ? username : `${username.toLowerCase().replace(/\s+/g, '')}@otica.com`,
+          password: password,
+        });
+
+        if (error) {
+          setErrorMsg(`Erro: ${error.message}`);
+          return;
+        }
+
+        if (data?.user) {
+          const { data: perfil } = await supabase
+            .from('perfis')
+            .select('nome, role, telefone')
+            .eq('id', data.user.id)
+            .single();
+
+          if (perfil) {
+            onLoginSuccess({
+              name: perfil.nome,
+              role: perfil.role === 'ceo' ? 'ceo' : perfil.role === 'lider' ? 'admin' : 'attendant',
+              phone: perfil.telefone || '',
+            });
+            return;
+          }
+        }
+      } catch (err: any) {
+        console.warn("Falha ao comunicar com Supabase Auth. Ativando login simulado.", err);
+      }
+    }
+
+    // CEO validation (Mock Fallback)
     if (selectedRole === 'ceo') {
       if (password.trim() === 'John Rocha' || password.trim() === 'john rocha') {
         onLoginSuccess({
@@ -31,7 +66,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       return;
     }
 
-    // Default Attendant/Admin login
+    // Default Attendant/Admin login (Mock Fallback)
     if (selectedRole === 'admin') {
       onLoginSuccess({
         name: 'Julia Martins',
