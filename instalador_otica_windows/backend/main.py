@@ -1,5 +1,15 @@
 import datetime
 import os
+from dotenv import load_dotenv
+
+# Tenta carregar as variáveis locais do .env.local
+if os.path.exists(".env.local"):
+    load_dotenv(".env.local")
+elif os.path.exists("backend/.env.local"):
+    load_dotenv("backend/.env.local")
+else:
+    load_dotenv()
+
 import jwt
 from typing import List, Optional
 from uuid import UUID

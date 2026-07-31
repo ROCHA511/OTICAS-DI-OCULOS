@@ -1,7 +1,13 @@
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+
+# Tenta carregar o arquivo .env.local primeiro (segurança local), senão o .env padrão
+if os.path.exists(".env.local"):
+    load_dotenv(".env.local")
+elif os.path.exists("backend/.env.local"):
+    load_dotenv("backend/.env.local")
+else:
+    load_dotenv()
 
 # Carrega DATABASE_URL das variáveis de ambiente. Caso não exista, utiliza um fallback para desenvolvimento.
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/otica_inteligente")
