@@ -83,7 +83,7 @@ DROP POLICY IF EXISTS "Líder: vê e edita perfis de seu time e clientes" ON pub
 
 -- Habilitar políticas de tenant RLS estritas nas tabelas
 CREATE POLICY "RLS Tenant: Perfis" ON public.perfis 
-    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id() OR tenant_id IS NULL) WITH CHECK (tenant_id = public.jwt_tenant_id() OR tenant_id IS NULL);
 
 CREATE POLICY "RLS Tenant: Produtos" ON public.produtos 
     FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());

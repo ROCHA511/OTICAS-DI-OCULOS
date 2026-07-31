@@ -18,8 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
-from .database import get_db
-from . import models
+from database import get_db
+import models
 
 app = FastAPI(title="Ótica Inteligente API", version="2.0.0")
 

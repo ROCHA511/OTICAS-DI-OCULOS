@@ -1,5 +1,8 @@
 import os
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # Tenta carregar o arquivo .env.local primeiro (segurança local), senão o .env padrão
 if os.path.exists(".env.local"):
