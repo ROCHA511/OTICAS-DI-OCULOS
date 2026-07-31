@@ -1,0 +1,6 @@
+{
+  "name": "Ótica Inteligente",
+  "description": "Sistema de gestão e assistente de IA operacional para óticas com atendimento WhatsApp, medição DNP por visão computacional, análise de receitas, orçamentos, ordens de serviço e controle de caixa.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

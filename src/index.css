@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@layer base {
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+  html, body, #root {
+    height: 100vh;
+    max-height: 100vh;
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #F7F8FA;
+    color: #111827;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Premium Luxury Palette Variables & Utilities */
+:root {
+  --color-blue-primary: #071D49;
+  --color-blue-deep: #0B255C;
+  --color-gold-matte: #C9A96E;
+  --color-gold-light: #E8D2A8;
+  --bg-canvas: #F7F8FA;
+  --text-main: #111827;
+  --text-sub: #6B7280;
+  --color-success: #10B981;
+  --color-alert: #EF4444;
+}
+
+/* Internal Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(201, 169, 110, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(201, 169, 110, 0.65);
+}
+
+/* Luxury Utilities */
+.bg-navy-primary {
+  background-color: #071D49;
+}
+.bg-navy-deep {
+  background-color: #0B255C;
+}
+.bg-canvas-light {
+  background-color: #F7F8FA;
+}
+.text-gold-matte {
+  color: #C9A96E;
+}
+.text-gold-light {
+  color: #E8D2A8;
+}
+.border-gold-subtle {
+  border-color: rgba(201, 169, 110, 0.3);
+}
+.border-gold-matte {
+  border-color: #C9A96E;
+}
+
+.gradient-navy-gold {
+  background: linear-gradient(135deg, #071D49 0%, #0B255C 60%, #153270 100%);
+}
+
+.gradient-gold-matte {
+  background: linear-gradient(135deg, #C9A96E 0%, #B89659 50%, #99783D 100%);
+}
+
+.card-luxury-shadow {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 169, 110, 0.25);
+}
