@@ -8,6 +8,7 @@ import os
 import getpass
 import psycopg2
 import sys
+import urllib.parse
 
 def main():
     print("=" * 80)
@@ -30,12 +31,16 @@ def main():
         print("Erro: A senha não pode estar vazia.")
         sys.exit(1)
         
-    connection_uri = f"postgresql://{user}:{password}@{host}:{port}/{database}"
-    
-    # 2. Testa a conexão com o banco
+    # 2. Testa a conexão com o banco usando parâmetros nomeados (evita falha por caracteres especiais da URI)
     print("\n[1/3] Conectando ao banco de dados remoto do Supabase...")
     try:
-        conn = psycopg2.connect(connection_uri)
+        conn = psycopg2.connect(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database
+        )
         cursor = conn.cursor()
         cursor.execute("SELECT version();")
         version = cursor.fetchone()
@@ -94,9 +99,10 @@ def main():
                 
                 novas_linhas = []
                 alterado = False
+                password_encoded = urllib.parse.quote_plus(password)
                 for line in lines:
                     if line.startswith("DATABASE_URL="):
-                        line = f"DATABASE_URL=postgresql://postgres:{password}@db.ulrrtzbxcsywmtshdnbp.supabase.co:5432/postgres\n"
+                        line = f"DATABASE_URL=postgresql://postgres:{password_encoded}@db.ulrrtzbxcsywmtshdnbp.supabase.co:5432/postgres\n"
                         alterado = True
                     novas_linhas.append(line)
                     
