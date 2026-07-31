@@ -51,6 +51,6 @@ ALTER TABLE public.cliente_biometria_optica ENABLE ROW LEVEL SECURITY;
 
 -- 4. Criação da Política RLS baseada no tenant logado
 CREATE POLICY "RLS Tenant: Biometria Óptica" ON public.cliente_biometria_optica
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 COMMIT;

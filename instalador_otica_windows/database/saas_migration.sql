@@ -69,7 +69,7 @@ CREATE INDEX IF NOT EXISTS idx_agenda_tenant ON public.agenda(tenant_id);
 
 -- 5. Reconfiguração de RLS baseada em tenant_id do Supabase (JWT app_metadata)
 -- Função auxiliar para extrair tenant_id do JWT do usuário autenticado no Supabase
-CREATE OR REPLACE FUNCTION auth.jwt_tenant_id()
+CREATE OR REPLACE FUNCTION public.jwt_tenant_id()
 RETURNS UUID AS $$
     SELECT COALESCE(
         (current_setting('request.jwt.claims', true)::jsonb -> 'app_metadata' ->> 'tenant_id')::uuid,
@@ -83,24 +83,24 @@ DROP POLICY IF EXISTS "Líder: vê e edita perfis de seu time e clientes" ON pub
 
 -- Habilitar políticas de tenant RLS estritas nas tabelas
 CREATE POLICY "RLS Tenant: Perfis" ON public.perfis 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 CREATE POLICY "RLS Tenant: Produtos" ON public.produtos 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 CREATE POLICY "RLS Tenant: Vendas" ON public.vendas 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 CREATE POLICY "RLS Tenant: Caixa" ON public.caixa 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 CREATE POLICY "RLS Tenant: Receitas" ON public.receitas 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 CREATE POLICY "RLS Tenant: Agenda" ON public.agenda 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 CREATE POLICY "RLS Tenant: Comissões" ON public.comissoes 
-    FOR ALL TO authenticated USING (tenant_id = auth.jwt_tenant_id()) WITH CHECK (tenant_id = auth.jwt_tenant_id());
+    FOR ALL TO authenticated USING (tenant_id = public.jwt_tenant_id()) WITH CHECK (tenant_id = public.jwt_tenant_id());
 
 COMMIT;
