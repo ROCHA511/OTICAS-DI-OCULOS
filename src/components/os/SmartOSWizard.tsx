@@ -35,7 +35,7 @@ import { Client, Frame, Lens, ServiceOrder, OpticalPrescription, DnpMeasurement 
 import { OticasLogo } from '../brand/OticasLogo';
 import { ServiceOrderDocument } from './ServiceOrderDocument';
 import FaceMeshOverlay from '../biometria/FaceMeshOverlay';
-import { calcularGeometriaOptica } from '../../utils/CalculadoraOptica';
+import { calcularGeometriaOptica, estimarEspessuraLente, validarCompatibilidadePreditiva } from '../../utils/CalculadoraOptica';
 
 interface SmartOSWizardProps {
   clients: Client[];
@@ -178,15 +178,45 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
     );
   });
 
-  // Frame compatibility & Optical Math
-  const dbc = selectedFrame.eyeSize + selectedFrame.bridge; // e.g. 52 + 18 = 70mm
-  const centroGeometrico = dbc / 2; // e.g. 35mm
-  const descentracaoOD = centroGeometrico - biometrics.dnpOD; // e.g. 35 - 32 = 3mm
-  const descentracaoOE = centroGeometrico - biometrics.dnpOE; // e.g. 35 - 32 = 3mm
-  const descentracaoTotal = descentracaoOD + descentracaoOE;
-  const diametroMinimoLente = frameED + 2 * Math.max(descentracaoOD, descentracaoOE) + 2.0;
-  const espessuraEstimada = Math.abs(prescription.od.esferico) > 4 ? '2.8 mm (Borda Fina)' : '1.9 mm (Borda Ultra Fina)';
-  const pesoEstimado = Math.round(14 + selectedFrame.eyeSize * 0.15); // g
+  // Frame compatibility & Optical Math (Consuming CalculadoraOptica)
+  const paramArmacao = {
+    aroHorizontalA: selectedFrame.eyeSize,
+    aroVerticalB: selectedFrame.eyeSize - 10,
+    ponteDbl: selectedFrame.bridge,
+    ed: frameED
+  };
+  const paramReceita = {
+    dnpOD: biometrics.dnpOD,
+    dnpOE: biometrics.dnpOE,
+    alturaOD: biometrics.alturaOD,
+    alturaOE: biometrics.alturaOE
+  };
+
+  const calculosOpticos = calcularGeometriaOptica(paramArmacao, paramReceita);
+  const espessurasFisicas = estimarEspessuraLente(
+    prescription.od.esferico,
+    prescription.od.cilindrico || 0,
+    paramArmacao,
+    paramReceita,
+    selectedLens.indexRefraction || 1.5
+  );
+
+  const compatibilidadePreditiva = validarCompatibilidadePreditiva(
+    prescription.od.esferico,
+    prescription.od.cilindrico || 0,
+    paramArmacao,
+    paramReceita,
+    selectedLens.indexRefraction || 1.5
+  );
+
+  const dbc = calculosOpticos.dbc;
+  const centroGeometrico = calculosOpticos.centroGeometrico;
+  const descentracaoOD = calculosOpticos.descentracaoOD;
+  const descentracaoOE = calculosOpticos.descentracaoOE;
+  const descentracaoTotal = calculosOpticos.descentracaoTotal;
+  const diametroMinimoLente = calculosOpticos.diametroMinimoLente;
+  const espessuraEstimada = `OD: ${espessurasFisicas.espessuraBordaOD}mm (Borda) / OE: ${espessurasFisicas.espessuraBordaOE}mm (Borda)`;
+  const pesoEstimado = espessurasFisicas.pesoEstimadoGramas;
 
   // Price totals
   const framePrice = selectedFrame.price;
@@ -889,6 +919,45 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
                   <div className="text-sm text-slate-200">Espessura Estimada: <strong>{espessuraEstimada}</strong></div>
                   <div className="text-sm text-slate-200">Peso Estimado: <strong>{pesoEstimado} g</strong></div>
                 </div>
+              </div>
+
+              {/* MÓDULO 10 - Validador de Armação e Lentes da IA */}
+              <div className="mt-6 p-4 rounded-2xl bg-slate-950/80 border border-[#C9A96E]/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <span className="text-xs font-bold text-[#E8D2A8] uppercase tracking-wider">Score de Adaptação Preditiva (OpticMesh AI)</span>
+                  </div>
+                  <span className={`px-3 py-1 text-sm font-black rounded-xl ${
+                    compatibilidadePreditiva.score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
+                    compatibilidadePreditiva.score >= 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
+                    'bg-red-500/20 text-red-400 border border-red-500/40'
+                  }`}>
+                    {compatibilidadePreditiva.score} / 100
+                  </span>
+                </div>
+                
+                {compatibilidadePreditiva.riscos.length > 0 && (
+                  <div className="space-y-1.5 border-t border-slate-900 pt-3">
+                    <div className="text-xs font-bold text-red-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <ShieldAlert className="w-4 h-4" /> Risco de Não-Adaptação ou Montagem:
+                    </div>
+                    {compatibilidadePreditiva.riscos.map((r, idx) => (
+                      <div key={idx} className="text-xs text-red-300 pl-5 relative before:content-['•'] before:absolute before:left-1 text-justify">{r}</div>
+                    ))}
+                  </div>
+                )}
+                
+                {compatibilidadePreditiva.recomendacoes.length > 0 && (
+                  <div className="space-y-1.5 border-t border-slate-900 pt-3">
+                    <div className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <Check className="w-4 h-4" /> Sugestões de Ajuste Recomendadas:
+                    </div>
+                    {compatibilidadePreditiva.recomendacoes.map((rec, idx) => (
+                      <div key={idx} className="text-xs text-emerald-300 pl-5 relative before:content-['•'] before:absolute before:left-1 text-justify">{rec}</div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

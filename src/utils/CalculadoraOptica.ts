@@ -156,3 +156,79 @@ export function validarCompatibilidadePreditiva(
     recomendacoes
   };
 }
+
+
+/**
+ * MÓDULO 11 - Estimativa de Espessura (Fórmula do Sagita)
+ * Estima as espessuras físicas de borda e centro da lente em milímetros (mm).
+ */
+export function estimarEspessuraLente(
+  grauEsferico: number,
+  grauCilindrico: number,
+  armacao: ParametrosArmacao,
+  medidas: ReceitaMedidas,
+  indiceRefracao: number
+): {
+  espessuraBordaOD: number;
+  espessuraBordaOE: number;
+  espessuraCentroOD: number;
+  espessuraCentroOE: number;
+  pesoEstimadoGramas: number;
+} {
+  const calculos = calcularGeometriaOptica(armacao, medidas);
+  
+  // O semidiâmetro (r) em mm da lente cortada é metade do diâmetro mínimo necessário
+  const r = calculos.diametroMinimoLente / 2;
+
+  // Poder total absoluto aproximado nos dois meridianos principais
+  const poderOD = grauEsferico + (grauCilindrico < 0 ? grauCilindrico : 0);
+  const poderOE = grauEsferico + (grauCilindrico < 0 ? grauCilindrico : 0);
+
+  // Espessura base de fabricação segura das lentes
+  const espessuraBaseNegativaCentro = 1.2; // mm
+  const espessuraBasePositivaBorda = 1.0;  // mm
+
+  // Cálculo da Sagita para OD/OE
+  const sagitaOD = (Math.pow(r, 2) * Math.abs(poderOD)) / (2000 * (indiceRefracao - 1));
+  const sagitaOE = (Math.pow(r, 2) * Math.abs(poderOE)) / (2000 * (indiceRefracao - 1));
+
+  let espessuraBordaOD = espessuraBasePositivaBorda;
+  let espessuraCentroOD = espessuraBaseNegativaCentro;
+  let espessuraBordaOE = espessuraBasePositivaBorda;
+  let espessuraCentroOE = espessuraBaseNegativaCentro;
+
+  // Lente Negativa (Miopia - mais grossa na borda)
+  if (poderOD < 0) {
+    espessuraBordaOD = espessuraBaseNegativaCentro + sagitaOD;
+    espessuraCentroOD = espessuraBaseNegativaCentro;
+  } else { // Lente Positiva (Hipermetropia - mais grossa no centro)
+    espessuraBordaOD = espessuraBasePositivaBorda;
+    espessuraCentroOD = espessuraBasePositivaBorda + sagitaOD;
+  }
+
+  if (poderOE < 0) {
+    espessuraBordaOE = espessuraBaseNegativaCentro + sagitaOE;
+    espessuraCentroOE = espessuraBaseNegativaCentro;
+  } else {
+    espessuraBordaOE = espessuraBasePositivaBorda;
+    espessuraCentroOE = espessuraBasePositivaBorda + sagitaOE;
+  }
+
+  // Estimativa de Peso (Baseado no diâmetro e na densidade média do material)
+  const densidadeMedia = 1.3; // g/cm3
+  const volumeOD = Math.PI * Math.pow(r / 10, 2) * ((espessuraCentroOD + espessuraBordaOD) / 2 / 10);
+  const volumeOE = Math.PI * Math.pow(r / 10, 2) * ((espessuraCentroOE + espessuraBordaOE) / 2 / 10);
+  
+  // Peso estimado total (Armação + as duas lentes)
+  const pesoArmacao = Math.round(14 + armacao.aroHorizontalA * 0.15); // g
+  const pesoLentes = (volumeOD + volumeOE) * densidadeMedia;
+  const pesoEstimadoGramas = Math.round(pesoArmacao + pesoLentes);
+
+  return {
+    espessuraBordaOD: Math.round(espessuraBordaOD * 10) / 10,
+    espessuraBordaOE: Math.round(espessuraBordaOE * 10) / 10,
+    espessuraCentroOD: Math.round(espessuraCentroOD * 10) / 10,
+    espessuraCentroOE: Math.round(espessuraCentroOE * 10) / 10,
+    pesoEstimadoGramas
+  };
+}
