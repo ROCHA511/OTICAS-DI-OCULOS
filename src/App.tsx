@@ -508,27 +508,28 @@ export default function App() {
 
   return (
     <div className="h-screen h-[100dvh] max-h-screen w-screen max-w-full bg-[#FDFBF7] flex flex-col font-sans antialiased text-slate-800 overflow-hidden box-border relative">
-      {/* Top Header Navbar */}
-      <Navbar
-        aiSettings={aiSettings}
-        setAiSettings={setAiSettings}
-        totalTodaySales={totalTodaySales}
-        activeChatsCount={clients.length}
-        currentUser={currentUser}
-        onLogout={() => setCurrentUser(null)}
-        onOpenProfessionalsModal={() => setIsProfessionalsModalOpen(true)}
-        onOpenShareModal={() => setIsShareModalOpen(true)}
-        onNavigateTab={(tab) => setActiveTab(tab)}
-        onOpenQuickSearch={() => setIsQuickSearchOpen(true)}
-      />
+      {/* Top Header Group - Guaranteed to never collapse on mobile viewports */}
+      <div className="shrink-0 w-full flex flex-col z-50">
+        <Navbar
+          aiSettings={aiSettings}
+          setAiSettings={setAiSettings}
+          totalTodaySales={totalTodaySales}
+          activeChatsCount={clients.length}
+          currentUser={currentUser}
+          onLogout={() => setCurrentUser(null)}
+          onOpenProfessionalsModal={() => setIsProfessionalsModalOpen(true)}
+          onOpenShareModal={() => setIsShareModalOpen(true)}
+          onNavigateTab={(tab) => setActiveTab(tab)}
+          onOpenQuickSearch={() => setIsQuickSearchOpen(true)}
+        />
 
-      {/* Metric Bar */}
-      <ExecutiveMetricBar
-        totalTodaySales={totalTodaySales}
-        activeChatsCount={clients.length}
-        inLabCount={inLabCount}
-        onOpenNews={() => setActiveTab('news')}
-      />
+        <ExecutiveMetricBar
+          totalTodaySales={totalTodaySales}
+          activeChatsCount={clients.length}
+          inLabCount={inLabCount}
+          onOpenNews={() => setActiveTab('news')}
+        />
+      </div>
 
       {/* Main Body with Sidebar + Active View */}
       <div className="flex-1 flex flex-row overflow-hidden min-h-0 min-w-0 w-full max-w-full box-border">
