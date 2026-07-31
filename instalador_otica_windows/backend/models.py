@@ -50,8 +50,8 @@ class Perfil(Base):
     atualizado_em = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relacionamentos
-    profissional = relationship("Profissional", uselist=False, back_populates="perfil")
-    cliente = relationship("Cliente", uselist=False, back_populates="perfil")
+    profissional = relationship("Profissional", uselist=False, back_populates="perfil", foreign_keys="[Profissional.id]")
+    cliente = relationship("Cliente", uselist=False, back_populates="perfil", foreign_keys="[Cliente.id]")
 
 
 class Profissional(Base):
