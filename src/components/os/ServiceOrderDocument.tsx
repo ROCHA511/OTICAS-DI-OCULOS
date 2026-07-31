@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Printer, Download, Scissors, QrCode, Check, FileText } from 'lucide-react';
+import { Printer, Download, Scissors, QrCode, Check, FileText, Lock } from 'lucide-react';
 import { ServiceOrder } from '../../types';
 import { OticasLogo } from '../brand/OticasLogo';
 
@@ -75,6 +75,10 @@ export const ServiceOrderDocument: React.FC<ServiceOrderDocumentProps> = ({
   ];
 
   const handlePrintClick = () => {
+    if (order.status === 'aguardando_pagamento' || order.status === 'orcamento') {
+      alert("⚠️ Ação Bloqueada: Não é possível imprimir ordens de serviço pendentes de pagamento. Por favor, registre o recebimento financeiro.");
+      return;
+    }
     if (onPrint) {
       onPrint();
     } else {
@@ -115,11 +119,20 @@ export const ServiceOrderDocument: React.FC<ServiceOrderDocumentProps> = ({
 
   // Helper Rx Prescription Sub-Table
   const renderRxTable = () => (
-    <div className="text-[10px] border border-slate-400">
-      <div className="bg-slate-100 font-bold border-b border-slate-400 text-center py-0.5">
+    <div className="text-[10px] border border-slate-400 relative">
+      {/* Overlay de Bloqueio Financeiro de Segurança (Módulo 14) */}
+      {(order.status === 'aguardando_pagamento' || order.status === 'orcamento') && (
+        <div className="absolute inset-0 bg-red-950/90 backdrop-blur-[2px] flex flex-col items-center justify-center p-2 text-center z-10 border border-red-500/30">
+          <Lock className="w-6 h-6 text-red-400 animate-pulse mb-1" />
+          <span className="text-[9px] font-black text-red-300 uppercase tracking-widest">DADOS BLOQUEADOS</span>
+          <span className="text-[7px] text-red-400 mt-0.5 font-bold">PAGAMENTO PENDENTE</span>
+        </div>
+      )}
+
+      <div className={`bg-slate-100 font-bold border-b border-slate-400 text-center py-0.5 ${(order.status === 'aguardando_pagamento' || order.status === 'orcamento') ? 'filter blur-[3px] pointer-events-none' : ''}`}>
         RECEITA
       </div>
-      <table className="w-full text-center border-collapse text-[9px]">
+      <table className={`w-full text-center border-collapse text-[9px] ${(order.status === 'aguardando_pagamento' || order.status === 'orcamento') ? 'filter blur-[3px] pointer-events-none' : ''}`}>
         <thead>
           <tr className="border-b border-slate-300 font-bold bg-slate-50">
             <th className="p-0.5 border-r border-slate-300"></th>
@@ -218,7 +231,7 @@ export const ServiceOrderDocument: React.FC<ServiceOrderDocumentProps> = ({
           </tr>
         </tbody>
       </table>
-      <div className="p-1 text-[9px] font-medium border-t border-slate-300 flex justify-between bg-slate-50">
+      <div className={`p-1 text-[9px] font-medium border-t border-slate-300 flex justify-between bg-slate-50 ${(order.status === 'aguardando_pagamento' || order.status === 'orcamento') ? 'filter blur-[3px] pointer-events-none' : ''}`}>
         <span>Médico/Optom: <strong>{order.medicoName || order.prescription.medicoName || 'Lauro / Dr. Roberto'}</strong></span>
         <span>Possui receita: <strong>{order.possuiReceita ? 'Sim' : 'Não'}</strong></span>
       </div>
