@@ -20,6 +20,9 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from database import get_db
 import models
+import contabilidade_service
+from fastapi.staticfiles import StaticFiles
+import asyncio
 
 app = FastAPI(title="Ótica Inteligente API", version="2.0.0")
 
@@ -554,3 +557,171 @@ def exportar_ordem_servico(venda_id: UUID, db: Session = Depends(get_db), tenant
             "face_form": float(biometria.face_form) if biometria.face_form else None,
         } if biometria else None
     }
+
+
+# ============================================================================
+# ENDPOINTS - MÓDULO CONTÁBIL AUTOMÁTICO
+# ============================================================================
+
+class ContabilidadeConfigSchema(BaseModel):
+    nome_contabilidade: str
+    nome_contador: str
+    whatsapp_contabilidade: str
+    email_contabilidade: str
+    nome_ceo: str
+    whatsapp_ceo: str
+    email_ceo: str
+    dia_fechamento: int
+    horario_envio: str
+    fuso_horario: str
+    envio_automatico: bool
+
+@app.get("/contabilidade/config")
+def obter_config_contabilidade(db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    config = db.query(models.ContabilidadeConfig).filter(models.ContabilidadeConfig.tenant_id == tenant_id).first()
+    if not config:
+        return {
+            "nome_contabilidade": "",
+            "nome_contador": "",
+            "whatsapp_contabilidade": "",
+            "email_contabilidade": "",
+            "nome_ceo": "",
+            "whatsapp_ceo": "",
+            "email_ceo": "",
+            "dia_fechamento": 1,
+            "horario_envio": "08:00:00",
+            "fuso_horario": "America/Sao_Paulo",
+            "envio_automatico": True
+        }
+    return config
+
+@app.post("/contabilidade/config")
+def salvar_config_contabilidade(dados: ContabilidadeConfigSchema, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    config = db.query(models.ContabilidadeConfig).filter(models.ContabilidadeConfig.tenant_id == tenant_id).first()
+    
+    if not config:
+        config = models.ContabilidadeConfig(tenant_id=tenant_id)
+        db.add(config)
+        
+    config.nome_contabilidade = dados.nome_contabilidade
+    config.nome_contador = dados.nome_contador
+    config.whatsapp_contabilidade = dados.whatsapp_contabilidade
+    config.email_contabilidade = dados.email_contabilidade
+    config.nome_ceo = dados.nome_ceo
+    config.whatsapp_ceo = dados.whatsapp_ceo
+    config.email_ceo = dados.email_ceo
+    config.dia_fechamento = dados.dia_fechamento
+    config.horario_envio = dados.horario_envio
+    config.fuso_horario = dados.fuso_horario
+    config.envio_automatico = dados.envio_automatico
+    
+    db.commit()
+    return {"status": "sucesso", "mensagem": "Configurações contábeis salvas com sucesso!"}
+
+@app.get("/contabilidade/relatorios")
+def listar_relatorios_contabeis(db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    relatorios = db.query(models.ContabilidadeRelatorio).filter(
+        models.ContabilidadeRelatorio.tenant_id == tenant_id
+    ).order_by(models.ContabilidadeRelatorio.criado_em.desc()).all()
+    return relatorios
+
+class DispararRelatorioSchema(BaseModel):
+    ano: int
+    mes: int
+
+@app.post("/contabilidade/relatorios/disparar")
+def disparar_relatorio_manual(dados: DispararRelatorioSchema, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    config = db.query(models.ContabilidadeConfig).filter(models.ContabilidadeConfig.tenant_id == tenant_id).first()
+    if not config:
+        raise HTTPException(status_code=400, detail="É necessário salvar as configurações da contabilidade antes de disparar um fechamento.")
+        
+    try:
+        sucesso = contabilidade_service.realizar_fechamento_contabil(db, str(tenant_id), dados.ano, dados.mes)
+        if sucesso:
+            return {"status": "sucesso", "mensagem": f"Fechamento de {dados.mes:02d}/{dados.ano} gerado e enviado com sucesso!"}
+        else:
+            raise HTTPException(status_code=500, detail="Falha ao gerar ou enviar o relatório contábil.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro interno ao gerar fechamento: {str(e)}")
+
+@app.post("/contabilidade/relatorios/{relatorio_id}/reenviar")
+def reenviar_relatorio_historico(relatorio_id: UUID, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    relatorio = db.query(models.ContabilidadeRelatorio).filter(
+        models.ContabilidadeRelatorio.id == relatorio_id,
+        models.ContabilidadeRelatorio.tenant_id == tenant_id
+    ).first()
+    
+    if not relatorio:
+        raise HTTPException(status_code=404, detail="Relatório não encontrado no histórico.")
+        
+    config = db.query(models.ContabilidadeConfig).filter(models.ContabilidadeConfig.tenant_id == tenant_id).first()
+    if not config:
+        raise HTTPException(status_code=400, detail="Configurações de contabilidade não encontradas.")
+        
+    try:
+        # Re-envia WhatsApp CEO
+        msg_ceo = f"Olá {config.nome_ceo}!\n\nSegue o REENVIO do relatório financeiro oficial da Ótica referente ao mês {relatorio.mes_referencia}.\n\nEste documento foi gerado automaticamente pelo sistema."
+        contabilidade_service.enviar_whatsapp_api(db, str(tenant_id), config.whatsapp_ceo, msg_ceo, relatorio.pdf_path_ceo)
+        
+        # Re-envia WhatsApp Contabilidade
+        msg_contabilidade = f"Prezado(a) {config.nome_contador} (Contabilidade {config.nome_contabilidade}),\n\nSegue o REENVIO do relatório contábil de movimentações referente ao mês {relatorio.mes_referencia} para fins fiscais."
+        contabilidade_service.enviar_whatsapp_api(db, str(tenant_id), config.whatsapp_contabilidade, msg_contabilidade, relatorio.pdf_path_contabilidade)
+        
+        return {"status": "sucesso", "mensagem": "Relatório reenviado para a fila de disparos com sucesso!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao reenviar: {str(e)}")
+
+
+# ============================================================================
+# CRON SCHEDULER DE APURAÇÃO CONTÁBIL AUTOMÁTICA
+# ============================================================================
+
+async def contabilidade_cron_job():
+    print(" -> [CONTA-CRON] Iniciando agendador contábil automático...")
+    while True:
+        try:
+            await asyncio.sleep(60)
+            from database import SessionLocal
+            db = SessionLocal()
+            try:
+                now = datetime.datetime.now()
+                configs = db.query(models.ContabilidadeConfig).filter(
+                    models.ContabilidadeConfig.envio_automatico == True
+                ).all()
+                
+                for config in configs:
+                    dia_atual = now.day
+                    horario_config = datetime.datetime.strptime(config.horario_envio, "%H:%M:%S").time() if isinstance(config.horario_envio, str) else config.horario_envio
+                    
+                    if dia_atual == config.dia_fechamento and now.hour == horario_config.hour:
+                        ano_ref = now.year
+                        mes_ref = now.month - 1
+                        if mes_ref == 0:
+                            mes_ref = 12
+                            ano_ref -= 1
+                            
+                        mes_ref_str = f"{ano_ref}-{mes_ref:02d}"
+                        
+                        ja_enviado = db.query(models.ContabilidadeRelatorio).filter(
+                            models.ContabilidadeRelatorio.tenant_id == config.tenant_id,
+                            models.ContabilidadeRelatorio.mes_referencia == mes_ref_str
+                        ).first()
+                        
+                        if not ja_enviado:
+                            print(f" -> [CONTA-CRON] Disparando fechamento automático de {config.tenant_id} para {mes_ref_str}")
+                            try:
+                                contabilidade_service.realizar_fechamento_contabil(db, str(config.tenant_id), ano_ref, mes_ref)
+                            except Exception as e:
+                                print(f" -> [CONTA-CRON] Falha no fechamento automático: {str(e)}")
+            finally:
+                db.close()
+        except Exception as e:
+            print(f" -> [CONTA-CRON] Erro no loop do agendador: {str(e)}")
+        
+        await asyncio.sleep(3600)
+
+@app.on_event("startup")
+async def startup_event():
+    os.makedirs(os.path.join("public", "relatorios"), exist_ok=True)
+    app.mount("/relatorios", StaticFiles(directory="public/relatorios"), name="relatorios")
+    asyncio.create_task(contabilidade_cron_job())

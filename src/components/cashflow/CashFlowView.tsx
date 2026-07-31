@@ -39,6 +39,7 @@ import { NewMovementModal } from './NewMovementModal';
 import { CashClosingModal } from './CashClosingModal';
 import { FinancialDashboardView } from './FinancialDashboardView';
 import { CashFlowReportsModal } from './CashFlowReportsModal';
+import { ContabilidadeView } from './ContabilidadeView';
 
 interface CashFlowViewProps {
   cashFlow: CashFlowEntry[];
@@ -56,7 +57,7 @@ export const CashFlowView: React.FC<CashFlowViewProps> = ({
   setClosings,
 }) => {
   // Navigation tabs
-  const [activeTab, setActiveTab] = useState<'movements' | 'dashboard' | 'reports'>('movements');
+  const [activeTab, setActiveTab] = useState<'movements' | 'dashboard' | 'reports' | 'contabilidade'>('movements');
 
   // Role permissions testing
   const [currentRole, setCurrentRole] = useState<UserRole>('ADMIN');
@@ -471,6 +472,17 @@ export const CashFlowView: React.FC<CashFlowViewProps> = ({
         >
           <FileText className="w-4 h-4 text-[#C5A880]" /> Relatórios & Livro Caixa
         </button>
+
+        <button
+          onClick={() => setActiveTab('contabilidade')}
+          className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all border ${
+            activeTab === 'contabilidade'
+              ? 'bg-[#0B1E36] text-amber-300 border-[#C5A880]/50 shadow-xs'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+          }`}
+        >
+          <Building2 className="w-4 h-4" /> Módulo Contábil
+        </button>
       </div>
 
       {/* Content Area */}
@@ -598,6 +610,10 @@ export const CashFlowView: React.FC<CashFlowViewProps> = ({
             serviceOrders={serviceOrders}
             currentFilial={filters.filial}
           />
+        )}
+
+        {activeTab === 'contabilidade' && (
+          <ContabilidadeView />
         )}
       </div>
 

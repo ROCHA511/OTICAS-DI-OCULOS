@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, Date, ForeignKey, Enum as SqlEnum, CheckConstraint
+from sqlalchemy import Column, String, Integer, Numeric, DateTime, Date, ForeignKey, Enum as SqlEnum, CheckConstraint, Boolean
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -342,3 +342,50 @@ class ClienteBiometriaOptica(Base):
     foto_scan_url = Column(String)
 
     criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ContabilidadeConfig(Base):
+    __tablename__ = "contabilidade_config"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, unique=True)
+    nome_contabilidade = Column(String(150), nullable=False)
+    nome_contador = Column(String(100), nullable=False)
+    whatsapp_contabilidade = Column(String(20), nullable=False)
+    email_contabilidade = Column(String(150), nullable=False)
+    nome_ceo = Column(String(100), nullable=False)
+    whatsapp_ceo = Column(String(20), nullable=False)
+    email_ceo = Column(String(150), nullable=False)
+    dia_fechamento = Column(Integer, default=1, nullable=False)
+    horario_envio = Column(String(20), default="08:00:00", nullable=False)
+    fuso_horario = Column(String(50), default="America/Sao_Paulo", nullable=False)
+    envio_automatico = Column(Boolean, default=True, nullable=False)
+    
+    criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    atualizado_em = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    tenant = relationship("Tenant")
+
+
+class ContabilidadeRelatorio(Base):
+    __tablename__ = "contabilidade_relatorios"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    mes_referencia = Column(String(7), nullable=False) # Formato: 'YYYY-MM'
+    data_geracao = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    quantidade_vendas = Column(Integer, default=0, nullable=False)
+    valor_bruto = Column(Numeric(10, 2), default=0.00, nullable=False)
+    valor_liquido = Column(Numeric(10, 2), default=0.00, nullable=False)
+    valor_pix = Column(Numeric(10, 2), default=0.00, nullable=False)
+    valor_cartao = Column(Numeric(10, 2), default=0.00, nullable=False)
+    valor_dinheiro = Column(Numeric(10, 2), default=0.00, nullable=False)
+    status = Column(String(50), default="pendente", nullable=False)
+    destinatarios = Column(JSONB, nullable=False)
+    pdf_path_ceo = Column(String)
+    pdf_path_contabilidade = Column(String)
+    protocolo = Column(String(100), unique=True)
+    log_erro = Column(String)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    tenant = relationship("Tenant")
