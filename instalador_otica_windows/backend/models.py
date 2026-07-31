@@ -305,3 +305,40 @@ class LogAuditoria(Base):
     dados_novos = Column(JSONB)
     ip_address = Column(String(45))
     criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class ClienteBiometriaOptica(Base):
+    __tablename__ = "cliente_biometria_optica"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    cliente_id = Column(UUID(as_uuid=True), ForeignKey("perfis.id", ondelete="CASCADE"), nullable=False)
+    venda_os_id = Column(UUID(as_uuid=True), ForeignKey("vendas.id", ondelete="SET NULL"))
+    receita_id = Column(UUID(as_uuid=True), ForeignKey("receitas.id", ondelete="SET NULL"))
+
+    # Parâmetros Oculares
+    dp_total = Column(Numeric(5, 2), nullable=False)
+    dnp_od = Column(Numeric(4, 2), nullable=False)
+    dnp_oe = Column(Numeric(4, 2), nullable=False)
+    altura_od_real = Column(Numeric(4, 2), nullable=False)
+    altura_oe_real = Column(Numeric(4, 2), nullable=False)
+
+    # Parâmetros de Centragem / Armação
+    co_od_horizontal = Column(Numeric(4, 2), nullable=False)
+    co_oe_horizontal = Column(Numeric(4, 2), nullable=False)
+    co_od_vertical = Column(Numeric(4, 2), nullable=False)
+    co_oe_vertical = Column(Numeric(4, 2), nullable=False)
+
+    # Parâmetros de Armação Física
+    distancia_vertice = Column(Numeric(4, 2))
+    angulo_pantoscopico = Column(Numeric(4, 2))
+    face_form = Column(Numeric(4, 2))
+    assimetria_facial = Column(Numeric(4, 2))
+    inclinacao_cabeca = Column(Numeric(4, 2))
+
+    # Auditoria de IA
+    indice_confianca_ia = Column(Numeric(4, 2), default=1.00)
+    dados_face_mesh = Column(JSONB)
+    foto_scan_url = Column(String)
+
+    criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

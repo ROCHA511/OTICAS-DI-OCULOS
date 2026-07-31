@@ -139,6 +139,29 @@ class ReceitaCreate(BaseModel):
     dnp_oe: float = 0.0
     validade: Optional[datetime.date] = None
 
+
+class BiometriaCreate(BaseModel):
+    cliente_id: UUID
+    venda_os_id: Optional[UUID] = None
+    receita_id: Optional[UUID] = None
+    dp_total: float
+    dnp_od: float
+    dnp_oe: float
+    altura_od_real: float
+    altura_oe_real: float
+    co_od_horizontal: float
+    co_oe_horizontal: float
+    co_od_vertical: float
+    co_oe_vertical: float
+    distancia_vertice: Optional[float] = None
+    angulo_pantoscopico: Optional[float] = None
+    face_form: Optional[float] = None
+    assimetria_facial: Optional[float] = None
+    inclinacao_cabeca: Optional[float] = None
+    indice_confianca_ia: float = 1.0
+    dados_face_mesh: Optional[dict] = None
+    foto_scan_url: Optional[str] = None
+
 class WhatsAppSend(BaseModel):
     remetente_id: UUID
     telefone_destinatario: str
@@ -434,8 +457,100 @@ def enviar_whatsapp(schema: WhatsAppSend, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(mensagem)
     
-    return {
         "status": status_envio,
         "id": mensagem.id,
         "erro": logs_erro
+    }
+
+
+# ============================================================================
+# ROTAS - BIOMETRIA ÓPTICA AVANÇADA (MediaPipe Face Landmarker)
+# ============================================================================
+
+@app.post("/ia/biometria/salvar", status_code=status.HTTP_201_CREATED)
+def salvar_biometria(schema: BiometriaCreate, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    biometria = models.ClienteBiometriaOptica(
+        tenant_id=tenant_id,
+        cliente_id=schema.cliente_id,
+        venda_os_id=schema.venda_os_id,
+        receita_id=schema.receita_id,
+        dp_total=schema.dp_total,
+        dnp_od=schema.dnp_od,
+        dnp_oe=schema.dnp_oe,
+        altura_od_real=schema.altura_od_real,
+        altura_oe_real=schema.altura_oe_real,
+        co_od_horizontal=schema.co_od_horizontal,
+        co_oe_horizontal=schema.co_oe_horizontal,
+        co_od_vertical=schema.co_od_vertical,
+        co_oe_vertical=schema.co_oe_vertical,
+        distancia_vertice=schema.distancia_vertice,
+        angulo_pantoscopico=schema.angulo_pantoscopico,
+        face_form=schema.face_form,
+        assimetria_facial=schema.assimetria_facial,
+        inclinacao_cabeca=schema.inclinacao_cabeca,
+        indice_confianca_ia=schema.indice_confianca_ia,
+        dados_face_mesh=schema.dados_face_mesh,
+        foto_scan_url=schema.foto_scan_url
+    )
+    db.add(biometria)
+    db.commit()
+    db.refresh(biometria)
+    return biometria
+
+
+@app.get("/vendas/{venda_id}/exportar-os")
+def exportar_ordem_servico(venda_id: UUID, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    # 1. Localiza a venda correspondente ao tenant
+    venda = db.query(models.Venda).filter(models.Venda.id == venda_id, models.Venda.tenant_id == tenant_id).first()
+    if not venda:
+        raise HTTPException(status_code=404, detail="Ordem de serviço não encontrada")
+
+    # 2. MÓDULO 14 - VALIDAÇÃO FINANCEIRA DE SEGURANÇA
+    # Soma todas as transações de entrada confirmadas para esta venda
+    from sqlalchemy.sql import func
+    total_pago = db.query(func.sum(models.TransacaoFinanceira.valor)).filter(
+        models.TransacaoFinanceira.venda_id == venda_id,
+        models.TransacaoFinanceira.tipo == "entrada"
+    ).scalar() or 0.00
+
+    # Se o valor líquido for maior do que o total pago, bloqueia dados de fabricação
+    if total_pago < float(venda.valor_liquido):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "erro": "PAGAMENTO_PENDENTE",
+                "mensagem": "OS BLOQUEADA: É necessário registrar a entrada financeira de pagamento para liberar o arquivo de laboratório e medidas técnicas.",
+                "total_devido": float(venda.valor_liquido),
+                "total_pago": float(total_pago)
+            }
+        )
+
+    # 3. Se pago, retorna todos os dados biométricos e da receita para fabricação
+    biometria = db.query(models.ClienteBiometriaOptica).filter(models.ClienteBiometriaOptica.venda_os_id == venda_id).first()
+    receita = db.query(models.Receita).filter(models.Receita.id == venda.receita_id).first()
+    
+    return {
+        "status": "pago_liberado",
+        "venda_id": venda.id,
+        "valor_total": float(venda.valor_total),
+        "desconto": float(venda.desconto),
+        "valor_liquido": float(venda.valor_liquido),
+        "receita": {
+            "esferico_od": float(receita.esferico_od) if receita else 0.0,
+            "cilindrico_od": float(receita.cilindrico_od) if receita else 0.0,
+            "eixo_od": receita.eixo_od if receita else 0,
+            "esferico_oe": float(receita.esferico_oe) if receita else 0.0,
+            "cilindrico_oe": float(receita.cilindrico_oe) if receita else 0.0,
+            "eixo_oe": receita.eixo_oe if receita else 0,
+        } if receita else None,
+        "biometria": {
+            "dnp_od": float(biometria.dnp_od),
+            "dnp_oe": float(biometria.dnp_oe),
+            "dp_total": float(biometria.dp_total),
+            "altura_od_real": float(biometria.altura_od_real),
+            "altura_oe_real": float(biometria.altura_oe_real),
+            "distancia_vertice": float(biometria.distancia_vertice) if biometria.distancia_vertice else None,
+            "angulo_pantoscopico": float(biometria.angulo_pantoscopico) if biometria.angulo_pantoscopico else None,
+            "face_form": float(biometria.face_form) if biometria.face_form else None,
+        } if biometria else None
     }

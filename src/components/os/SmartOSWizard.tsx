@@ -34,6 +34,8 @@ import {
 import { Client, Frame, Lens, ServiceOrder, OpticalPrescription, DnpMeasurement } from '../../types';
 import { OticasLogo } from '../brand/OticasLogo';
 import { ServiceOrderDocument } from './ServiceOrderDocument';
+import FaceMeshOverlay from '../biometria/FaceMeshOverlay';
+import { calcularGeometriaOptica } from '../../utils/CalculadoraOptica';
 
 interface SmartOSWizardProps {
   clients: Client[];
@@ -96,6 +98,7 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
 
   // Stage 4: Biometric AI Camera Capture
   const [isCapturingCam, setIsCapturingCam] = useState(false);
+  const [showRealCamera, setShowRealCamera] = useState(false);
   const [camDistance, setCamDistance] = useState<number>(100); // 100 cm target
   const [capturedFrontPhoto, setCapturedFrontPhoto] = useState<string | null>(
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'
@@ -213,30 +216,31 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
     setShowNewClientForm(false);
   };
 
-  // Trigger Simulated Camera Biometric Scanning
+  // Trigger Real Camera Biometric Scanning
   const handleStartAiScan = () => {
+    setShowRealCamera(true);
+  };
+
+  const handleCaptureComplete = (medidas: any) => {
+    setBiometrics({
+      dnpOD: medidas.dnpOD,
+      dnpOE: medidas.dnpOE,
+      dpTotal: medidas.dpTotal,
+      alturaOD: medidas.alturaOD,
+      alturaOE: medidas.alturaOE,
+      centroHorizOD: medidas.dnpOD,
+      centroHorizOE: medidas.dnpOE,
+      centroVertOD: medidas.alturaOD,
+      centroVertOE: medidas.alturaOE,
+      distanciaVertice: medidas.distanciaVertice,
+      faceForm: medidas.faceForm,
+      anguloPantoscopico: medidas.anguloPantoscopico,
+      assimetriaFacial: medidas.assimetriaFacial,
+      inclinacaoCabeca: medidas.inclinacaoCabeca,
+      confidenceScore: medidas.indiceConfianca,
+    });
     setIsCapturingCam(true);
-    setIsAiMeasuring(true);
-    setTimeout(() => {
-      setIsAiMeasuring(false);
-      setBiometrics({
-        dnpOD: 32.5,
-        dnpOE: 31.8,
-        dpTotal: 64.3,
-        alturaOD: 29.2,
-        alturaOE: 29.0,
-        centroHorizOD: 32.5,
-        centroHorizOE: 31.8,
-        centroVertOD: 29.2,
-        centroVertOE: 29.0,
-        distanciaVertice: 12.0,
-        faceForm: 5.2,
-        anguloPantoscopico: 8.5,
-        assimetriaFacial: 0.3,
-        inclinacaoCabeca: 0.8,
-        confidenceScore: 99.9,
-      });
-    }, 2000);
+    setShowRealCamera(false);
   };
 
   // Save Final OS
@@ -1365,6 +1369,13 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           </button>
         )}
       </div>
+      
+      {showRealCamera && (
+        <FaceMeshOverlay
+          onCaptureComplete={handleCaptureComplete}
+          onClose={() => setShowRealCamera(false)}
+        />
+      )}
     </div>
   );
 };
