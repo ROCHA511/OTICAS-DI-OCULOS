@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Banco de Dados PostgreSQL Local de Desenvolvimento
+  db:
+    image: postgres:15-alpine
+    container_name: otica_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: otica_inteligente
+    ports:
+      - "5432:5432"
+    volumes:
+      - otica_postgres_data:/var/lib/postgresql/data
+      - ../database/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+
+  # API FastAPI do Backend da Ótica Inteligente
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: otica_api
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/otica_inteligente
+      - PORT=8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  otica_postgres_data:

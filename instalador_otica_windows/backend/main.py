@@ -1,0 +1,345 @@
+import datetime
+from typing import List, Optional
+from uuid import UUID
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
+from sqlalchemy.orm import Session
+from .database import get_db
+from . import models
+
+app = FastAPI(title="Ótica Inteligente API", version="2.0.0")
+
+# Habilita CORS para conexão com o frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ============================================================================
+# SCHEMAS PYDANTIC
+# ============================================================================
+
+class PerfilCreate(BaseModel):
+    nome: str
+    email: EmailStr
+    telefone: Optional[str] = None
+    role: str = "cliente"
+
+class ClienteCreate(BaseModel):
+    perfil: PerfilCreate
+    cpf: str
+    data_nascimento: Optional[datetime.date] = None
+    endereco: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
+
+class ProdutoCreate(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    preco_venda: float
+    preco_custo: float
+    estoque_atual: int
+    estoque_minimo: int
+    categoria: str = "lentes"
+
+class VendaItemSchema(BaseModel):
+    produto_id: UUID
+    quantidade: int
+    preco_unitario: float
+
+class VendaCreate(BaseModel):
+    cliente_id: UUID
+    profissional_id: UUID
+    receita_id: Optional[UUID] = None
+    itens: List[VendaItemSchema]
+    desconto: float = 0.0
+
+class CaixaAbrir(BaseModel):
+    operador_id: UUID
+    saldo_inicial: float
+
+class CaixaFechar(BaseModel):
+    saldo_final: float
+
+class TransacaoCreate(BaseModel):
+    tipo: str  # 'entrada', 'saida'
+    valor: float
+    forma_pagamento: str  # 'pix', 'cartao_credito', 'cartao_debito', 'dinheiro', 'parcelado'
+    descricao: Optional[str] = None
+    venda_id: Optional[UUID] = None
+
+class AgendaCreate(BaseModel):
+    cliente_id: UUID
+    profissional_id: UUID
+    data_hora: datetime.datetime
+    observacoes: Optional[str] = None
+
+class ReceitaCreate(BaseModel):
+    cliente_id: UUID
+    medico_id: Optional[UUID] = None
+    esferico_od: float = 0.0
+    cilindrico_od: float = 0.0
+    eixo_od: int = 0
+    adicao_od: float = 0.0
+    esferico_oe: float = 0.0
+    cilindrico_oe: float = 0.0
+    eixo_oe: int = 0
+    adicao_oe: float = 0.0
+    dnp_od: float = 0.0
+    dnp_oe: float = 0.0
+    validade: Optional[datetime.date] = None
+
+class WhatsAppSend(BaseModel):
+    remetente_id: UUID
+    telefone_destinatario: str
+    mensagem: str
+
+# ============================================================================
+# ROTAS - CLIENTES & PERFIS
+# ============================================================================
+
+@app.post("/clientes", status_code=status.HTTP_201_CREATED)
+def criar_cliente(schema: ClienteCreate, db: Session = Depends(get_db)):
+    # 1. Cria Perfil de Usuário
+    perfil = models.Perfil(
+        nome=schema.perfil.nome,
+        email=schema.perfil.email,
+        telefone=schema.perfil.telefone,
+        role="cliente"
+    )
+    db.add(perfil)
+    db.flush() # Gera o ID do perfil
+
+    # 2. Cria Cliente
+    cliente = models.Cliente(
+        id=perfil.id,
+        cpf=schema.cpf,
+        data_nascimento=schema.data_nascimento,
+        endereco=schema.endereco,
+        cidade=schema.cidade,
+        estado=schema.estado,
+        cep=schema.cep
+    )
+    db.add(cliente)
+    db.commit()
+    db.refresh(cliente)
+    return {"status": "sucesso", "cliente_id": cliente.id}
+
+@app.get("/clientes")
+def listar_clientes(db: Session = Depends(get_db)):
+    clientes = db.query(models.Cliente).all()
+    res = []
+    for c in clientes:
+        perf = db.query(models.Perfil).filter(models.Perfil.id == c.id).first()
+        res.append({
+            "id": c.id,
+            "nome": perf.nome if perf else "Desconhecido",
+            "email": perf.email if perf else "",
+            "cpf": c.cpf,
+            "telefone": perf.telefone if perf else ""
+        })
+    return res
+
+# ============================================================================
+# ROTAS - PRODUTOS (ESTOQUE)
+# ============================================================================
+
+@app.post("/produtos", status_code=status.HTTP_201_CREATED)
+def criar_produto(schema: ProdutoCreate, db: Session = Depends(get_db)):
+    produto = models.Produto(
+        nome=schema.nome,
+        descricao=schema.descricao,
+        preco_venda=schema.preco_venda,
+        preco_custo=schema.preco_custo,
+        estoque_atual=schema.estoque_atual,
+        estoque_minimo=schema.estoque_minimo,
+        categoria=schema.categoria
+    )
+    db.add(produto)
+    db.commit()
+    db.refresh(produto)
+    return produto
+
+@app.get("/produtos")
+def listar_produtos(db: Session = Depends(get_db)):
+    return db.query(models.Produto).all()
+
+# ============================================================================
+# ROTAS - VENDAS (OS)
+# ============================================================================
+
+@app.post("/vendas", status_code=status.HTTP_201_CREATED)
+def criar_venda(schema: VendaCreate, db: Session = Depends(get_db)):
+    # 1. Calcula o valor total da venda a partir dos itens
+    valor_total = 0.0
+    for item in schema.itens:
+        prod = db.query(models.Produto).filter(models.Produto.id == item.produto_id).first()
+        if not prod:
+            raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
+        if prod.estoque_atual < item.quantidade:
+            raise HTTPException(status_code=400, detail=f"Estoque insuficiente para o produto {prod.nome}")
+        valor_total += item.preco_unitario * item.quantidade
+
+    # 2. Registra a venda
+    venda = models.Venda(
+        cliente_id=schema.cliente_id,
+        profissional_id=schema.profissional_id,
+        receita_id=schema.receita_id,
+        valor_total=valor_total,
+        desconto=schema.desconto,
+        status="aberto"
+    )
+    db.add(venda)
+    db.flush()
+
+    # 3. Registra os itens e decrementa o estoque
+    for item in schema.itens:
+        venda_item = models.VendaItem(
+            venda_id=venda.id,
+            produto_id=item.produto_id,
+            quantidade=item.quantidade,
+            preco_unitario=item.preco_unitario
+        )
+        db.add(venda_item)
+        
+        # Atualização física de estoque
+        prod = db.query(models.Produto).filter(models.Produto.id == item.produto_id).first()
+        prod.estoque_atual -= item.quantidade
+
+    # 4. Calcula Comissão Automática (Ex: 5% sobre o valor líquido)
+    valor_liquido = valor_total - schema.desconto
+    valor_comissao = valor_liquido * 0.05
+    comissao = models.Comissao(
+        profissional_id=schema.profissional_id,
+        venda_id=venda.id,
+        valor_comissao=valor_comissao,
+        percentual=5.00,
+        status="pendente"
+    )
+    db.add(comissao)
+
+    db.commit()
+    db.refresh(venda)
+    return {"status": "sucesso", "venda_id": venda.id, "valor_liquido": valor_liquido, "comissao": valor_comissao}
+
+# ============================================================================
+# ROTAS - FINANCEIRO (CAIXA)
+# ============================================================================
+
+@app.post("/caixa/abrir")
+def abrir_caixa(schema: CaixaAbrir, db: Session = Depends(get_db)):
+    caixa_aberto = db.query(models.Caixa).filter(models.Caixa.status == "aberto").first()
+    if caixa_aberto:
+        raise HTTPException(status_code=400, detail="Já existe um caixa aberto no sistema.")
+
+    caixa = models.Caixa(
+        operador_id=schema.operador_id,
+        saldo_inicial=schema.saldo_inicial,
+        status="aberto"
+    )
+    db.add(caixa)
+    db.commit()
+    db.refresh(caixa)
+    return {"status": "caixa_aberto", "caixa_id": caixa.id}
+
+@app.post("/caixa/{caixa_id}/fechar")
+def fechar_caixa(caixa_id: UUID, schema: CaixaFechar, db: Session = Depends(get_db)):
+    caixa = db.query(models.Caixa).filter(models.Caixa.id == caixa_id).first()
+    if not caixa:
+        raise HTTPException(status_code=404, detail="Caixa não encontrado")
+    if caixa.status == "fechado":
+        raise HTTPException(status_code=400, detail="Este caixa já está fechado.")
+
+    caixa.status = "fechado"
+    caixa.saldo_final = schema.saldo_final
+    caixa.data_fechamento = datetime.datetime.now()
+    db.commit()
+    return {"status": "caixa_fechado", "caixa_id": caixa.id}
+
+@app.post("/caixa/{caixa_id}/transacao")
+def registrar_transacao(caixa_id: UUID, schema: TransacaoCreate, db: Session = Depends(get_db)):
+    caixa = db.query(models.Caixa).filter(models.Caixa.id == caixa_id).first()
+    if not caixa or caixa.status == "fechado":
+        raise HTTPException(status_code=400, detail="Transações só podem ser registradas em um caixa aberto.")
+
+    transacao = models.TransacaoFinanceira(
+        caixa_id=caixa_id,
+        venda_id=schema.venda_id,
+        tipo=schema.tipo,
+        valor=schema.valor,
+        forma_pagamento=schema.forma_pagamento,
+        descricao=schema.descricao
+    )
+    db.add(transacao)
+    db.commit()
+    db.refresh(transacao)
+    return transacao
+
+# ============================================================================
+# ROTAS - AGENDA
+# ============================================================================
+
+@app.post("/agenda")
+def criar_compromisso(schema: AgendaCreate, db: Session = Depends(get_db)):
+    compromisso = models.Agenda(
+        cliente_id=schema.cliente_id,
+        profissional_id=schema.profissional_id,
+        data_hora=schema.data_hora,
+        observacoes=schema.observacoes
+    )
+    db.add(compromisso)
+    db.commit()
+    db.refresh(compromisso)
+    return compromisso
+
+@app.get("/agenda")
+def listar_agenda(db: Session = Depends(get_db)):
+    return db.query(models.Agenda).all()
+
+# ============================================================================
+# ROTAS - RECEITAS & IA/OCR MOCK
+# ============================================================================
+
+@app.post("/receitas")
+def salvar_receita(schema: ReceitaCreate, db: Session = Depends(get_db)):
+    receita = models.Receita(
+        cliente_id=schema.cliente_id,
+        medico_id=schema.medico_id,
+        esferico_od=schema.esferico_od,
+        cilindrico_od=schema.cilindrico_od,
+        eixo_od=schema.eixo_od,
+        adicao_od=schema.adicao_od,
+        esferico_oe=schema.esferico_oe,
+        cilindrico_oe=schema.cilindrico_oe,
+        eixo_oe=schema.eixo_oe,
+        adicao_oe=schema.adicao_oe,
+        dnp_od=schema.dnp_od,
+        dnp_oe=schema.dnp_oe,
+        validade=schema.validade
+    )
+    db.add(receita)
+    db.commit()
+    db.refresh(receita)
+    return receita
+
+# ============================================================================
+# INTEGRAÇÃO WHATSAPP MOCK
+# ============================================================================
+
+@app.post("/whatsapp/enviar")
+def enviar_whatsapp(schema: WhatsAppSend, db: Session = Depends(get_db)):
+    mensagem = models.MensagemWhatsapp(
+        remetente_id=schema.remetente_id,
+        telefone_destinatario=schema.telefone_destinatario,
+        mensagem=schema.mensagem,
+        status_envio="enviado"
+    )
+    db.add(mensagem)
+    db.commit()
+    db.refresh(mensagem)
+    return {"status": "mensagem_enviada", "id": mensagem.id}
