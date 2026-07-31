@@ -6,13 +6,41 @@ from sqlalchemy.sql import func
 from .database import Base
 
 # ============================================================================
-# DEFINIÇÃO DOS MODELOS ORM DA ÓTICA INTELIGENTE
+# DEFINIÇÃO DOS MODELOS ORM SAAS DA ÓTICA INTELIGENTE
 # ============================================================================
+
+class Tenant(Base):
+    __tablename__ = "tenants"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nome_fantasia = Column(String(255), nullable=False)
+    razao_social = Column(String(255), nullable=False)
+    cnpj = Column(String(18), unique=True, nullable=False)
+    plano_atual = Column(String(50), default="starter", nullable=False) # 'starter', 'professional', 'premium_ia', 'visufit_ai'
+    status = Column(String(50), default="ativo", nullable=False)
+    criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class Filial(Base):
+    __tablename__ = "filiais"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    nome = Column(String(150), nullable=False)
+    cnpj = Column(String(18), unique=True)
+    telefone = Column(String(50))
+    endereco = Column(String)
+    cidade = Column(String(100))
+    estado = Column(String(2))
+    criado_em = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
 
 class Perfil(Base):
     __tablename__ = "perfis"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    filial_id = Column(UUID(as_uuid=True), ForeignKey("filiais.id", ondelete="SET NULL"))
     nome = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     telefone = Column(String(50))
@@ -66,6 +94,7 @@ class Produto(Base):
     __tablename__ = "produtos"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     nome = Column(String(255), nullable=False)
     descricao = Column(String)
     preco_venda = Column(Numeric(10, 2), nullable=False)
@@ -89,6 +118,7 @@ class Receita(Base):
     __tablename__ = "receitas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     cliente_id = Column(UUID(as_uuid=True), ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False)
     medico_id = Column(UUID(as_uuid=True), ForeignKey("profissionais.id", ondelete="SET NULL"))
     
@@ -120,6 +150,8 @@ class Venda(Base):
     __tablename__ = "vendas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    filial_id = Column(UUID(as_uuid=True), ForeignKey("filiais.id", ondelete="SET NULL"))
     cliente_id = Column(UUID(as_uuid=True), ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False)
     profissional_id = Column(UUID(as_uuid=True), ForeignKey("profissionais.id", ondelete="CASCADE"), nullable=False)
     receita_id = Column(UUID(as_uuid=True), ForeignKey("receitas.id", ondelete="SET NULL"))
@@ -143,6 +175,7 @@ class VendaItem(Base):
     __tablename__ = "vendas_itens"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     venda_id = Column(UUID(as_uuid=True), ForeignKey("vendas.id", ondelete="CASCADE"), nullable=False)
     produto_id = Column(UUID(as_uuid=True), ForeignKey("produtos.id", ondelete="CASCADE"), nullable=False)
     quantidade = Column(Integer, nullable=False)
@@ -158,6 +191,8 @@ class Caixa(Base):
     __tablename__ = "caixa"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    filial_id = Column(UUID(as_uuid=True), ForeignKey("filiais.id", ondelete="SET NULL"))
     operador_id = Column(UUID(as_uuid=True), ForeignKey("perfis.id", ondelete="CASCADE"), nullable=False)
     data_abertura = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     data_fechamento = Column(DateTime(timezone=True))
@@ -175,6 +210,7 @@ class TransacaoFinanceira(Base):
     __tablename__ = "transacoes_financeiras"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     caixa_id = Column(UUID(as_uuid=True), ForeignKey("caixa.id", ondelete="CASCADE"), nullable=False)
     venda_id = Column(UUID(as_uuid=True), ForeignKey("vendas.id", ondelete="SET NULL"))
     tipo = Column(String(50), nullable=False) # 'entrada', 'saida'
@@ -193,6 +229,7 @@ class Parcela(Base):
     __tablename__ = "parcelas"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     transacao_id = Column(UUID(as_uuid=True), ForeignKey("transacoes_financeiras.id", ondelete="CASCADE"), nullable=False)
     numero_parcela = Column(Integer, nullable=False)
     valor = Column(Numeric(10, 2), nullable=False)
@@ -209,6 +246,7 @@ class Comissao(Base):
     __tablename__ = "comissoes"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     profissional_id = Column(UUID(as_uuid=True), ForeignKey("profissionais.id", ondelete="CASCADE"), nullable=False)
     venda_id = Column(UUID(as_uuid=True), ForeignKey("vendas.id", ondelete="CASCADE"), nullable=False)
     valor_comissao = Column(Numeric(10, 2), nullable=False)
@@ -226,6 +264,8 @@ class Agenda(Base):
     __tablename__ = "agenda"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    filial_id = Column(UUID(as_uuid=True), ForeignKey("filiais.id", ondelete="SET NULL"))
     cliente_id = Column(UUID(as_uuid=True), ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False)
     profissional_id = Column(UUID(as_uuid=True), ForeignKey("profissionais.id", ondelete="CASCADE"), nullable=False)
     data_hora = Column(DateTime(timezone=True), nullable=False)
@@ -242,6 +282,7 @@ class MensagemWhatsapp(Base):
     __tablename__ = "mensagens_whatsapp"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     remetente_id = Column(UUID(as_uuid=True), ForeignKey("perfis.id", ondelete="CASCADE"), nullable=False)
     destinatario_id = Column(UUID(as_uuid=True), ForeignKey("perfis.id", ondelete="SET NULL"))
     telefone_destinatario = Column(String(50), nullable=False)
@@ -255,6 +296,7 @@ class LogAuditoria(Base):
     __tablename__ = "logs_auditoria"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     usuario_id = Column(UUID(as_uuid=True), ForeignKey("perfis.id", ondelete="SET NULL"))
     acao = Column(String(100), nullable=False)
     tabela = Column(String(100), nullable=False)

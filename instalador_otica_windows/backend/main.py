@@ -43,6 +43,17 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token JWT inválido")
 
+from fastapi import Header
+
+def get_current_tenant(x_tenant_id: Optional[str] = Header(None)):
+    # Fallback para tenant padrão de desenvolvimento se não fornecido
+    if not x_tenant_id:
+        return UUID("00000000-0000-0000-0000-000000000000")
+    try:
+        return UUID(x_tenant_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Cabeçalho X-Tenant-ID deve ser um UUID válido.")
+
 # ============================================================================
 # SCHEMAS PYDANTIC
 # ============================================================================
@@ -128,9 +139,10 @@ class WhatsAppSend(BaseModel):
 # ============================================================================
 
 @app.post("/clientes", status_code=status.HTTP_201_CREATED)
-def criar_cliente(schema: ClienteCreate, db: Session = Depends(get_db)):
-    # 1. Cria Perfil de Usuário
+def criar_cliente(schema: ClienteCreate, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    # 1. Cria Perfil de Usuário associado ao Tenant
     perfil = models.Perfil(
+        tenant_id=tenant_id,
         nome=schema.perfil.nome,
         email=schema.perfil.email,
         telefone=schema.perfil.telefone,
@@ -155,8 +167,9 @@ def criar_cliente(schema: ClienteCreate, db: Session = Depends(get_db)):
     return {"status": "sucesso", "cliente_id": cliente.id}
 
 @app.get("/clientes")
-def listar_clientes(db: Session = Depends(get_db)):
-    clientes = db.query(models.Cliente).all()
+def listar_clientes(db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    # Filtra clientes associados ao tenant correspondente através do Perfil
+    clientes = db.query(models.Cliente).join(models.Perfil, models.Cliente.id == models.Perfil.id).filter(models.Perfil.tenant_id == tenant_id).all()
     res = []
     for c in clientes:
         perf = db.query(models.Perfil).filter(models.Perfil.id == c.id).first()
@@ -174,8 +187,9 @@ def listar_clientes(db: Session = Depends(get_db)):
 # ============================================================================
 
 @app.post("/produtos", status_code=status.HTTP_201_CREATED)
-def criar_produto(schema: ProdutoCreate, db: Session = Depends(get_db)):
+def criar_produto(schema: ProdutoCreate, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
     produto = models.Produto(
+        tenant_id=tenant_id,
         nome=schema.nome,
         descricao=schema.descricao,
         preco_venda=schema.preco_venda,
@@ -190,27 +204,28 @@ def criar_produto(schema: ProdutoCreate, db: Session = Depends(get_db)):
     return produto
 
 @app.get("/produtos")
-def listar_produtos(db: Session = Depends(get_db)):
-    return db.query(models.Produto).all()
+def listar_produtos(db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    return db.query(models.Produto).filter(models.Produto.tenant_id == tenant_id).all()
 
 # ============================================================================
 # ROTAS - VENDAS (OS)
 # ============================================================================
 
 @app.post("/vendas", status_code=status.HTTP_201_CREATED)
-def criar_venda(schema: VendaCreate, db: Session = Depends(get_db)):
-    # 1. Calcula o valor total da venda a partir dos itens
+def criar_venda(schema: VendaCreate, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    # 1. Calcula o valor total da venda a partir dos itens filtrados por tenant_id
     valor_total = 0.0
     for item in schema.itens:
-        prod = db.query(models.Produto).filter(models.Produto.id == item.produto_id).first()
+        prod = db.query(models.Produto).filter(models.Produto.id == item.produto_id, models.Produto.tenant_id == tenant_id).first()
         if not prod:
-            raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado")
+            raise HTTPException(status_code=404, detail=f"Produto {item.produto_id} não encontrado neste tenant")
         if prod.estoque_atual < item.quantidade:
             raise HTTPException(status_code=400, detail=f"Estoque insuficiente para o produto {prod.nome}")
         valor_total += item.preco_unitario * item.quantidade
 
-    # 2. Registra a venda
+    # 2. Registra a venda associada ao Tenant
     venda = models.Venda(
+        tenant_id=tenant_id,
         cliente_id=schema.cliente_id,
         profissional_id=schema.profissional_id,
         receita_id=schema.receita_id,
@@ -224,6 +239,7 @@ def criar_venda(schema: VendaCreate, db: Session = Depends(get_db)):
     # 3. Registra os itens e decrementa o estoque
     for item in schema.itens:
         venda_item = models.VendaItem(
+            tenant_id=tenant_id,
             venda_id=venda.id,
             produto_id=item.produto_id,
             quantidade=item.quantidade,
@@ -232,13 +248,14 @@ def criar_venda(schema: VendaCreate, db: Session = Depends(get_db)):
         db.add(venda_item)
         
         # Atualização física de estoque
-        prod = db.query(models.Produto).filter(models.Produto.id == item.produto_id).first()
+        prod = db.query(models.Produto).filter(models.Produto.id == item.produto_id, models.Produto.tenant_id == tenant_id).first()
         prod.estoque_atual -= item.quantidade
 
     # 4. Calcula Comissão Automática (Ex: 5% sobre o valor líquido)
     valor_liquido = valor_total - schema.desconto
     valor_comissao = valor_liquido * 0.05
     comissao = models.Comissao(
+        tenant_id=tenant_id,
         profissional_id=schema.profissional_id,
         venda_id=venda.id,
         valor_comissao=valor_comissao,
@@ -256,12 +273,13 @@ def criar_venda(schema: VendaCreate, db: Session = Depends(get_db)):
 # ============================================================================
 
 @app.post("/caixa/abrir")
-def abrir_caixa(schema: CaixaAbrir, db: Session = Depends(get_db)):
-    caixa_aberto = db.query(models.Caixa).filter(models.Caixa.status == "aberto").first()
+def abrir_caixa(schema: CaixaAbrir, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    caixa_aberto = db.query(models.Caixa).filter(models.Caixa.status == "aberto", models.Caixa.tenant_id == tenant_id).first()
     if caixa_aberto:
-        raise HTTPException(status_code=400, detail="Já existe um caixa aberto no sistema.")
+        raise HTTPException(status_code=400, detail="Já existe um caixa aberto para esta ótica (tenant).")
 
     caixa = models.Caixa(
+        tenant_id=tenant_id,
         operador_id=schema.operador_id,
         saldo_inicial=schema.saldo_inicial,
         status="aberto"
@@ -272,10 +290,10 @@ def abrir_caixa(schema: CaixaAbrir, db: Session = Depends(get_db)):
     return {"status": "caixa_aberto", "caixa_id": caixa.id}
 
 @app.post("/caixa/{caixa_id}/fechar")
-def fechar_caixa(caixa_id: UUID, schema: CaixaFechar, db: Session = Depends(get_db)):
-    caixa = db.query(models.Caixa).filter(models.Caixa.id == caixa_id).first()
+def fechar_caixa(caixa_id: UUID, schema: CaixaFechar, db: Session = Depends(get_db), tenant_id: UUID = Depends(get_current_tenant)):
+    caixa = db.query(models.Caixa).filter(models.Caixa.id == caixa_id, models.Caixa.tenant_id == tenant_id).first()
     if not caixa:
-        raise HTTPException(status_code=404, detail="Caixa não encontrado")
+        raise HTTPException(status_code=404, detail="Caixa não encontrado neste tenant")
     if caixa.status == "fechado":
         raise HTTPException(status_code=400, detail="Este caixa já está fechado.")
 

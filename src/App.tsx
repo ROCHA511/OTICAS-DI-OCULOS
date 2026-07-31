@@ -88,7 +88,11 @@ export default function App() {
   React.useEffect(() => {
     async function loadData() {
       try {
-        const resClientes = await fetch('http://localhost:8000/clientes');
+        const headers = {
+          'X-Tenant-ID': '00000000-0000-0000-0000-000000000000' // Default dev tenant ID
+        };
+
+        const resClientes = await fetch('http://localhost:8000/clientes', { headers });
         if (resClientes.ok) {
           const data = await resClientes.json();
           const mappedClients: Client[] = data.map((c: any) => ({
@@ -108,7 +112,7 @@ export default function App() {
           }
         }
 
-        const resProdutos = await fetch('http://localhost:8000/produtos');
+        const resProdutos = await fetch('http://localhost:8000/produtos', { headers });
         if (resProdutos.ok) {
           const data = await resProdutos.json();
           const mappedFrames: Frame[] = data
