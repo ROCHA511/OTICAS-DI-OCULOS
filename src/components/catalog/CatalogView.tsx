@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Glasses, Search, Plus, Tag, ShieldCheck, DollarSign } from 'lucide-react';
+import { Glasses, Search, Plus, Tag, ShieldCheck, DollarSign, Sparkles } from 'lucide-react';
 import { Frame, Lens } from '../../types';
 
 interface CatalogViewProps {
@@ -95,24 +95,38 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   Estoque: {f.stock} un
                 </span>
               </div>
-              <div className="p-4 space-y-2 flex-1 flex flex-col justify-between">
+              <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider">
                     {f.brand}
                   </div>
                   <h3 className="text-sm font-bold text-slate-900">{f.model}</h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    {f.color} • {f.material}
+                    {f.color} • {f.material} {f.peso ? `• ${f.peso}g` : ''}
                   </p>
-                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                    Aro {f.eyeSize}mm / Ponte {f.bridge}mm / Haste {f.temple}mm
-                  </p>
+                  
+                  {/* Dimensões Geométricas Avançadas */}
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 bg-slate-50 p-2 rounded-xl border border-slate-100 text-[10px] font-mono text-slate-600 mt-2">
+                    <div>Aro: <strong>{f.eyeSize} mm</strong></div>
+                    <div>Ponte: <strong>{f.bridge} mm</strong></div>
+                    <div>Haste: <strong>{f.temple} mm</strong></div>
+                    <div>ED (Diâmetro): <strong>{f.ed || 55} mm</strong></div>
+                    {f.diagonalMaior && <div>Diagonal: <strong>{f.diagonalMaior} mm</strong></div>}
+                    {f.baseCurva && <div>Curvatura: <strong>Base {f.baseCurva}</strong></div>}
+                  </div>
                 </div>
-                <div className="pt-2 border-t flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold">Preço de Tabela:</span>
-                  <span className="text-base font-extrabold text-slate-900">
-                    R$ {f.price.toFixed(2)}
-                  </span>
+
+                <div className="pt-2 border-t flex items-center justify-between gap-2">
+                  <div className="text-left">
+                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Preço de Tabela:</span>
+                    <span className="text-sm font-extrabold text-slate-900">
+                      R$ {f.price.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <button className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 border border-teal-500/30 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 active:scale-95">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-600" /> PROVAR 3D
+                  </button>
                 </div>
               </div>
             </div>
@@ -125,16 +139,33 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100 overflow-hidden">
           {filteredLenses.map((l) => (
             <div key={l.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-all text-xs">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-extrabold text-blue-900">{l.brand}</span>
                   <span className="font-bold text-slate-800">{l.name}</span>
                   <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
                     Índice {l.indexRefraction}
                   </span>
+                  {l.garantiaMeses && (
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      Garantia: {l.garantiaMeses} meses
+                    </span>
+                  )}
                 </div>
                 <p className="text-slate-500">{l.description}</p>
-                <p className="text-[11px] text-indigo-600 font-semibold">
+                
+                {/* Exibição de Tratamentos (Módulo 02) */}
+                {l.tratamentos && l.tratamentos.length > 0 && (
+                  <div className="flex gap-1.5 flex-wrap pt-1">
+                    {l.tratamentos.map((t, idx) => (
+                      <span key={idx} className="bg-slate-100 border text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                
+                <p className="text-[11px] text-indigo-600 font-semibold pt-0.5">
                   💡 Indicado para: {l.idealForRange}
                 </p>
               </div>

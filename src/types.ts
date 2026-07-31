@@ -46,6 +46,16 @@ export interface Frame {
   price: number;
   image: string;
   stock: number;
+  
+  // Parâmetros avançados da versão 2.0
+  ed?: number;             // Diâmetro efetivo (mm)
+  diagonalMaior?: number;  // Diagonal maior (mm)
+  baseCurva?: number;      // Curvatura da armação (graus/base)
+  larguraTotal?: number;   // Largura frontal total (mm)
+  peso?: number;           // Peso em gramas (g)
+  modelo3dUrl?: string;    // URL para provador virtual 3D
+  codigoBarras?: string;
+  ativo?: boolean;
 }
 
 export type LensType = 'visao_simples' | 'bifocal' | 'multifocal_digital' | 'antirreflexo_blue' | 'fotocromatica';
@@ -59,6 +69,15 @@ export interface Lens {
   price: number;
   description: string;
   idealForRange?: string; // e.g. "Graus de -3.00 a -6.00"
+  
+  // Parâmetros avançados da versão 2.0
+  fabricante?: string;
+  grauEsfMax?: number;
+  grauEsfMin?: number;
+  grauCilMax?: number;
+  grauCilMin?: number;
+  garantiaMeses?: number;
+  tratamentos?: string[];
 }
 
 export interface ChatMessage {
