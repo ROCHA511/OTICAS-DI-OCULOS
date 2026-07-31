@@ -456,7 +456,7 @@ def enviar_whatsapp(schema: WhatsAppSend, db: Session = Depends(get_db)):
     db.add(mensagem)
     db.commit()
     db.refresh(mensagem)
-    
+    return {
         "status": status_envio,
         "id": mensagem.id,
         "erro": logs_erro
