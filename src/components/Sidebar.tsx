@@ -243,7 +243,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 overflow-y-auto px-2 space-y-3 w-full [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {navGroups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
-            {isExpanded && (
+            {(isExpanded || isMobileOpen) && (
               <div className="px-2 pt-1 pb-0.5 text-[9px] font-black text-[#C9A96E]/80 tracking-widest uppercase">
                 {group.groupTitle}
               </div>
@@ -265,14 +265,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#C9A96E]' : 'text-slate-300'}`} />
-                    {isExpanded && (
+                    {(isExpanded || isMobileOpen) && (
                       <span className="text-xs truncate tracking-tight text-left">
                         {item.title}
                       </span>
                     )}
                   </div>
 
-                  {isExpanded && (
+                  {(isExpanded || isMobileOpen) && (
                     <div className="flex items-center gap-1 shrink-0 ml-1">
                       {item.isStar && (
                         <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
@@ -285,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                   )}
 
-                  {!isExpanded && item.badge !== undefined && item.badge > 0 && (
+                  {!(isExpanded || isMobileOpen) && item.badge !== undefined && item.badge > 0 && (
                     <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-amber-400 rounded-full border-2 border-[#071D49]" />
                   )}
                 </button>
