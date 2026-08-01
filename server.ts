@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
@@ -724,6 +725,230 @@ app.post('/api/whatsapp/meta-webhook', async (req, res) => {
   } catch (err) {
     console.error('Erro ao processar Webhook Meta WhatsApp:', err);
     res.status(200).send('EVENT_RECEIVED');
+  }
+});
+
+// -------------------------------------------------------------
+// MERCADO PAGO SAAS SUBSCRIPTIONS INTEGRATION
+// -------------------------------------------------------------
+const SUBSCRIPTIONS_FILE = path.join(process.cwd(), 'subscriptions.json');
+
+function loadSubscriptions(): Record<string, any> {
+  try {
+    if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
+      const data = fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (err) {
+    console.error('Erro ao ler assinaturas:', err);
+  }
+  return {};
+}
+
+function saveSubscriptions(subs: Record<string, any>) {
+  try {
+    fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Erro ao salvar assinaturas:', err);
+  }
+}
+
+// 1. Obter a assinatura do tenant atual
+app.get('/api/payments/subscription', (req, res) => {
+  try {
+    const email = req.query.email as string;
+    const tenantId = (req.headers['x-tenant-id'] as string) || '00000000-0000-0000-0000-000000000000';
+
+    if (!email) {
+      return res.status(400).json({ error: 'E-mail do usuário é obrigatório.' });
+    }
+
+    const subs = loadSubscriptions();
+    
+    // Busca por e-mail ou tenantId
+    let userSub = Object.values(subs).find((s: any) => s.customerEmail === email || s.tenantId === tenantId);
+
+    if (!userSub) {
+      // Cria assinatura trial de 3 dias
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 3);
+
+      userSub = {
+        tenantId,
+        plan: 'trial',
+        status: 'trialing',
+        trialEndsAt: trialEndsAt.toISOString(),
+        customerEmail: email
+      };
+
+      subs[tenantId] = userSub;
+      saveSubscriptions(subs);
+      console.log(`[SaaS] Criada nova assinatura de teste de 3 dias para o tenant ${tenantId} (${email})`);
+    }
+
+    // Calcula os dias restantes
+    const ends = new Date(userSub.trialEndsAt);
+    const now = new Date();
+    const diffTime = ends.getTime() - now.getTime();
+    const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+    return res.json({
+      ...userSub,
+      daysRemainingInTrial: daysRemaining,
+      isExpired: (userSub.plan === 'trial' && daysRemaining <= 0) || userSub.status === 'expired' || userSub.status === 'canceled'
+    });
+  } catch (err: any) {
+    console.error('Erro ao buscar assinatura:', err);
+    return res.status(500).json({ error: 'Erro interno ao processar assinatura.' });
+  }
+});
+
+// 2. Criar ou renovar assinatura no Mercado Pago
+app.post('/api/payments/create-subscription', async (req, res) => {
+  try {
+    const { email, plan } = req.body; // plan: 'basico' | 'promax'
+    const tenantId = (req.headers['x-tenant-id'] as string) || '00000000-0000-0000-0000-000000000000';
+
+    const priceMap: Record<string, number> = {
+      basico: 199.00,
+      promax: 249.00,
+    };
+
+    const amount = priceMap[plan];
+    if (!amount) {
+      return res.status(400).json({ error: 'Plano inválido especificado.' });
+    }
+
+    const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+
+    // Simulador em modo dev
+    if (!MP_ACCESS_TOKEN || MP_ACCESS_TOKEN.startsWith('dummy')) {
+      console.log('⚠️ MERCADOPAGO_ACCESS_TOKEN ausente ou dummy. Simulando checkout Mercado Pago e ativando plano pago.');
+      
+      const subs = loadSubscriptions();
+      const nextBilling = new Date();
+      nextBilling.setMonth(nextBilling.getMonth() + 1);
+
+      const updatedSub = {
+        tenantId,
+        plan,
+        status: 'active',
+        trialEndsAt: new Date().toISOString(),
+        nextBillingDate: nextBilling.toISOString(),
+        customerEmail: email,
+        mercadoPagoSubscriptionId: `sub_simulated_${Math.random().toString(36).substring(7)}`
+      };
+
+      subs[tenantId] = updatedSub;
+      saveSubscriptions(subs);
+
+      return res.json({
+        success: true,
+        subscriptionId: updatedSub.mercadoPagoSubscriptionId,
+        initPoint: `/subscription/success?plan=${plan}` // Redirecionamento local simulado
+      });
+    }
+
+    // Chamada oficial à API do Mercado Pago
+    const mpResponse = await fetch('https://api.mercadopago.com/preapproval', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        reason: `Assinatura Sistema Ótica - Plano ${plan.toUpperCase()}`,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: amount,
+          currency_id: 'BRL',
+        },
+        payer_email: email,
+        back_url: 'https://oticas-di-oculos.vercel.app/subscription/success',
+        status: 'authorized',
+      }),
+    });
+
+    const data = await mpResponse.json();
+
+    if (!mpResponse.ok) {
+      return res.status(400).json({ error: 'Erro ao processar assinatura no Mercado Pago', details: data });
+    }
+
+    // Salvar como assinatura trialing aguardando webhook
+    const subs = loadSubscriptions();
+    subs[tenantId] = {
+      tenantId,
+      plan,
+      status: 'trialing',
+      trialEndsAt: new Date().toISOString(),
+      customerEmail: email,
+      mercadoPagoSubscriptionId: data.id
+    };
+    saveSubscriptions(subs);
+
+    return res.json({
+      success: true,
+      subscriptionId: data.id,
+      initPoint: data.init_point, // URL oficial de checkout do MP
+    });
+  } catch (err: any) {
+    console.error('Erro no servidor de pagamento:', err);
+    return res.status(500).json({ error: 'Falha interna ao processar pagamento.' });
+  }
+});
+
+// 3. Webhook de atualização do Mercado Pago
+app.post('/api/payments/webhook', async (req, res) => {
+  try {
+    const { type, data } = req.body;
+    const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
+
+    if ((type === 'subscription_preapproval' || type === 'payment') && data?.id) {
+      const resourceId = data.id;
+
+      const response = await fetch(`https://api.mercadopago.com/preapproval/${resourceId}`, {
+        headers: {
+          'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
+        },
+      });
+
+      if (response.ok) {
+        const subData = await response.json();
+        const payerEmail = subData.payer_email;
+        const status = subData.status; // 'authorized', 'paused', 'cancelled'
+
+        console.log(`[Mercado Pago Webhook] Assinatura ${resourceId} de ${payerEmail} está ${status}`);
+
+        const subs = loadSubscriptions();
+        let foundTenantId = '';
+        for (const [tid, s] of Object.entries(subs)) {
+          if (s.mercadoPagoSubscriptionId === resourceId || s.customerEmail === payerEmail) {
+            foundTenantId = tid;
+            break;
+          }
+        }
+
+        if (foundTenantId) {
+          if (status === 'authorized') {
+            subs[foundTenantId].status = 'active';
+            const nextBilling = new Date();
+            nextBilling.setMonth(nextBilling.getMonth() + 1);
+            subs[foundTenantId].nextBillingDate = nextBilling.toISOString();
+          } else if (status === 'cancelled' || status === 'paused') {
+            subs[foundTenantId].status = 'canceled';
+          }
+          saveSubscriptions(subs);
+          console.log(`[SaaS Webhook] Assinatura do tenant ${foundTenantId} atualizada para ${subs[foundTenantId].status}`);
+        }
+      }
+    }
+
+    return res.status(200).send('OK');
+  } catch (error) {
+    console.error('Erro no Webhook:', error);
+    return res.status(500).send('Internal Server Error');
   }
 });
 

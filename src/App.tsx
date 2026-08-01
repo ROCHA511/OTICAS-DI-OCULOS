@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft, Home, FileText, MessageSquare, Users, Menu } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { ExecutiveMetricBar } from './components/ExecutiveMetricBar';
 import { Sidebar, ActiveTab } from './components/Sidebar';
@@ -24,6 +24,7 @@ import { SmartOSWizard } from './components/os/SmartOSWizard';
 import { SellersModule } from './components/sellers/SellersModule';
 import { QuickSearchModal } from './components/QuickSearchModal';
 import { QuickActionBar } from './components/QuickActionBar';
+import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
 
 import {
   initialClients,
@@ -54,6 +55,7 @@ import {
 } from './types';
 
 export default function App() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
     role: 'ceo' | 'admin' | 'attendant';
@@ -83,6 +85,13 @@ export default function App() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isSmartOSWizardOpen, setIsSmartOSWizardOpen] = useState(false);
   const [isQuickSearchOpen, setIsQuickSearchOpen] = useState(false);
+  const [subscription, setSubscription] = useState<{
+    plan: 'trial' | 'basico' | 'promax';
+    status: string;
+    daysRemainingInTrial: number;
+    isExpired: boolean;
+  } | null>(null);
+  const [isPlanGateOpen, setIsPlanGateOpen] = useState(false);
 
   // Hook de sincronização de dados com as APIs reais do backend (FastAPI)
   React.useEffect(() => {
@@ -135,6 +144,65 @@ export default function App() {
     }
     loadData();
   }, []);
+
+  // Sincronização do status de assinatura SaaS com Mercado Pago
+  React.useEffect(() => {
+    if (currentUser) {
+      const userEmail = currentUser.role === 'ceo' ? 'dioenne@otica.com' : 'contato@otica.com';
+      fetch(`/api/payments/subscription?email=${encodeURIComponent(userEmail)}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Erro na API de Assinatura');
+          return res.json();
+        })
+        .then(data => {
+          setSubscription(data);
+          if (data.isExpired) {
+            setIsPlanGateOpen(true);
+          }
+        })
+        .catch(err => {
+          console.warn("Erro ao buscar plano SaaS (Vite server offline):", err);
+          // Fallback seguro em desenvolvimento caso offline
+          setSubscription({
+            plan: 'trial',
+            status: 'trialing',
+            daysRemainingInTrial: 3,
+            isExpired: false
+          });
+        });
+    }
+  }, [currentUser]);
+
+  const handleTabChange = (tab: ActiveTab) => {
+    if (subscription?.isExpired) {
+      setIsPlanGateOpen(true);
+      return;
+    }
+
+    if (subscription?.plan === 'basico') {
+      const proTabs: ActiveTab[] = ['chat', 'camera', 'ai-settings'];
+      if (proTabs.includes(tab)) {
+        alert("O Agente de Atendimento IA no WhatsApp e as ferramentas avançadas são exclusivos do Plano Pro Max.");
+        setIsPlanGateOpen(true);
+        return;
+      }
+    }
+
+    setActiveTab(tab);
+  };
+
+  const handleOpenSmartOSWizard = () => {
+    if (subscription?.isExpired) {
+      setIsPlanGateOpen(true);
+      return;
+    }
+    if (subscription?.plan === 'basico') {
+      alert("O Laboratório Inteligente (Smart OS 12 Etapas) é exclusivo do Plano Pro Max.");
+      setIsPlanGateOpen(true);
+      return;
+    }
+    setIsSmartOSWizardOpen(true);
+  };
 
   const handleAddProfessional = (newProf: Professional) => {
     setProfessionals((prev) => [newProf, ...prev]);
@@ -519,15 +587,17 @@ export default function App() {
           onLogout={() => setCurrentUser(null)}
           onOpenProfessionalsModal={() => setIsProfessionalsModalOpen(true)}
           onOpenShareModal={() => setIsShareModalOpen(true)}
-          onNavigateTab={(tab) => setActiveTab(tab)}
+          onNavigateTab={handleTabChange}
           onOpenQuickSearch={() => setIsQuickSearchOpen(true)}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
         />
 
         <ExecutiveMetricBar
           totalTodaySales={totalTodaySales}
           activeChatsCount={clients.length}
           inLabCount={inLabCount}
-          onOpenNews={() => setActiveTab('news')}
+          onOpenNews={() => handleTabChange('news')}
         />
       </div>
 
@@ -535,14 +605,16 @@ export default function App() {
       <div className="flex-1 flex flex-row overflow-hidden min-h-0 min-w-0 w-full max-w-full box-border">
         <Sidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleTabChange}
           unreadCountTotal={unreadCountTotal}
           inLabCount={inLabCount}
           onLogout={() => setCurrentUser(null)}
-          onOpenSmartOSWizard={() => setIsSmartOSWizardOpen(true)}
+          onOpenSmartOSWizard={handleOpenSmartOSWizard}
+          isMobileOpen={isMobileMenuOpen}
+          setIsMobileOpen={setIsMobileMenuOpen}
         />
 
-        <main className="flex-1 min-w-0 h-full overflow-hidden flex flex-col box-border">
+        <main className="flex-1 min-w-0 h-full overflow-hidden flex flex-col box-border pb-14 sm:pb-0">
           {activeTab !== 'dashboard' && (
             <div className="bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] px-3 sm:px-4 py-2 border-b-2 border-[#C9A96E] flex items-center justify-between shrink-0 text-white shadow-md z-30">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -590,7 +662,7 @@ export default function App() {
           {activeTab === 'news' && (
             <EnterpriseNewsView
               onOpenShareModal={() => setIsShareModalOpen(true)}
-              onNavigateTab={(tab) => setActiveTab(tab)}
+              onNavigateTab={handleTabChange}
               totalTodaySales={totalTodaySales}
               activeChatsCount={clients.length}
               inLabCount={inLabCount}
@@ -837,19 +909,117 @@ export default function App() {
         frames={frames}
         lenses={lenses}
         onSelectClient={(cId) => setSelectedClientId(cId)}
-        onNavigateTab={(tab) => setActiveTab(tab)}
-        onOpenSmartOS={() => setIsSmartOSWizardOpen(true)}
-        onOpenNewClient={() => setIsNewClientModalOpen(true)}
+        onNavigateTab={handleTabChange}
+        onOpenSmartOS={handleOpenSmartOSWizard}
+        onOpenNewClient={() => {
+          if (subscription?.isExpired) {
+            setIsPlanGateOpen(true);
+          } else {
+            setIsNewClientModalOpen(true);
+          }
+        }}
       />
 
       {/* Speed Dial Floating Quick Action Bar */}
       <QuickActionBar
-        onOpenSmartOS={() => setIsSmartOSWizardOpen(true)}
-        onOpenNewClient={() => setIsNewClientModalOpen(true)}
-        onOpenAiConsultant={() => setIsAiConsultantOpen(true)}
-        onNavigateTab={(tab) => setActiveTab(tab)}
-        onOpenQuickSearch={() => setIsQuickSearchOpen(true)}
+        onOpenSmartOS={handleOpenSmartOSWizard}
+        onOpenNewClient={() => {
+          if (subscription?.isExpired) {
+            setIsPlanGateOpen(true);
+          } else {
+            setIsNewClientModalOpen(true);
+          }
+        }}
+        onOpenAiConsultant={() => {
+          if (subscription?.isExpired) {
+            setIsPlanGateOpen(true);
+          } else if (subscription?.plan === 'basico') {
+            alert("O Consultor IA é exclusivo do Plano Pro Max.");
+            setIsPlanGateOpen(true);
+          } else {
+            setIsAiConsultantOpen(true);
+          }
+        }}
+        onNavigateTab={handleTabChange}
+        onOpenQuickSearch={() => {
+          if (subscription?.isExpired) {
+            setIsPlanGateOpen(true);
+          } else {
+            setIsQuickSearchOpen(true);
+          }
+        }}
       />
+
+      {/* SaaS Subscription Block / Plan Selector Modal */}
+      <SaaSPlanGateModal
+        isOpen={isPlanGateOpen}
+        userEmail={currentUser?.role === 'ceo' ? 'dioenne@otica.com' : 'contato@otica.com'}
+        daysRemainingInTrial={subscription?.daysRemainingInTrial ?? 3}
+        currentPlan={subscription?.plan ?? 'trial'}
+        onClose={() => {
+          if (subscription && !subscription.isExpired) {
+            setIsPlanGateOpen(false);
+          } else {
+            alert("Acesso restrito. Selecione um plano para continuar.");
+          }
+        }}
+      />
+
+      {/* Barra de Navegação Inferior Fixa para Mobile (Exibida apenas em telas < 640px via `sm:hidden`) */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#071D49]/98 backdrop-blur-xl border-t-2 border-[#C9A96E]/70 px-2 py-1 flex items-center justify-around text-white shadow-[0_-5px_25px_rgba(0,0,0,0.5)]">
+        <button
+          onClick={() => handleTabChange('dashboard')}
+          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
+            activeTab === 'dashboard' ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          }`}
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Início</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('os')}
+          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
+            activeTab === 'os' ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          }`}
+        >
+          <FileText className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Ordens</span>
+        </button>
+
+        <button
+          onClick={() => handleTabChange('chat')}
+          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all relative ${
+            activeTab === 'chat' ? 'text-[#25D366] font-black scale-105' : 'text-slate-300 font-medium'
+          }`}
+        >
+          <MessageSquare className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Chat IA</span>
+          {unreadCountTotal > 0 && (
+            <span className="absolute top-0 right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+          )}
+        </button>
+
+        <button
+          onClick={() => handleTabChange('clients')}
+          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
+            activeTab === 'clients' ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          }`}
+        >
+          <Users className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Clientes</span>
+        </button>
+
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
+            isMobileMenuOpen ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          }`}
+        >
+          <Menu className="w-5 h-5" />
+          <span className="text-[10px] mt-0.5">Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }
