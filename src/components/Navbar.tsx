@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, ChevronDown, Sparkles, MessageCircle, Building2, ShieldCheck, UserPlus, Share2 } from 'lucide-react';
+import { Bell, ChevronDown, Sparkles, MessageCircle, Building2, ShieldCheck, UserPlus, Share2, Menu } from 'lucide-react';
 import { AiSettings } from '../types';
 import { OticasLogo } from './brand/OticasLogo';
 import { InstallButton } from './InstallButton';
@@ -15,6 +15,8 @@ interface NavbarProps {
   onOpenShareModal?: () => void;
   onNavigateTab?: (tab: any) => void;
   onOpenQuickSearch?: () => void;
+  isMobileMenuOpen?: boolean;
+  setIsMobileMenuOpen?: (open: boolean) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -26,6 +28,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenShareModal,
   onNavigateTab,
   onOpenQuickSearch,
+  isMobileMenuOpen = false,
+  setIsMobileMenuOpen,
 }) => {
   const [selectedBranch, setSelectedBranch] = useState('Filial Matriz Centro');
   const [showMessagesMenu, setShowMessagesMenu] = useState(false);
@@ -372,6 +376,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <ChevronDown className="w-3.5 h-3.5 text-[#C9A96E]" />
         </div>
+
+        {/* Botão Hambúrguer Mobile na extremidade da Navbar */}
+        <button
+          onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="sm:hidden p-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] rounded-xl font-bold transition-all border border-white/30 shadow-md active:scale-95 flex items-center justify-center shrink-0 cursor-pointer ml-1"
+          title="Abrir Menu do Sistema"
+        >
+          <Menu className="w-5 h-5 stroke-[2.5]" />
+        </button>
       </div>
     </header>
   );

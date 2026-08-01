@@ -48,6 +48,8 @@ interface SidebarProps {
   inLabCount: number;
   onLogout?: () => void;
   onOpenSmartOSWizard?: () => void;
+  isMobileOpen?: boolean;
+  setIsMobileOpen?: (open: boolean) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -57,8 +59,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   inLabCount,
   onLogout,
   onOpenSmartOSWizard,
+  isMobileOpen = false,
+  setIsMobileOpen,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Fecha o menu automaticamente após selecionar uma opção
+  const handleSelectTab = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    if (setIsMobileOpen) setIsMobileOpen(false);
+  };
 
   // Categorias organizadas de navegação
   const navGroups = [
@@ -144,17 +154,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside
-      className={`relative bg-[#071D49]/95 backdrop-blur-xl text-white flex flex-col justify-between py-3 my-2 ml-2 rounded-[24px] border-2 border-[#C9A96E] shadow-[0_0_25px_rgba(201,169,110,0.3)] shrink-0 z-30 h-[calc(100%-16px)] transition-all duration-300 ease-in-out select-none ${
-        isExpanded
-          ? 'w-[85vw] max-w-[280px] sm:w-[50vw] sm:max-w-[280px] shadow-2xl'
-          : 'w-[68px] sm:w-[72px]'
-      }`}
-    >
+    <>
+      {/* Overlay Escuro com Desfoque ao Abrir no Celular */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-[180] sm:hidden animate-in fade-in"
+          onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
+      <aside
+        className={`bg-[#071D49]/98 sm:bg-[#071D49]/95 backdrop-blur-xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none ${
+          isMobileOpen
+            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E] shadow-2xl flex'
+            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#C9A96E] sm:shadow-[0_0_25px_rgba(201,169,110,0.3)] sm:h-[calc(100%-16px)]'
+        } ${
+          isExpanded || isMobileOpen ? 'w-[280px] sm:w-[280px]' : 'sm:w-[72px]'
+        }`}
+      >
       {/* Botão de Expandir / Recolher na borda - Sem piscadas */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute -right-3.5 top-6 z-50 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] p-1.5 rounded-full shadow-lg border-2 border-[#071D49] hover:scale-110 active:scale-95 transition-all cursor-pointer"
+        className="absolute -right-3.5 top-6 z-50 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] p-1.5 rounded-full shadow-lg border-2 border-[#071D49] hover:scale-110 active:scale-95 transition-all cursor-pointer hidden sm:flex"
         title={isExpanded ? 'Recolher Barra Lateral' : 'Expandir Barra Lateral'}
       >
         {isExpanded ? (
@@ -166,9 +188,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Brand Header - Clickable to Return Home */}
       <div className="px-2 flex flex-col items-center border-b border-[#C9A96E]/30 pb-3 mb-1">
-        {isExpanded ? (
+        {isExpanded || isMobileOpen ? (
           <button
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleSelectTab('dashboard')}
             className="w-full bg-white hover:bg-slate-100 text-[#071D49] py-2 px-3 rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95"
             title="Voltar para a Página Inicial (Dashboard)"
           >
@@ -176,7 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         ) : (
           <button
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleSelectTab('dashboard')}
             className="w-11 h-10 rounded-2xl bg-[#0B255C] hover:bg-[#153270] border-2 border-[#C9A96E] flex items-center justify-center p-1 cursor-pointer hover:scale-105 transition-all shadow-md active:scale-95"
             title="Voltar para a Página Inicial (Dashboard)"
           >
@@ -187,11 +209,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Fixed OS Button (Novo Módulo OS Inteligente) */}
       <div className="px-2 mb-2">
-        {isExpanded ? (
+        {isExpanded || isMobileOpen ? (
           <button
             onClick={() => {
               if (onOpenSmartOSWizard) onOpenSmartOSWizard();
-              setActiveTab('os');
+              handleSelectTab('os');
             }}
             className="w-full bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] font-black text-xs py-2.5 px-3 rounded-2xl border-2 border-[#C9A96E] flex items-center justify-between shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95 group"
           >
@@ -207,7 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={() => {
               if (onOpenSmartOSWizard) onOpenSmartOSWizard();
-              setActiveTab('os');
+              handleSelectTab('os');
             }}
             className="w-11 h-11 mx-auto bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] rounded-2xl border-2 border-[#C9A96E] flex items-center justify-center shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95"
             title="[ OS ] Nova Ordem de Serviço Inteligente (12 Etapas)"
@@ -233,13 +255,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               return (
                 <button
                   key={idx}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => handleSelectTab(item.id)}
                   title={item.title}
                   className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 cursor-pointer relative ${
                     isActive
                       ? 'bg-[#0B255C] text-[#C9A96E] border border-[#C9A96E] font-bold shadow-md'
                       : 'text-slate-200 hover:text-[#C9A96E] hover:bg-[#0B255C]/60 border border-transparent font-medium'
-                  } ${!isExpanded ? 'justify-center' : 'justify-between'}`}
+                  } ${!(isExpanded || isMobileOpen) ? 'justify-center' : 'justify-between'}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#C9A96E]' : 'text-slate-300'}`} />
@@ -275,9 +297,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Floating Chat Button at Bottom */}
       <div className="px-2 pt-2 border-t border-[#C9A96E]/30 space-y-2 mt-1 shrink-0">
-        {isExpanded ? (
+        {isExpanded || isMobileOpen ? (
           <button
-            onClick={() => setActiveTab('chat')}
+            onClick={() => handleSelectTab('chat')}
             className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold text-xs py-2.5 px-3 rounded-2xl flex items-center justify-between shadow-lg transition-all cursor-pointer active:scale-95"
           >
             <div className="flex items-center gap-2">
@@ -292,7 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         ) : (
           <button
-            onClick={() => setActiveTab('chat')}
+            onClick={() => handleSelectTab('chat')}
             className="w-11 h-11 mx-auto bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95 relative"
             title="Chat IA WhatsApp"
           >
@@ -306,33 +328,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Settings & Logout */}
-        <div className={`flex items-center gap-1 ${isExpanded ? 'justify-between' : 'justify-center'}`}>
+        <div className={`flex items-center gap-1 ${isExpanded || isMobileOpen ? 'justify-between' : 'justify-center'}`}>
           <button
-            onClick={() => setActiveTab('ai-settings')}
+            onClick={() => handleSelectTab('ai-settings')}
             title="Configurações do Agente IA"
             className={`p-2 rounded-xl transition-all cursor-pointer ${
               activeTab === 'ai-settings'
                 ? 'bg-[#0B255C] text-[#C9A96E] border border-[#C9A96E]'
                 : 'text-slate-300 hover:text-[#C9A96E] hover:bg-[#0B255C]/70'
-            } ${isExpanded ? 'flex items-center gap-2 text-xs font-bold' : ''}`}
+            } ${isExpanded || isMobileOpen ? 'flex items-center gap-2 text-xs font-bold' : ''}`}
           >
             <Settings className="w-4 h-4 text-[#C9A96E]" />
-            {isExpanded && <span>Ajustes</span>}
+            {isExpanded || isMobileOpen ? <span>Ajustes</span> : null}
           </button>
 
           <button
             onClick={onLogout ? onLogout : () => alert('Sessão encerrada.')}
             title="Sair do Sistema"
             className={`p-2 rounded-xl text-slate-300 hover:text-[#C9A96E] hover:bg-[#0B255C]/80 transition-all cursor-pointer ${
-              isExpanded ? 'flex items-center gap-2 text-xs font-bold' : ''
+              isExpanded || isMobileOpen ? 'flex items-center gap-2 text-xs font-bold' : ''
             }`}
           >
             <LogOut className="w-4 h-4 text-[#C9A96E]" />
-            {isExpanded && <span>Sair</span>}
+            {isExpanded || isMobileOpen ? <span>Sair</span> : null}
           </button>
         </div>
       </div>
     </aside>
-  );
+  </>
+);
 };
 
