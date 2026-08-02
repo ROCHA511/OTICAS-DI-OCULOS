@@ -27,6 +27,7 @@ import { QuickActionBar } from './components/QuickActionBar';
 import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
 import { SaaSAdminView } from './components/saas/SaaSAdminView';
 import { SaaSOnboardingView } from './components/saas/SaaSOnboardingView';
+import { PwaInstallPromptModal } from './components/pwa/PwaInstallPromptModal';
 import {
   loadClientsFromSupabase,
   saveClientToSupabase,
