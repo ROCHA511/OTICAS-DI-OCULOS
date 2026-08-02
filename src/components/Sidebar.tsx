@@ -205,6 +205,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <OticasLogo size="sm" variant="icon-only" />
           </button>
         )}
+
+        {/* Informações da loja - Visível apenas no Mobile quando aberto */}
+        {(isExpanded || isMobileOpen) && (
+          <div className="mt-2 text-center flex flex-col items-center gap-1 select-text sm:hidden">
+            <span className="text-[9px] bg-[#C9A96E]/20 text-[#E8D2A8] font-bold px-2 py-0.5 rounded-full border border-[#C9A96E]/60 flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+              PRIME ENTERPRISE
+            </span>
+            <div className="text-[11px] font-bold text-[#E8D2A8] mt-0.5">
+              Matriz Centro (Ituberá - BA)
+            </div>
+            <div className="text-[9px] text-slate-300/80 font-normal leading-tight text-center max-w-[220px]">
+              Rua 23 de Abril, 51, Centro • (73) 98112-8923
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Fixed OS Button (Novo Módulo OS Inteligente) */}
