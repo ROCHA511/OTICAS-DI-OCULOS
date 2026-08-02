@@ -8,8 +8,98 @@ export const CameraAiScannerView: React.FC = () => {
   const [formattedMessage, setFormattedMessage] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [flashEnabled, setFlashEnabled] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [useWebcam, setUseWebcam] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement | null>(null);
+  const streamRef = React.useRef<MediaStream | null>(null);
+
+  const handleStartWebcam = async () => {
+    setScanResult(null);
+    setSelectedImage(null);
+    setUseWebcam(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error('Erro ao acessar webcam:', err);
+      alert('Não foi possível acessar a câmera. Verifique as permissões de privacidade no seu navegador.');
+      setUseWebcam(false);
+    }
+  };
+
+  const handleCapturePhoto = () => {
+    if (videoRef.current && streamRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        setSelectedImage(dataUrl);
+      }
+      handleStopWebcam();
+    }
+  };
+
+  const handleStopWebcam = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setUseWebcam(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        alert('O arquivo excede o limite de 10MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setSelectedImage(event.target.result as string);
+          setScanResult(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setSelectedImage(event.target.result as string);
+          setScanResult(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSimulateScan = async () => {
+    let base64ToSend = selectedImage;
+    if (!base64ToSend) {
+      alert("Por favor, ative a câmera ou carregue uma foto do dispositivo antes de executar a análise.");
+      return;
+    }
+
     setIsScanning(true);
     setScanResult(null);
     setFormattedMessage('');
@@ -20,7 +110,7 @@ export const CameraAiScannerView: React.FC = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            imageBase64: 'data:image/jpeg;base64,sample',
+            imageBase64: base64ToSend,
             frameId: 'ARM-2026-RAYBAN',
             clientId: 'CLI-789',
           }),
@@ -30,6 +120,8 @@ export const CameraAiScannerView: React.FC = () => {
         if (data.success) {
           setScanResult(data.measurement);
           setFormattedMessage(data.formattedText);
+        } else {
+          alert('Erro ao analisar imagem: ' + (data.error || 'Erro desconhecido'));
         }
       } catch (e) {
         setIsScanning(false);
@@ -42,7 +134,7 @@ export const CameraAiScannerView: React.FC = () => {
           client_id: 'CLI-789',
         };
         setScanResult(fallbackMeas);
-        setFormattedMessage(`Foto processada com sucesso! Identifiquei os reflexos de luz e marcos faciais.
+        setFormattedMessage(`[Fallback] Foto processada localmente devido a falha de conexão.
 
 **Medidas Pupilares Horizontal:**
 * **DNP Olho Direito (OD):** 31.5 mm
@@ -184,7 +276,23 @@ Seus dados foram salvos e já estão prontos para a produção das suas lentes d
             )}
 
             {/* Simulated Viewfinder */}
-            <div className="relative w-full h-72 bg-slate-900 rounded-2xl overflow-hidden flex flex-col items-center justify-center border-2 border-dashed border-slate-700 text-slate-400 p-4">
+            <div 
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onClick={() => !useWebcam && !selectedImage && document.getElementById('file-picker-input')?.click()}
+              className={`relative w-full h-72 bg-slate-900 rounded-2xl overflow-hidden flex flex-col items-center justify-center border-2 border-dashed border-slate-700 text-slate-400 p-4 transition-all ${
+                !useWebcam && !selectedImage ? 'cursor-pointer hover:border-slate-500 hover:bg-slate-800/80' : ''
+              }`}
+            >
+              {/* Input Invisível para Upload */}
+              <input 
+                type="file" 
+                id="file-picker-input" 
+                accept="image/*" 
+                onChange={handleFileChange} 
+                className="hidden" 
+              />
+
               {isScanning ? (
                 <div className="flex flex-col items-center space-y-3 text-center">
                   <RefreshCw className="w-8 h-8 text-[#C9A96E] animate-spin" />
@@ -195,20 +303,57 @@ Seus dados foram salvos e já estão prontos para a produção das suas lentes d
                     Calculando DNP OD, DNP OE e Altura de Montagem...
                   </div>
                 </div>
-              ) : scanResult ? (
+              ) : useWebcam ? (
+                <div className="relative w-full h-full">
+                  <video 
+                    ref={videoRef} 
+                    autoPlay 
+                    playsInline 
+                    className="w-full h-full object-cover rounded-xl"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-48 h-48 border border-white/40 rounded-full flex items-center justify-center">
+                      <div className="w-40 h-40 border border-dashed border-white/60 rounded-full" />
+                    </div>
+                  </div>
+                  <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2 px-4">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleCapturePhoto(); }}
+                      className="px-4 py-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs rounded-full shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                    >
+                      <Camera className="w-3.5 h-3.5" /> Tirar Foto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleStopWebcam(); }}
+                      className="px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-white font-extrabold text-xs rounded-full shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : selectedImage ? (
                 <div className="relative w-full h-full">
                   <img
-                    src={
-                      activeTab === 'dnp_mary'
-                        ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600'
-                        : activeTab === 'receita'
-                        ? 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500'
-                        : 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500'
-                    }
+                    src={selectedImage}
                     alt="Escaneamento"
-                    className="w-full h-full object-cover rounded-xl opacity-85"
+                    className="w-full h-full object-contain rounded-xl opacity-85"
                   />
-                  {activeTab === 'dnp_mary' && (
+                  
+                  {/* Botão de Reset por cima */}
+                  <div className="absolute top-3 right-3">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setSelectedImage(null); setScanResult(null); }}
+                      className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all cursor-pointer"
+                      title="Remover Foto"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {activeTab === 'dnp_mary' && scanResult && (
                     <div className="absolute inset-0 border-2 border-[#C9A96E]/80 rounded-xl pointer-events-none flex flex-col justify-between p-3">
                       <div className="flex justify-between items-center text-[10px] bg-black/60 text-[#C9A96E] font-mono px-2 py-1 rounded">
                         <span>● MALHA 3D MEDIAPIPE ATIVA</span>
@@ -224,20 +369,29 @@ Seus dados foram salvos e já estão prontos para a produção das suas lentes d
                         </div>
                       </div>
                       <div className="text-center text-[10px] bg-black/60 text-emerald-400 font-mono py-0.5 rounded">
-                        DP: 63.5mm | DNP OD: 31.5mm | DNP OE: 32.0mm
+                        DP: {scanResult.dp_total}mm | DNP OD: {scanResult.dnp_od}mm | DNP OE: {scanResult.dnp_oe}mm
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center text-center space-y-2">
+                <div className="flex flex-col items-center text-center space-y-3">
                   <Upload className="w-8 h-8 text-slate-500" />
                   <p className="text-xs font-semibold text-slate-300">
                     {activeTab === 'dnp_mary'
                       ? 'Capture a foto com FLASH ativado ou selecione do dispositivo'
-                      : `Arraste a foto da ${activeTab === 'receita' ? 'receita médica' : 'armação'} ou clique para capturar`}
+                      : `Arraste a foto da ${activeTab === 'receita' ? 'receita médica' : 'armação'} ou clique para carregar`}
                   </p>
                   <span className="text-[10px] text-slate-500">Formatos aceitos: JPG, PNG, WEBP (Até 10MB)</span>
+                  
+                  {/* Botão de Webcam */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleStartWebcam(); }}
+                    className="mt-2 px-4 py-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs rounded-full shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" /> Ativar Câmera (Webcam)
+                  </button>
                 </div>
               )}
             </div>
