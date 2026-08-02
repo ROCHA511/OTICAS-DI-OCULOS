@@ -23,6 +23,7 @@ import {
   Sparkles,
   ClipboardCheck,
   UserCheck,
+  Building2,
 } from 'lucide-react';
 import { OticasLogo } from './brand/OticasLogo';
 
@@ -39,7 +40,8 @@ export type ActiveTab =
   | 'catalog'
   | 'camera'
   | 'pricetable'
-  | 'ai-settings';
+  | 'ai-settings'
+  | 'saas-admin';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -50,6 +52,7 @@ interface SidebarProps {
   onOpenSmartOSWizard?: () => void;
   isMobileOpen?: boolean;
   setIsMobileOpen?: (open: boolean) => void;
+  userRole?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -61,6 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenSmartOSWizard,
   isMobileOpen = false,
   setIsMobileOpen,
+  userRole,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -152,6 +156,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
   ];
+
+  if (userRole === 'ceo') {
+    navGroups.push({
+      groupTitle: 'GESTÃO SAAS',
+      items: [
+        {
+          id: 'saas-admin' as ActiveTab,
+          title: 'Painel Multi-Óticas',
+          icon: Building2,
+        },
+      ],
+    });
+  }
 
   return (
     <>

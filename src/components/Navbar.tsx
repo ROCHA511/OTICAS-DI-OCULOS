@@ -156,6 +156,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="hidden lg:inline">+ Profissionais</span>
         </button>
 
+        {/* Painel SaaS Master (Dioenne Rocha) */}
+        {currentUser?.role === 'ceo' && onNavigateTab && (
+          <button
+            onClick={() => onNavigateTab('saas-admin')}
+            className="bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] font-black text-xs px-2.5 sm:px-3.5 py-1.5 rounded-full border-2 border-[#C9A96E] shadow-[0_0_12px_rgba(201,169,110,0.4)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
+            title="Acessar o Painel SaaS Multitenant (Cadastro de Novas Óticas)"
+          >
+            <Building2 className="w-3.5 h-3.5 text-[#C9A96E]" />
+            <span className="hidden md:inline">Painel SaaS ⚙️</span>
+          </button>
+        )}
+
         {/* AI Copilot Status Badge */}
         <button
           onClick={() =>

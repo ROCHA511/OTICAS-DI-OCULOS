@@ -25,6 +25,7 @@ import { SellersModule } from './components/sellers/SellersModule';
 import { QuickSearchModal } from './components/QuickSearchModal';
 import { QuickActionBar } from './components/QuickActionBar';
 import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
+import { SaaSAdminView } from './components/saas/SaaSAdminView';
 
 import {
   initialClients,
@@ -174,6 +175,11 @@ export default function App() {
   }, [currentUser]);
 
   const handleTabChange = (tab: ActiveTab) => {
+    if (tab === 'saas-admin') {
+      setActiveTab(tab);
+      return;
+    }
+
     if (subscription?.isExpired) {
       setIsPlanGateOpen(true);
       return;
@@ -612,6 +618,7 @@ export default function App() {
           onOpenSmartOSWizard={handleOpenSmartOSWizard}
           isMobileOpen={isMobileMenuOpen}
           setIsMobileOpen={setIsMobileMenuOpen}
+          userRole={currentUser?.role}
         />
 
         <main className="flex-1 min-w-0 h-full overflow-hidden flex flex-col box-border pb-14 sm:pb-0">
@@ -814,6 +821,8 @@ export default function App() {
           {activeTab === 'ai-settings' && (
             <AiSettingsView settings={aiSettings} onSaveSettings={setAiSettings} />
           )}
+
+          {activeTab === 'saas-admin' && <SaaSAdminView />}
         </main>
       </div>
 
