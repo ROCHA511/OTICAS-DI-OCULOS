@@ -26,6 +26,18 @@ import { QuickSearchModal } from './components/QuickSearchModal';
 import { QuickActionBar } from './components/QuickActionBar';
 import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
 import { SaaSAdminView } from './components/saas/SaaSAdminView';
+import {
+  loadClientsFromSupabase,
+  saveClientToSupabase,
+  loadProductsFromSupabase,
+  saveProductToSupabase,
+  loadOrdersFromSupabase,
+  saveOrderToSupabase,
+  loadCashflowFromSupabase,
+  saveTransactionToSupabase,
+  ensureUUID
+} from './utils/supabaseSync';
+import { supabase } from './utils/supabaseClient';
 
 import {
   initialClients,
@@ -94,54 +106,25 @@ export default function App() {
   } | null>(null);
   const [isPlanGateOpen, setIsPlanGateOpen] = useState(false);
 
-  // Hook de sincronização de dados com as APIs reais do backend (FastAPI)
+  // Hook de sincronização de dados com as APIs reais do backend (Supabase)
   React.useEffect(() => {
     async function loadData() {
-      try {
-        const headers = {
-          'X-Tenant-ID': '00000000-0000-0000-0000-000000000000' // Default dev tenant ID
-        };
+      // 1. Carrega Clientes
+      const cliData = await loadClientsFromSupabase(initialClients);
+      setClients(cliData);
 
-        const resClientes = await fetch('http://localhost:8000/clientes', { headers });
-        if (resClientes.ok) {
-          const data = await resClientes.json();
-          const mappedClients: Client[] = data.map((c: any) => ({
-            id: c.id,
-            name: c.nome,
-            phone: c.telefone || '',
-            email: c.email || '',
-            cpf: c.cpf,
-            unreadCount: 0,
-            avatar: '',
-            isAiHandled: false,
-            lastInteraction: 'Agora mesmo',
-            notes: ''
-          }));
-          if (mappedClients.length > 0) {
-            setClients(mappedClients);
-          }
-        }
+      // 2. Carrega Catálogo (Produtos & Lentes)
+      const prodData = await loadProductsFromSupabase(initialFrames, initialLenses);
+      setFrames(prodData.frames);
+      setLenses(prodData.lenses);
 
-        const resProdutos = await fetch('http://localhost:8000/produtos', { headers });
-        if (resProdutos.ok) {
-          const data = await resProdutos.json();
-          const mappedFrames: Frame[] = data
-            .filter((p: any) => p.categoria === 'armacoes')
-            .map((p: any) => ({
-              id: p.id,
-              brand: p.nome,
-              model: p.descricao || '',
-              price: parseFloat(p.preco_venda),
-              stock: p.estoque_atual,
-              image: ''
-            }));
-          if (mappedFrames.length > 0) {
-            setFrames(mappedFrames);
-          }
-        }
-      } catch (err) {
-        console.warn("Conexão offline ou backend não iniciado. Utilizando dados mockados padrão.", err);
-      }
+      // 3. Carrega Ordens de Serviço (Vendas)
+      const ordersData = await loadOrdersFromSupabase(initialServiceOrders);
+      setServiceOrders(ordersData);
+
+      // 4. Carrega Fluxo de Caixa
+      const flowData = await loadCashflowFromSupabase(initialCashFlow);
+      setCashFlow(flowData);
     }
     loadData();
   }, []);
@@ -462,7 +445,14 @@ export default function App() {
         ceoApprovalNeeded: totalValue > aiSettings.ceoApprovalThreshold,
       };
 
-      setServiceOrders((prev) => [newOS, ...prev]);
+      let savedOS = newOS;
+      try {
+        savedOS = await saveOrderToSupabase(newOS);
+      } catch (err) {
+        console.warn('Erro ao salvar OS no Supabase:', err);
+      }
+
+      setServiceOrders((prev) => [savedOS, ...prev]);
 
       handleSendMessage(
         `📝 **ORDEM DE SERVIÇO ${osNumber} GERADA COM SUCESSO!**\n• **Armação:** ${selectedFrame.brand} ${selectedFrame.model}\n• **Lente:** ${selectedLens.brand} ${selectedLens.name}\n• **Valor Total:** R$ ${totalValue.toFixed(
@@ -491,15 +481,24 @@ export default function App() {
       });
       const data = await res.json();
 
+      const updatedOS = { 
+        ...os, 
+        status: 'no_laboratorio' as const, 
+        nfceNumber: data.nfceNumber, 
+        ceoNotified: true 
+      };
+
+      try {
+        await saveOrderToSupabase(updatedOS);
+      } catch (err) {
+        console.warn('Erro ao atualizar OS no Supabase:', err);
+      }
+
       setServiceOrders((prev) =>
-        prev.map((o) =>
-          o.id === os.id
-            ? { ...o, status: 'no_laboratorio', nfceNumber: data.nfceNumber, ceoNotified: true }
-            : o
-        )
+        prev.map((o) => o.id === os.id ? updatedOS : o)
       );
 
-      const newCashFlow: CashFlowEntry = {
+      let newCashFlow: CashFlowEntry = {
         id: `cf_${Date.now()}`,
         empresa: 'Óticas Di Óculos Prime',
         filial: 'Matriz Centro',
@@ -520,6 +519,13 @@ export default function App() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
+
+      try {
+        newCashFlow = await saveTransactionToSupabase(newCashFlow);
+      } catch (err) {
+        console.warn('Erro ao salvar transação no Supabase:', err);
+      }
+
       setCashFlow((prev) => [newCashFlow, ...prev]);
 
       handleSendMessage(
@@ -535,9 +541,9 @@ export default function App() {
     setIsNewClientModalOpen(true);
   };
 
-  const handleSaveNewClient = (clientData: Partial<Client>) => {
+  const handleSaveNewClient = async (clientData: Partial<Client>) => {
     const newId = `c_${Date.now()}`;
-    const newClient: Client = {
+    let newClient: Client = {
       id: newId,
       name: clientData.name || 'Novo Cliente',
       phone: clientData.phone || '(73) 98112-8923',
@@ -554,20 +560,26 @@ export default function App() {
       notes: clientData.notes,
     };
 
+    try {
+      newClient = await saveClientToSupabase(newClient);
+    } catch (err) {
+      console.warn('Erro ao salvar no Supabase, mantendo dados locais:', err);
+    }
+
     setClients((prev) => [newClient, ...prev]);
     setMessagesMap((prev) => ({
       ...prev,
-      [newId]: [
+      [newClient.id]: [
         {
-          id: `m_init_${Date.now()}`,
-          clientId: newId,
-          sender: 'ai',
-          text: `Olá ${newClient.name}! Seja bem-vindo à **Óticas Di Óculos** (Rua 23 de Abril, 51, Centro, Ituberá - BA)! 👓\n\nSeu cadastro foi realizado com sucesso. Como podemos ajudar com seus óculos, lentes e orçamentos hoje?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          id: `m_welcome_${Date.now()}`,
+          clientId: newClient.id,
+          sender: 'assistant',
+          text: `Olá ${newClient.name}! Seu cadastro foi realizado com sucesso nas Óticas Di Óculos. Como posso te ajudar hoje?`,
+          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         },
       ],
     }));
-    setSelectedClientId(newId);
+    setSelectedClientId(newClient.id);
   };
 
   if (!currentUser) {
@@ -679,10 +691,54 @@ export default function App() {
           {activeTab === 'cashflow' && (
             <CashFlowView
               cashFlow={cashFlow}
-              setCashFlow={setCashFlow}
+              setCashFlow={async (value) => {
+                if (typeof value === 'function') {
+                  setCashFlow((prev) => {
+                    const next = value(prev);
+                    if (next.length > prev.length) {
+                      const addedEntry = next[0];
+                      saveTransactionToSupabase(addedEntry).catch(err => {
+                        console.error('Erro ao salvar movimentação no Supabase:', err);
+                      });
+                    } else if (next.length < prev.length) {
+                      const deleted = prev.find(p => !next.some(n => n.id === p.id));
+                      if (deleted && supabase) {
+                        supabase.from('transacoes_financeiras').delete().eq('id', deleted.id).catch(err => {
+                          console.error('Erro ao excluir do Supabase:', err);
+                        });
+                      }
+                    }
+                    return next;
+                  });
+                } else {
+                  setCashFlow(value);
+                }
+              }}
               serviceOrders={serviceOrders}
               closings={closings}
-              setClosings={setClosings}
+              setClosings={async (value) => {
+                if (typeof value === 'function') {
+                  setClosings((prev) => {
+                    const next = value(prev);
+                    if (next.length > prev.length) {
+                      const added = next[0];
+                      if (supabase) {
+                        supabase.from('caixa').insert({
+                          id: ensureUUID(added.id),
+                          status: added.status,
+                          saldo_final: added.saldoFinal,
+                          criado_em: added.createdAt
+                        }).catch(err => {
+                          console.error('Erro ao fechar caixa no Supabase:', err);
+                        });
+                      }
+                    }
+                    return next;
+                  });
+                } else {
+                  setClosings(value);
+                }
+              }}
             />
           )}
 
@@ -732,7 +788,7 @@ export default function App() {
                   prev.map((q) => (q.id === qId ? { ...q, status: newStatus } : q))
                 );
               }}
-              onConvertToOS={(quote) => {
+              onConvertToOS={async (quote) => {
                 const newOs: ServiceOrder = {
                   id: `os_ai_${Date.now()}`,
                   osNumber: `OS-2026-${Math.floor(100 + Math.random() * 900)}`,
@@ -763,11 +819,18 @@ export default function App() {
                   ceoApproved: true,
                 };
 
-                setServiceOrders((prev) => [newOs, ...prev]);
+                let saved = newOs;
+                try {
+                  saved = await saveOrderToSupabase(newOs);
+                } catch (err) {
+                  console.error('Erro ao converter OS no Supabase:', err);
+                }
+
+                setServiceOrders((prev) => [saved, ...prev]);
                 setAiQuotes((prev) =>
                   prev.map((q) => (q.id === quote.id ? { ...q, status: 'convertido_os' } : q))
                 );
-                alert(`✨ Orçamento ${quote.id} convertido com sucesso na OS ${newOs.osNumber}! Enviado para o Laboratório.`);
+                alert(`✨ Orçamento ${quote.id} convertido com sucesso na OS ${saved.osNumber}! Enviado para o Laboratório.`);
                 setActiveTab('lab');
               }}
               onOpenAiConsultantModal={() => setIsAiConsultantOpen(true)}
@@ -794,7 +857,16 @@ export default function App() {
           {activeTab === 'lab' && (
             <LabTrackingView
               orders={serviceOrders}
-              onUpdateOSStatus={(osId, newStatus) => {
+              onUpdateOSStatus={async (osId, newStatus) => {
+                const targetOS = serviceOrders.find(o => o.id === osId);
+                if (targetOS) {
+                  const updatedOS = { ...targetOS, status: newStatus };
+                  try {
+                    await saveOrderToSupabase(updatedOS);
+                  } catch (err) {
+                    console.warn('Erro ao atualizar status da OS no Supabase:', err);
+                  }
+                }
                 setServiceOrders((prev) =>
                   prev.map((o) => (o.id === osId ? { ...o, status: newStatus } : o))
                 );
@@ -809,8 +881,24 @@ export default function App() {
             <CatalogView
               frames={frames}
               lenses={lenses}
-              onAddFrame={(f) => setFrames((prev) => [{ ...f, id: `f_${Date.now()}` }, ...prev])}
-              onAddLens={(l) => setLenses((prev) => [{ ...l, id: `l_${Date.now()}` }, ...prev])}
+              onAddFrame={async (f) => {
+                try {
+                  const saved = await saveProductToSupabase(f, 'armacao');
+                  setFrames((prev) => [{ ...saved }, ...prev]);
+                } catch (err) {
+                  console.error('Erro ao salvar armacao no Supabase:', err);
+                  setFrames((prev) => [{ ...f, id: `f_${Date.now()}` }, ...prev]);
+                }
+              }}
+              onAddLens={async (l) => {
+                try {
+                  const saved = await saveProductToSupabase(l, 'lentes');
+                  setLenses((prev) => [{ ...saved }, ...prev]);
+                } catch (err) {
+                  console.error('Erro ao salvar lentes no Supabase:', err);
+                  setLenses((prev) => [{ ...l, id: `l_${Date.now()}` }, ...prev]);
+                }
+              }}
             />
           )}
 
@@ -875,11 +963,19 @@ export default function App() {
           frames={frames}
           lenses={lenses}
           onAddClient={(newClient) => setClients((prev) => [newClient, ...prev])}
-          onSaveOS={(newOS) => {
-            setServiceOrders((prev) => [newOS, ...prev]);
+          onSaveOS={async (newOS) => {
+            let savedOS = newOS;
+            try {
+              savedOS = await saveOrderToSupabase(newOS);
+            } catch (err) {
+              console.error('Erro ao salvar OS no Supabase:', err);
+            }
+
+            setServiceOrders((prev) => [savedOS, ...prev]);
+            
             // Automatically record in cashflow if advance payment made
             if (newOS.adiantamento && newOS.adiantamento > 0) {
-              const newCashEntry: CashFlowEntry = {
+              let newCashEntry: CashFlowEntry = {
                 id: `cash_os_${Date.now()}`,
                 empresa: 'Óticas DI Óculos',
                 filial: 'Matriz Ituberá BA',
@@ -887,7 +983,7 @@ export default function App() {
                 date: new Date().toISOString().split('T')[0],
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'entrada',
-                category: 'Receibmento OS',
+                category: 'Recebimento OS',
                 description: `Adiantamento OS ${newOS.osNumber} - Cliente ${newOS.clientName}`,
                 paymentMethod: newOS.paymentMethod === 'pix' ? 'Pix' : newOS.paymentMethod === 'cartao_credito' ? 'Cartão Crédito' : 'Dinheiro',
                 entrada: newOS.adiantamento,
@@ -900,6 +996,13 @@ export default function App() {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
               };
+
+              try {
+                newCashEntry = await saveTransactionToSupabase(newCashEntry);
+              } catch (err) {
+                console.error('Erro ao salvar transação no Supabase:', err);
+              }
+
               setCashFlow((prev) => [newCashEntry, ...prev]);
             }
             setIsSmartOSWizardOpen(false);
