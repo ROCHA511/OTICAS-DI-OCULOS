@@ -612,9 +612,9 @@ export default function App() {
         />
 
         <ExecutiveMetricBar
-          totalTodaySales={totalTodaySales}
-          activeChatsCount={clients.length}
-          inLabCount={inLabCount}
+          orders={serviceOrders}
+          cashFlow={cashFlow}
+          clients={clients}
           onOpenNews={() => handleTabChange('news')}
         />
       </div>
@@ -682,9 +682,9 @@ export default function App() {
             <EnterpriseNewsView
               onOpenShareModal={() => setIsShareModalOpen(true)}
               onNavigateTab={handleTabChange}
-              totalTodaySales={totalTodaySales}
-              activeChatsCount={clients.length}
-              inLabCount={inLabCount}
+              orders={serviceOrders}
+              cashFlow={cashFlow}
+              clients={clients}
             />
           )}
 

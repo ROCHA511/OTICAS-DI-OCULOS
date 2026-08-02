@@ -27,12 +27,14 @@ import {
   Check,
 } from 'lucide-react';
 
+import { Client, ServiceOrder, CashFlowEntry } from '../../types';
+
 interface EnterpriseNewsViewProps {
   onOpenShareModal?: () => void;
   onNavigateTab?: (tab: any) => void;
-  totalTodaySales?: number;
-  activeChatsCount?: number;
-  inLabCount?: number;
+  orders: ServiceOrder[];
+  cashFlow: CashFlowEntry[];
+  clients: Client[];
 }
 
 interface NoticeItem {
@@ -53,10 +55,21 @@ interface NoticeItem {
 export const EnterpriseNewsView: React.FC<EnterpriseNewsViewProps> = ({
   onOpenShareModal,
   onNavigateTab,
-  totalTodaySales = 8420,
-  activeChatsCount = 18,
-  inLabCount = 12,
+  orders,
+  cashFlow,
+  clients,
 }) => {
+  const hoje = new Date().toISOString().split('T')[0];
+
+  const totalTodaySales = cashFlow
+    .filter((c) => c.type === 'entrada' && c.date === hoje)
+    .reduce((sum, c) => sum + c.amount, 0);
+
+  const activeChatsCount = clients.length;
+  const inLabCount = orders.filter((os) => os.status === 'no_laboratorio').length;
+  const retiradasCount = orders.filter((os) => os.status === 'pronto').length;
+  const percentMetaDia = Math.min(Math.round((totalTodaySales / 10000) * 100), 100);
+
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingNews, setIsAddingNews] = useState(false);
@@ -248,7 +261,7 @@ export const EnterpriseNewsView: React.FC<EnterpriseNewsViewProps> = ({
             Transmissão Ao Vivo
           </div>
           <div className="text-xs text-[#E8D2A8] font-semibold truncate animate-pulse">
-            📢 Vendas Hoje: R$ {(totalTodaySales + 4200).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • 5 Clientes Aguardando Retirada de Óculos • IA Mary Respondendo {activeChatsCount + 18} Atendimentos • 0 Atrasos na Garantia OS
+            📢 Vendas Hoje: R$ {totalTodaySales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} • {retiradasCount} Clientes Aguardando Retirada de Óculos • IA Mary Respondendo {activeChatsCount} Atendimentos • 0 Atrasos na Garantia OS
           </div>
         </div>
       </div>
@@ -265,14 +278,14 @@ export const EnterpriseNewsView: React.FC<EnterpriseNewsViewProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl font-extrabold text-slate-900">
-              R$ {(totalTodaySales + 4200).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              R$ {totalTodaySales.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-600 mt-1">
               <span>Meta do Dia: R$ 10.000,00</span>
-              <span className="font-extrabold text-emerald-600">84%</span>
+              <span className="font-extrabold text-emerald-600">{percentMetaDia}%</span>
             </div>
             <div className="w-full bg-slate-100 rounded-full h-1.5 mt-1.5 overflow-hidden">
-              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '84%' }} />
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${percentMetaDia}%` }} />
             </div>
           </div>
         </div>
@@ -287,10 +300,10 @@ export const EnterpriseNewsView: React.FC<EnterpriseNewsViewProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl font-extrabold text-slate-900">
-              {activeChatsCount + 18} Pacientes
+              {activeChatsCount} Clientes
             </div>
             <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 mt-1">
-              <Sparkles className="w-3 h-3 text-[#C9A96E]" /> IA Mary operando com 98% autonomia
+              <Sparkles className="w-3 h-3 text-[#C9A96E]" /> IA Mary operando com 100% autonomia
             </p>
           </div>
         </div>
@@ -305,7 +318,7 @@ export const EnterpriseNewsView: React.FC<EnterpriseNewsViewProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl font-extrabold text-slate-900">
-              {inLabCount + 8} OSs Ativas
+              {inLabCount} OSs Ativas
             </div>
             <p className="text-[11px] text-slate-600 font-semibold mt-1 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Garantia: 0 atrasos no prazo
@@ -323,7 +336,7 @@ export const EnterpriseNewsView: React.FC<EnterpriseNewsViewProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl font-extrabold text-slate-900">
-              5 Óculos Prontos
+              {retiradasCount} Óculos Prontos
             </div>
             <p className="text-[11px] text-amber-800 font-bold mt-1">
               Clientes avisados via WhatsApp

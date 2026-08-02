@@ -38,7 +38,7 @@ export const loadClientsFromSupabase = async (fallbackData: Client[]): Promise<C
       .eq('role', 'cliente');
 
     if (errPerfis) throw errPerfis;
-    if (!perfis || perfis.length === 0) return fallbackData;
+    if (!perfis || perfis.length === 0) return [];
 
     // Traduz do banco para a interface Client do frontend
     const translated: Client[] = perfis.map((p: any) => {
@@ -216,7 +216,7 @@ export const loadOrdersFromSupabase = async (fallbackOrders: ServiceOrder[]): Pr
       `);
 
     if (errVendas) throw errVendas;
-    if (!vendas || vendas.length === 0) return fallbackOrders;
+    if (!vendas || vendas.length === 0) return [];
 
     const translated: ServiceOrder[] = vendas.map((v: any) => {
       const cliProfile = v.perfis || {};
@@ -323,7 +323,7 @@ export const loadCashflowFromSupabase = async (fallbackEntries: CashFlowEntry[])
       .order('criado_em', { ascending: false });
 
     if (errTrans) throw errTrans;
-    if (!transacoes || transacoes.length === 0) return fallbackEntries;
+    if (!transacoes || transacoes.length === 0) return [];
 
     const translated: CashFlowEntry[] = transacoes.map((t: any) => {
       const typeMap: any = {

@@ -11,69 +11,109 @@ import {
   Award,
   Sparkles,
 } from 'lucide-react';
+import { Client, ServiceOrder, CashFlowEntry } from '../types';
 
 interface ExecutiveMetricBarProps {
-  totalTodaySales: number;
-  activeChatsCount: number;
-  inLabCount: number;
+  orders: ServiceOrder[];
+  cashFlow: CashFlowEntry[];
+  clients: Client[];
   onOpenNews?: () => void;
 }
 
 export const ExecutiveMetricBar: React.FC<ExecutiveMetricBarProps> = ({
-  totalTodaySales,
-  activeChatsCount,
-  inLabCount,
+  orders,
+  cashFlow,
+  clients,
   onOpenNews,
 }) => {
+  const hoje = new Date().toISOString().split('T')[0];
+  const mesAtual = new Date().toISOString().substring(0, 7); // YYYY-MM
+
+  // 1. Atendimento Hoje (número de clientes ativos no CRM)
+  const atendimentosHojeCount = clients.length;
+
+  // 2. Vendas Hoje (soma das entradas financeiras de hoje no caixa)
+  const totalTodaySales = cashFlow
+    .filter((c) => c.type === 'entrada' && c.date === hoje)
+    .reduce((sum, c) => sum + c.amount, 0);
+
+  // 3. Ticket Médio (valor total de OS ativas dividido pela quantidade de OS)
+  const totalSalesValue = orders.reduce((sum, o) => sum + o.totalValue, 0);
+  const ticketMedio = orders.length > 0 ? totalSalesValue / orders.length : 0;
+
+  // 4. Taxa de Conversão (OS geradas em relação aos clientes cadastrados)
+  const conversao = clients.length > 0 ? Math.min(Math.round((orders.length / clients.length) * 100), 100) : 0;
+
+  // 5. OS Laboratório (OS ativas em laboratório)
+  const inLabCount = orders.filter((os) => os.status === 'no_laboratorio').length;
+
+  // 6. Meta do Dia (proporção contra a meta diária de R$ 10.000)
+  const metaDia = 10000;
+  const percentMetaDia = Math.min(Math.round((totalTodaySales / metaDia) * 100), 100);
+
+  // 7. Meta do Mês (soma de entradas do mês contra a meta de R$ 180.000)
+  const totalMonthSales = cashFlow
+    .filter((c) => c.type === 'entrada' && c.date.startsWith(mesAtual))
+    .reduce((sum, c) => sum + c.amount, 0);
+  const metaMes = 180000;
+  const percentMetaMes = Math.min(Math.round((totalMonthSales / metaMes) * 100), 100);
+
+  // 8. Retiradas Prontas (OS com status 'pronto' aguardando cliente)
+  const retiradasProntasCount = orders.filter((os) => os.status === 'pronto').length;
+
   const metrics = [
     {
       label: 'Atendimento Hoje',
-      value: `${activeChatsCount + 18}`,
+      value: `${atendimentosHojeCount}`,
       icon: Users,
       color: 'text-[#C9A96E]',
     },
     {
       label: 'Vendas Hoje',
-      value: `R$ ${(totalTodaySales + 4200).toLocaleString('pt-BR', {
+      value: `R$ ${totalTodaySales.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       })}`,
       icon: DollarSign,
       color: 'text-[#10B981]',
     },
     {
       label: 'Ticket Médio',
-      value: 'R$ 1.240,00',
+      value: `R$ ${ticketMedio.toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`,
       icon: Award,
       color: 'text-[#C9A96E]',
     },
     {
       label: 'Conversão',
-      value: '68%',
+      value: `${conversao}%`,
       icon: Percent,
       color: 'text-[#10B981]',
     },
     {
       label: 'IA Status',
-      value: 'Mary Online (98%)',
+      value: 'Mary Online (100%)',
       icon: Sparkles,
       color: 'text-[#C9A96E]',
       badge: 'Ativa',
     },
     {
       label: 'OS Laboratório',
-      value: `${inLabCount + 8} Ativas`,
+      value: `${inLabCount} Ativas`,
       icon: Clock,
       color: 'text-[#E8D2A8]',
     },
     {
       label: 'Meta do Dia',
-      value: '84% (R$ 8.420 / 10k)',
+      value: `${percentMetaDia}% (R$ ${totalTodaySales.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} / 10k)`,
       icon: Target,
       color: 'text-[#C9A96E]',
     },
     {
       label: 'Meta do Mês',
-      value: '72% (R$ 130k / 180k)',
+      value: `${percentMetaMes}% (R$ ${(totalMonthSales / 1000).toFixed(0)}k / 180k)`,
       icon: TrendingUp,
       color: 'text-[#10B981]',
     },
@@ -85,7 +125,7 @@ export const ExecutiveMetricBar: React.FC<ExecutiveMetricBarProps> = ({
     },
     {
       label: 'Retiradas Hoje',
-      value: '5 Clientes',
+      value: `${retiradasProntasCount} Clientes`,
       icon: PackageCheck,
       color: 'text-[#C9A96E]',
     },
