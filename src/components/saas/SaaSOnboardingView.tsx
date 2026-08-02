@@ -322,14 +322,20 @@ export const SaaSOnboardingView: React.FC = () => {
                       plano === 'trial' ? 'border-[#C9A96E] ring-2 ring-[#C9A96E]/20 bg-white/10' : 'border-white/10'
                     }`}
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-black text-white text-sm">Trial Grátis</span>
                         {plano === 'trial' && <CheckCircle2 className="w-4 h-4 text-[#C9A96E]" />}
                       </div>
-                      <p className="text-slate-300 text-[11px]">3 Dias de Acesso total para testes iniciais.</p>
+                      <p className="text-slate-300 text-[10px]">3 Dias de Acesso total para testes iniciais.</p>
+                      <ul className="space-y-1 text-[10px] text-slate-300 border-t border-white/5 pt-2 font-medium">
+                        <li className="flex items-center gap-1">✔ CRM de Clientes</li>
+                        <li className="flex items-center gap-1">✔ Controle de Caixa</li>
+                        <li className="flex items-center gap-1">✔ Cadastro de Lentes</li>
+                        <li className="flex items-center gap-1">✔ IA Básica (Testes)</li>
+                      </ul>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-white/10 flex items-baseline gap-1">
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-1">
                       <span className="text-lg font-black text-white">R$ 0</span>
                       <span className="text-[10px] text-slate-400">/ grátis</span>
                     </div>
@@ -342,14 +348,20 @@ export const SaaSOnboardingView: React.FC = () => {
                       plano === 'basico' ? 'border-[#C9A96E] ring-2 ring-[#C9A96E]/20 bg-white/10' : 'border-white/10'
                     }`}
                   >
-                    <div className="space-y-1">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-black text-white text-sm">Plano Básico</span>
                         {plano === 'basico' && <CheckCircle2 className="w-4 h-4 text-[#C9A96E]" />}
                       </div>
-                      <p className="text-slate-300 text-[11px]">Até 150 OS/mês, CRM completo. Sem IA no WhatsApp.</p>
+                      <p className="text-slate-300 text-[10px]">Ideal para pequenas empresas com CRM e Financeiro.</p>
+                      <ul className="space-y-1 text-[10px] text-slate-300 border-t border-white/5 pt-2 font-medium">
+                        <li className="flex items-center gap-1">✔ Até 150 OS/mês</li>
+                        <li className="flex items-center gap-1">✔ CRM Completo</li>
+                        <li className="flex items-center gap-1">✔ Controle de Caixas</li>
+                        <li className="flex items-center gap-1 text-red-400 font-bold">❌ Sem IA no WhatsApp</li>
+                      </ul>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-white/10 flex items-baseline gap-1">
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-1">
                       <span className="text-lg font-black text-white">R$ 199</span>
                       <span className="text-[10px] text-slate-400">/ mês</span>
                     </div>
@@ -365,33 +377,25 @@ export const SaaSOnboardingView: React.FC = () => {
                     <div className="absolute top-0 right-0 bg-[#C9A96E] text-[#071D49] text-[9px] font-black uppercase px-2 py-0.5 tracking-wider rounded-bl-lg">
                       Recomendado
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="font-black text-white text-sm flex items-center gap-1">
                           Pro Max <Sparkles className="w-3.5 h-3.5 text-[#C9A96E]" />
                         </span>
                         {plano === 'promax' && <CheckCircle2 className="w-4 h-4 text-[#C9A96E]" />}
                       </div>
-                      <p className="text-slate-300 text-[11px]">OS ilimitadas, Agente IA 24/7 e Multifiliais.</p>
+                      <p className="text-slate-300 text-[10px]">Completo com IA autônoma e filiais integradas.</p>
+                      <ul className="space-y-1 text-[10px] text-[#C9A96E] border-t border-white/5 pt-2 font-black">
+                        <li className="flex items-center gap-1">✔ OS Ilimitadas</li>
+                        <li className="flex items-center gap-1">✔ IA Mary 24/7 Autônoma</li>
+                        <li className="flex items-center gap-1">✔ WhatsApp Integrado</li>
+                        <li className="flex items-center gap-1">✔ Multi-Filiais / Redes</li>
+                      </ul>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-white/10 flex items-baseline gap-1">
+                    <div className="mt-4 pt-3 border-t border-white/10 flex items-baseline gap-1">
                       <span className="text-lg font-black text-white">R$ 249</span>
                       <span className="text-[10px] text-slate-400">/ mês</span>
                     </div>
-                  </div>
-                </div>
-
-                {/* Recursos Incluídos */}
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
-                  <h4 className="text-xs font-bold text-[#C9A96E] uppercase tracking-wider">Recursos Incluídos no {plano === 'trial' ? 'Trial' : plano === 'basico' ? 'Plano Básico' : 'Pro Max'}:</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-200">
-                    <div>✔ Cadastro de Clientes (CRM)</div>
-                    <div>✔ Controle Financeiro e Caixas</div>
-                    {plano !== 'basico' && <div>✔ Inteligência Artificial Mary 24/7</div>}
-                    {plano !== 'basico' && <div>✔ OS Ilimitadas</div>}
-                    {plano === 'basico' && <div>✔ Limite de 150 OS/mês</div>}
-                    <div>✔ Suporte via Central</div>
-                    {plano === 'promax' && <div>✔ Multi-Filiais Integradas</div>}
                   </div>
                 </div>
               </div>
