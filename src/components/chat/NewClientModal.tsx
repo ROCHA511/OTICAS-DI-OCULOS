@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Phone, Calendar, CreditCard, MapPin, Glasses, FileText, CheckCircle2, Sparkles } from 'lucide-react';
 import { Client, OpticalPrescription, DnpMeasurement } from '../../types';
+import { isFictitiousPhone, formatBrazilianPhone } from '../../utils/phoneValidator';
 
 interface NewClientModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
   onSaveClient,
 }) => {
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('(73) 98112-8923');
+  const [phone, setPhone] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [cpf, setCpf] = useState('');
   const [address, setAddress] = useState('Rua 23 de Abril, 51, Centro');
@@ -39,6 +40,11 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
     e.preventDefault();
     if (!name.trim()) {
       alert('Por favor, informe o nome do cliente.');
+      return;
+    }
+
+    if (isFictitiousPhone(phone)) {
+      alert('Número de telefone fictício, de teste ou inválido. Por favor, insira um número real com DDD brasileiro válido para cadastrar o cliente.');
       return;
     }
 
@@ -146,7 +152,7 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
                   type="text"
                   required
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(formatBrazilianPhone(e.target.value))}
                   placeholder="(73) 98112-8923"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#0284C7] focus:outline-none"
                 />
