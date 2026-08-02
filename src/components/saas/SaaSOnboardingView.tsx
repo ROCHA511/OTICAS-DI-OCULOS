@@ -189,7 +189,7 @@ export const SaaSOnboardingView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#071D49] flex flex-col justify-between select-none relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#071D49] flex flex-col justify-between select-none relative overflow-y-auto font-sans">
       {/* Background Decorative Circles */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#C9A96E]/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
