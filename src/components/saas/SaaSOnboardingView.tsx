@@ -317,7 +317,7 @@ export const SaaSOnboardingView: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
                   {/* Trial Card */}
                   <div 
-                    onClick={() => setPlano('trial')}
+                    onClick={() => { setPlano('trial'); setStep(2); }}
                     className={`bg-white/5 border rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between hover:border-[#C9A96E]/60 ${
                       plano === 'trial' ? 'border-[#C9A96E] ring-2 ring-[#C9A96E]/20 bg-white/10' : 'border-white/10'
                     }`}
@@ -337,7 +337,7 @@ export const SaaSOnboardingView: React.FC = () => {
 
                   {/* Básico Card */}
                   <div 
-                    onClick={() => setPlano('basico')}
+                    onClick={() => { setPlano('basico'); setStep(2); }}
                     className={`bg-white/5 border rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between hover:border-[#C9A96E]/60 ${
                       plano === 'basico' ? 'border-[#C9A96E] ring-2 ring-[#C9A96E]/20 bg-white/10' : 'border-white/10'
                     }`}
@@ -357,7 +357,7 @@ export const SaaSOnboardingView: React.FC = () => {
 
                   {/* Pro Max Card */}
                   <div 
-                    onClick={() => setPlano('promax')}
+                    onClick={() => { setPlano('promax'); setStep(2); }}
                     className={`bg-white/5 border rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between hover:border-[#C9A96E]/60 relative overflow-hidden ${
                       plano === 'promax' ? 'border-[#C9A96E] ring-2 ring-[#C9A96E]/20 bg-white/10' : 'border-white/10'
                     }`}
