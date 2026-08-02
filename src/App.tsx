@@ -1132,6 +1132,9 @@ export default function App() {
           <span className="text-[10px] mt-0.5">Menu</span>
         </button>
       </nav>
+
+      {/* PWA Install Promo / Auto-Prompt Modal */}
+      <PwaInstallPromptModal />
     </div>
   );
 }
