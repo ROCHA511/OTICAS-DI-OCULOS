@@ -26,6 +26,7 @@ import { QuickSearchModal } from './components/QuickSearchModal';
 import { QuickActionBar } from './components/QuickActionBar';
 import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
 import { SaaSAdminView } from './components/saas/SaaSAdminView';
+import { SaaSOnboardingView } from './components/saas/SaaSOnboardingView';
 import {
   loadClientsFromSupabase,
   saveClientToSupabase,
@@ -581,6 +582,14 @@ export default function App() {
     }));
     setSelectedClientId(newClient.id);
   };
+
+  // Intercepta convite exclusivo de auto-onboarding SaaS do cliente final
+  const queryParams = new URLSearchParams(window.location.search);
+  const isAutoOnboarding = queryParams.get('saas') === 'true' && queryParams.get('onboarding') === 'true';
+
+  if (isAutoOnboarding) {
+    return <SaaSOnboardingView />;
+  }
 
   if (!currentUser) {
     return (

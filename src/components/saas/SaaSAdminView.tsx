@@ -14,7 +14,8 @@ import {
   Sparkles, 
   CreditCard,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Share2
 } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 
@@ -37,6 +38,16 @@ export const SaaSAdminView: React.FC = () => {
   // Vendedores adicionais
   const [novoVendedor, setNovoVendedor] = useState('');
   const [vendedores, setVendedores] = useState<string[]>([]);
+
+  // Estados de Link de Onboarding
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyOnboardingLink = () => {
+    const inviteUrl = `${window.location.origin}?saas=true&onboarding=true`;
+    navigator.clipboard.writeText(inviteUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 3000);
+  };
 
   // Estados de Processamento
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -190,9 +201,23 @@ export const SaaSAdminView: React.FC = () => {
             Cadastre novas franquias, filiais e óticas parceiras vinculadas ao isolamento RLS do Supabase.
           </p>
         </div>
-        <span className="bg-[#C9A96E]/20 text-[#071D49] border border-[#C9A96E] font-black text-xs px-3 py-1 rounded-full uppercase tracking-wider self-start md:self-center">
-          Super Admin Master
-        </span>
+        <div className="flex items-center gap-3 self-start md:self-center">
+          <button
+            type="button"
+            onClick={handleCopyOnboardingLink}
+            className={`px-4 py-1.5 text-xs font-black rounded-full border transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs ${
+              copiedLink 
+                ? 'bg-emerald-500 border-emerald-500 text-white'
+                : 'bg-[#C9A96E]/10 hover:bg-[#C9A96E]/20 border-[#C9A96E] text-[#071D49]'
+            }`}
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            {copiedLink ? 'Link Copiado!' : 'Copiar Link de Onboarding'}
+          </button>
+          <span className="bg-[#071D49]/10 text-[#071D49] border border-[#071D49]/20 font-black text-xs px-3 py-1 rounded-full uppercase tracking-wider">
+            Super Admin Master
+          </span>
+        </div>
       </div>
 
       <div className="max-w-6xl mx-auto">
