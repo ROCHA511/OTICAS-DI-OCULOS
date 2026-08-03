@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Glasses, Search, Plus, Tag, ShieldCheck, DollarSign, Sparkles } from 'lucide-react';
 import { Frame, Lens } from '../../types';
+import { PriceTableView } from './PriceTableView';
 
 interface CatalogViewProps {
   frames: Frame[];
@@ -38,10 +39,12 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-            <Glasses className="w-5 h-5 text-amber-600" /> TABELA DE PREÇOS, ARMAÇÕES & LENTES
+            <Glasses className="w-5 h-5 text-[#C9A96E]" /> {activeTab === 'frames' ? 'LENTES E ARMAÇÕES - CATÁLOGO' : 'TABELAS DE PREÇOS DE LENTES'}
           </h1>
           <p className="text-xs text-slate-500">
-            Catálogo completo de produtos ópticos consultado pela IA em tempo real para cálculo de orçamentos.
+            {activeTab === 'frames' 
+              ? 'Catálogo completo de produtos ópticos consultado pela IA em tempo real para cálculo de orçamentos.' 
+              : 'Gerencie todas as tabelas de preços oficiais de marcas parceiras (Hoya, Zeiss, etc) e crie produtos customizados.'}
           </p>
         </div>
 
@@ -69,17 +72,19 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Buscar no catálogo por marca, modelo ou tratamento..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
-        />
-      </div>
+      {/* Search Bar (Apenas para Armações) */}
+      {activeTab === 'frames' && (
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar no catálogo por marca, modelo ou tratamento..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+          />
+        </div>
+      )}
 
       {/* Frames Catalog Cards */}
       {activeTab === 'frames' && (
@@ -134,51 +139,9 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         </div>
       )}
 
-      {/* Lenses Catalog List */}
+      {/* Lenses Catalog (PriceTableView Completo com todas as opções: buscar, incluir, listagem de preços) */}
       {activeTab === 'lenses' && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs divide-y divide-slate-100 overflow-hidden">
-          {filteredLenses.map((l) => (
-            <div key={l.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-all text-xs">
-              <div className="space-y-1.5 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-extrabold text-blue-900">{l.brand}</span>
-                  <span className="font-bold text-slate-800">{l.name}</span>
-                  <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    Índice {l.indexRefraction}
-                  </span>
-                  {l.garantiaMeses && (
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Garantia: {l.garantiaMeses} meses
-                    </span>
-                  )}
-                </div>
-                <p className="text-slate-500">{l.description}</p>
-                
-                {/* Exibição de Tratamentos (Módulo 02) */}
-                {l.tratamentos && l.tratamentos.length > 0 && (
-                  <div className="flex gap-1.5 flex-wrap pt-1">
-                    {l.tratamentos.map((t, idx) => (
-                      <span key={idx} className="bg-slate-100 border text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                
-                <p className="text-[11px] text-indigo-600 font-semibold pt-0.5">
-                  💡 Indicado para: {l.idealForRange}
-                </p>
-              </div>
-
-              <div className="text-right shrink-0">
-                <div className="text-[10px] text-slate-400 uppercase font-bold">Valor da Lente:</div>
-                <div className="text-lg font-extrabold text-slate-900">
-                  R$ {l.price.toFixed(2)}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <PriceTableView />
       )}
     </div>
   );

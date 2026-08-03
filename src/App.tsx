@@ -12,7 +12,6 @@ import { ExecutiveDashboardView } from './components/dashboard/ExecutiveDashboar
 import { EnterpriseNewsView } from './components/dashboard/EnterpriseNewsView';
 import { ClientsCrmView } from './components/crm/ClientsCrmView';
 import { CameraAiScannerView } from './components/ai/CameraAiScannerView';
-import { PriceTableView } from './components/catalog/PriceTableView';
 import { NewClientModal } from './components/chat/NewClientModal';
 import { AiQuotesSalesView } from './components/ai/AiQuotesSalesView';
 import { AiConsultantModal } from './components/ai/AiConsultantModal';
@@ -913,8 +912,6 @@ export default function App() {
           )}
 
           {activeTab === 'camera' && <CameraAiScannerView />}
-
-          {activeTab === 'pricetable' && <PriceTableView />}
 
           {activeTab === 'ai-settings' && (
             <AiSettingsView settings={aiSettings} onSaveSettings={setAiSettings} />
