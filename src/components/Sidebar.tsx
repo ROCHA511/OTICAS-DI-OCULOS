@@ -82,12 +82,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       groupTitle: 'PRODUTOS & VENDAS',
       items: [
         {
-          id: 'os' as ActiveTab,
-          title: 'Ordens de Serviço',
-          icon: ClipboardCheck,
-          badge: 2,
-        },
-        {
           id: 'cashflow' as ActiveTab,
           title: 'Vendas & Financeiro',
           icon: ShoppingCart,
@@ -217,27 +211,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isExpanded || isMobileOpen ? (
           <button
             onClick={() => {
-              if (onOpenSmartOSWizard) onOpenSmartOSWizard();
               handleSelectTab('os');
             }}
             className="w-full bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] font-black text-xs py-2.5 px-3 rounded-2xl border-2 border-[#C9A96E] flex items-center justify-between shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95 group"
           >
             <div className="flex items-center gap-2.5">
               <ClipboardCheck className="w-5 h-5 text-[#C9A96E] group-hover:scale-110 transition-transform" />
-              <span className="tracking-wider uppercase text-sm font-black">Ordens de Serviços</span>
+              <span className="tracking-wider uppercase text-sm font-black">Ordens de Serviço</span>
             </div>
-            <span className="text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-1.5 py-0.5 rounded-md">
-              8 ETAPAS
-            </span>
           </button>
         ) : (
           <button
             onClick={() => {
-              if (onOpenSmartOSWizard) onOpenSmartOSWizard();
               handleSelectTab('os');
             }}
             className="w-11 h-11 mx-auto bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] rounded-2xl border-2 border-[#C9A96E] flex items-center justify-center shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95"
-            title="Ordens de Serviços (8 Etapas)"
+            title="Ordens de Serviço"
           >
             <ClipboardCheck className="w-6 h-6 text-[#C9A96E]" />
           </button>

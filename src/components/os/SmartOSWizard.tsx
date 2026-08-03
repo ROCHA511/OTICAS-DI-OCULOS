@@ -1547,65 +1547,92 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              NOVA ETAPA 08 - BLOQUEIO E LIBERAÇÃO DE PRODUÇÃO
+              NOVA ETAPA 08 - CONSULTAR ORDEM DE SERVIÇO
              ==================================================== */}
           {currentStage === 8 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    {isPaid ? <Unlock className="w-5 h-5 text-emerald-400" /> : <Lock className="w-5 h-5 text-rose-500" />}
-                    Etapa 08 - Status de Produção & Trava de Segurança
-
+                    <ClipboardCheck className="w-5 h-5 text-[#C9A96E]" /> Etapa 08 - Consultar Ordem de Serviço
                   </h2>
                   <p className="text-xs text-slate-300">
-                    A produção e os arquivos de corte no laboratório somente são liberados após confirmação do pagamento.
+                    Confira abaixo o resumo completo e a Ficha Técnica da Ordem de Serviço gerada.
                   </p>
+                </div>
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all active:scale-95 border border-blue-400/30"
+                >
+                  <Printer className="w-4 h-4" /> Imprimir OS
+                </button>
+              </div>
+
+              {/* Ficha Técnica de Laboratório incorporada diretamente no painel */}
+              <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl font-mono text-xs text-slate-200 space-y-3">
+                <div className="text-center font-bold text-[#E8D2A8] border-b border-slate-800 pb-2 uppercase">
+                  *** FICHA TÉCNICA DE LABORATÓRIO INTELIGENTE - DI ÓTICAS ***
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">Número da OS:</span>
+                    <span className="font-bold text-[#E8D2A8]">{osNumber}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">Cliente:</span>
+                    <span className="font-bold text-[#E8D2A8]">{selectedClient?.name}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">DP Total:</span>
+                    <span className="font-bold text-white">{biometrics.dpTotal} mm</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">DNP OD/OE:</span>
+                    <span className="font-bold text-white">{biometrics.dnpOD} / {biometrics.dnpOE} mm</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">Altura OD/OE:</span>
+                    <span className="font-bold text-white">{biometrics.alturaOD} / {biometrics.alturaOE} mm</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">Ângulo Pantoscópico:</span>
+                    <span className="font-bold text-white">{biometrics.anguloPantoscopico}°</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">Distância de Vértice:</span>
+                    <span className="font-bold text-white">{biometrics.distanciaVertice} mm</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-800/40 py-1">
+                    <span className="text-slate-400">DBC / Centro Geométrico:</span>
+                    <span className="font-bold text-white">{dbc} mm / {centroGeometrico} mm</span>
+                  </div>
                 </div>
               </div>
 
-              {isPaid ? (
-                <div className="p-6 bg-emerald-950/80 border-2 border-emerald-500 rounded-2xl text-center space-y-3">
-                  <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-                  <h3 className="text-base font-black text-emerald-200 uppercase">PRODUÇÃO LIBERADA AUTOMATICAMENTE</h3>
-                  <p className="text-xs text-emerald-300 max-w-lg mx-auto">
-                    Pagamento confirmado! A ordem de serviço {osNumber} foi transmitida diretamente para o laboratório de surfaçagem digital e montagem.
+              {/* Botão de Ação Principal: Consultar OS */}
+              <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-4">
+                <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
+                <div>
+                  <h3 className="text-base font-black text-white uppercase">Salvar e Visualizar no Painel</h3>
+                  <p className="text-xs text-slate-400 max-w-lg mx-auto mt-1">
+                    Ao finalizar, a Ordem de Serviço será consolidada na base de dados. Você poderá consultar o status de laboratório, efetuar alterações e reemitir vias a qualquer momento.
                   </p>
+                </div>
+                <div className="pt-2 flex justify-center gap-3">
                   <button
-                    onClick={() => handleFinalizeOS(true)}
-                    className="mt-4 px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-2xl shadow-xl transition-all cursor-pointer"
+                    onClick={() => {
+                      setIsPaid(true); // Confirma a OS
+                      handleFinalizeOS(true);
+                    }}
+                    className="px-8 py-3.5 bg-[#C9A96E] hover:bg-[#b8985d] text-[#071D49] font-black text-sm rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
                   >
-                    FINALIZAR E CONCLUIR OS
+                    <ClipboardCheck className="w-5 h-5" /> CONSULTAR OS
                   </button>
                 </div>
-              ) : (
-                <div className="p-6 bg-rose-950/80 border-2 border-rose-500 rounded-2xl text-center space-y-3">
-                  <ShieldAlert className="w-12 h-12 text-rose-400 mx-auto" />
-                  <h3 className="text-base font-black text-rose-200 uppercase">PRODUÇÃO BLOQUEADA (PAGAMENTO PENDENTE)</h3>
-                  <p className="text-xs text-rose-300 max-w-lg mx-auto">
-                    A receita e os arquivos de laboratório estão bloqueados até o recebimento da entrada ou quitação.
-                  </p>
-                  <div className="flex justify-center gap-3 pt-2">
-                    <button
-                      onClick={() => handleFinalizeOS(false)}
-                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl cursor-pointer shadow-md"
-                    >
-                      Salvar OS como Pendente
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsPaid(true);
-                        handleFinalizeOS(true);
-                      }}
-                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
-                    >
-                      <CheckCircle2 className="w-4 h-4" /> [ LIBERAR PRODUÇÃO - CONFIRMAR PAGAMENTO ]
-                    </button>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
+
 
         </div>
       </div>
