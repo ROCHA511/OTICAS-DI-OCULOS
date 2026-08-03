@@ -227,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="tracking-wider uppercase text-sm font-black">Ordens de Serviços</span>
             </div>
             <span className="text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-1.5 py-0.5 rounded-md">
-              12 ETAPAS
+              8 ETAPAS
             </span>
           </button>
         ) : (
@@ -237,7 +237,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               handleSelectTab('os');
             }}
             className="w-11 h-11 mx-auto bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] rounded-2xl border-2 border-[#C9A96E] flex items-center justify-center shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95"
-            title="Ordens de Serviços (12 Etapas)"
+            title="Ordens de Serviços (8 Etapas)"
           >
             <ClipboardCheck className="w-6 h-6 text-[#C9A96E]" />
           </button>

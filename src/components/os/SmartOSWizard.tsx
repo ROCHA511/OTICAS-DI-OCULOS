@@ -475,9 +475,9 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
     { num: 5, name: 'Cálculos, Receita & Anexos', icon: Calculator },
     { num: 6, name: 'Geração OS', icon: QrCode },
     { num: 7, name: 'Orçamento', icon: DollarSign },
-    { num: 8, name: 'PDF Técnico', icon: Printer },
-    { num: 9, name: 'Produção', icon: Lock },
+    { num: 8, name: 'Produção', icon: Lock },
   ];
+
 
   return (
     <div className="fixed inset-0 z-50 bg-[#071D49]/95 backdrop-blur-md flex flex-col overflow-hidden text-slate-100 font-sans">
@@ -1547,55 +1547,16 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              NOVA ETAPA 08 - PDF TÉCNICO COMPLETO
+              NOVA ETAPA 08 - BLOQUEIO E LIBERAÇÃO DE PRODUÇÃO
              ==================================================== */}
           {currentStage === 8 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <Printer className="w-5 h-5 text-[#C9A96E]" /> Etapa 08 - PDF Técnico do Laboratório
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Ficha Técnica completa com todas as especificações ópticas pronta para exportação.
-                  </p>
-                </div>
-                <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 cursor-pointer"
-                >
-                  <Printer className="w-4 h-4" /> Gerar Impressão / PDF
-                </button>
-              </div>
-
-              <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl font-mono text-xs text-slate-200 space-y-3">
-                <div className="text-center font-bold text-[#E8D2A8] border-b border-slate-800 pb-2 uppercase">
-                  *** FICHA TÉCNICA DE LABORATÓRIO INTELIGENTE - DI ÓTICAS ***
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>OS: {osNumber}</div>
-                  <div>Cliente: {selectedClient?.name}</div>
-                  <div>DP Total: {biometrics.dpTotal} mm</div>
-                  <div>DNP OD/OE: {biometrics.dnpOD} / {biometrics.dnpOE} mm</div>
-                  <div>Altura OD/OE: {biometrics.alturaOD} / {biometrics.alturaOE} mm</div>
-                  <div>Pantoscópico: {biometrics.anguloPantoscopico}°</div>
-                  <div>Vértice: {biometrics.distanciaVertice} mm</div>
-                  <div>DBC / CG: {dbc} mm / {centroGeometrico} mm</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ====================================================
-              NOVA ETAPA 09 - BLOQUEIO E LIBERAÇÃO DE PRODUÇÃO
-             ==================================================== */}
-          {currentStage === 9 && (
-            <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
-                <div>
-                  <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
                     {isPaid ? <Unlock className="w-5 h-5 text-emerald-400" /> : <Lock className="w-5 h-5 text-rose-500" />}
-                    Etapa 09 - Status de Produção & Trava de Segurança
+                    Etapa 08 - Status de Produção & Trava de Segurança
+
                   </h2>
                   <p className="text-xs text-slate-300">
                     A produção e os arquivos de corte no laboratório somente são liberados após confirmação do pagamento.
@@ -1680,12 +1641,12 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
         </div>
 
         <div className="text-xs font-bold text-[#E8D2A8] text-center">
-          Etapa {currentStage} de 9 • {stages[currentStage - 1].name}
+          Etapa {currentStage} de 8 • {stages[currentStage - 1].name}
         </div>
 
-        {currentStage < 9 ? (
+        {currentStage < 8 ? (
           <button
-            onClick={() => setCurrentStage(Math.min(9, currentStage + 1))}
+            onClick={() => setCurrentStage(Math.min(8, currentStage + 1))}
             className="px-5 py-2 bg-[#C9A96E] hover:bg-[#b8985d] text-[#071D49] font-extrabold text-xs rounded-xl shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
           >
             Avançar Etapa <ChevronRight className="w-4 h-4" />
@@ -1698,6 +1659,7 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
             Concluir Cadastro OS
           </button>
         )}
+
       </div>
       
       {showRealCamera && (
