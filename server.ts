@@ -952,6 +952,433 @@ app.post('/api/payments/webhook', async (req, res) => {
   }
 });
 
+// ============================================================================
+// MÓDULO: SALA DE EXAMES OPTOMÉTRICOS & PRONTUÁRIO IA
+// ============================================================================
+const EXAMS_FILE = path.join(process.cwd(), 'exams.json');
+
+interface LocalExamRecord {
+  id: string;
+  paciente_id: string;
+  paciente_nome: string;
+  paciente_telefone: string;
+  paciente_cpf?: string;
+  optometrista_nome: string;
+  cbo_numero: string;
+  data_exame: string;
+  is_pinned: boolean;
+  status: string;
+  prioridade: string;
+  od_esferico: number;
+  od_cilindrico: number;
+  od_eixo: number;
+  oe_esferico: number;
+  oe_cilindrico: number;
+  oe_eixo: number;
+  adicao: number;
+  dnp_od: number;
+  dnp_oe: number;
+  altura_od: number;
+  altura_oe: number;
+  av_longe_od: string;
+  av_longe_oe: string;
+  av_perto_od: string;
+  av_perto_oe: string;
+  diagnostico_optometrico?: string;
+  recomendacao_lentes?: string;
+  observacoes_clinicas?: string;
+  anamnese_json?: any;
+  enviado_para_otica: boolean;
+  anexos?: any[];
+  created_at: string;
+}
+
+const defaultExams: Record<string, LocalExamRecord> = {
+  "PRONT-2026-881": {
+    id: "PRONT-2026-881",
+    paciente_id: "pac_pedrosilva",
+    paciente_nome: "Pedro Silva",
+    paciente_telefone: "(11) 98877-1001",
+    paciente_cpf: "123.456.789-01",
+    optometrista_nome: "Dr. Lauro Rocha",
+    cbo_numero: "CBO 14852-BA",
+    data_exame: "2026-08-02",
+    is_pinned: true,
+    status: "anamnese_concluida",
+    prioridade: "Urgente",
+    od_esferico: -1.75,
+    od_cilindrico: -0.50,
+    od_eixo: 180,
+    oe_esferico: -2.00,
+    oe_cilindrico: -0.25,
+    oe_eixo: 175,
+    adicao: 0.0,
+    dnp_od: 31.0,
+    dnp_oe: 31.5,
+    altura_od: 21.0,
+    altura_oe: 21.0,
+    av_longe_od: "20/25",
+    av_longe_oe: "20/30",
+    av_perto_od: "J2",
+    av_perto_oe: "J2",
+    diagnostico_optometrico: "Miopia e Astigmatismo composto no Olho Direito e Esquerdo",
+    recomendacao_lentes: "Lente Transitions 1.60 Poly com Antirreflexo Premium",
+    observacoes_clinicas: "Paciente queixa-se de cansaço visual ao fim do dia.",
+    anamnese_json: {
+      queixa_principal: "Dificuldade de enxergar de longe e dor de cabeça no final do dia",
+      tempo_sintomas: "3 meses",
+      sintomas_visuais: ["Dores de Cabeça", "Visão Embaçada"],
+      doencas_sistemicas: ["Hipertensão"],
+      historico_familiar: ["Glaucoma"],
+      uso_atual_oculos: "Sim, há 2 anos",
+      ia_summary: "🤖 Análise IA Pré-Exame: Paciente relatou cefaleia tardia e embaçamento de longe. Sintomas associados a fadiga visual refrativa secundária a histórico familiar de glaucoma (atenção para tonometria).",
+      submitted_at: "10:32:00"
+    },
+    enviado_para_otica: false,
+    anexos: [
+      {
+        id: "anexo_1",
+        nome: "Receita Antiga Pedro.pdf",
+        tipo: "receita_antiga",
+        url: "https://example.com/receita.pdf",
+        data_upload: "2026-08-02T10:30:00Z"
+      }
+    ],
+    created_at: new Date().toISOString()
+  },
+  "PRONT-2026-882": {
+    id: "PRONT-2026-882",
+    paciente_id: "pac_pedroalves",
+    paciente_nome: "Pedro Alves",
+    paciente_telefone: "(11) 97766-2002",
+    paciente_cpf: "234.567.890-12",
+    optometrista_nome: "Dr. Lauro Rocha",
+    cbo_numero: "CBO 14852-BA",
+    data_exame: "2026-08-02",
+    is_pinned: false,
+    status: "aguardando_anamnese",
+    prioridade: "Normal",
+    od_esferico: 0.0,
+    od_cilindrico: 0.0,
+    od_eixo: 0,
+    oe_esferico: 0.0,
+    oe_cilindrico: 0.0,
+    oe_eixo: 0,
+    adicao: 0.0,
+    dnp_od: 31.5,
+    dnp_oe: 31.5,
+    altura_od: 20.0,
+    altura_oe: 20.0,
+    av_longe_od: "20/20",
+    av_longe_oe: "20/20",
+    av_perto_od: "J1",
+    av_perto_oe: "J1",
+    enviado_para_otica: false,
+    anexos: [],
+    created_at: new Date().toISOString()
+  }
+};
+
+function loadExams(): Record<string, LocalExamRecord> {
+  try {
+    if (fs.existsSync(EXAMS_FILE)) {
+      const data = fs.readFileSync(EXAMS_FILE, 'utf-8');
+      return JSON.parse(data);
+    } else {
+      saveExams(defaultExams);
+      return defaultExams;
+    }
+  } catch (err) {
+    console.error('Erro ao ler prontuários:', err);
+  }
+  return {};
+}
+
+function saveExams(exams: Record<string, LocalExamRecord>) {
+  try {
+    fs.writeFileSync(EXAMS_FILE, JSON.stringify(exams, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Erro ao salvar prontuários:', err);
+  }
+}
+
+// 1. Adicionar Paciente na Fila do Exame
+app.post('/api/exames/fila/novo', (req, res) => {
+  const { paciente_nome, paciente_telefone, paciente_cpf, prioridade, observacoes } = req.body;
+  
+  if (!paciente_nome || !paciente_telefone) {
+    return res.status(400).json({ error: 'Nome e telefone do paciente são obrigatórios.' });
+  }
+
+  const exams = loadExams();
+  const year = new Date().getFullYear();
+  const hex = Math.random().toString(16).substring(2, 6).toUpperCase();
+  const prontuario_id = `PRONT-${year}-${hex}`;
+  const paciente_id = `pac_${Math.random().toString(36).substring(2, 8)}`;
+
+  const newExam: LocalExamRecord = {
+    id: prontuario_id,
+    paciente_id,
+    paciente_nome,
+    paciente_telefone,
+    paciente_cpf,
+    optometrista_nome: "Dr. Lauro Rocha",
+    cbo_numero: "CBO 14852-BA",
+    data_exame: new Date().toISOString().split('T')[0],
+    is_pinned: false,
+    status: "aguardando_anamnese",
+    prioridade: prioridade || "Normal",
+    od_esferico: 0.0,
+    od_cilindrico: 0.0,
+    od_eixo: 0,
+    oe_esferico: 0.0,
+    oe_cilindrico: 0.0,
+    oe_eixo: 0,
+    adicao: 0.0,
+    dnp_od: 31.5,
+    dnp_oe: 31.5,
+    altura_od: 20.0,
+    altura_oe: 20.0,
+    av_longe_od: "20/20",
+    av_longe_oe: "20/20",
+    av_perto_od: "J1",
+    av_perto_oe: "J1",
+    observacoes_clinicas: observacoes || "",
+    enviado_para_otica: false,
+    anexos: [],
+    created_at: new Date().toISOString()
+  };
+
+  exams[prontuario_id] = newExam;
+  saveExams(exams);
+
+  res.json({
+    mensagem: "Paciente adicionado na fila de exames com sucesso",
+    prontuario_id,
+    status: newExam.status
+  });
+});
+
+// 2. Listar Fila de Atendimento Optométrico
+app.get('/api/exames/fila', (req, res) => {
+  const status = req.query.status as string;
+  const exams = loadExams();
+  let list = Object.values(exams);
+  
+  if (status && status !== 'todos') {
+    list = list.filter(e => e.status === status);
+  }
+  
+  // Ordena prioritários (pinned) no topo e depois por data
+  list.sort((a, b) => {
+    if (a.is_pinned && !b.is_pinned) return -1;
+    if (!a.is_pinned && b.is_pinned) return 1;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+  
+  res.json(list);
+});
+
+// 3. Pin / Unpin Paciente na Fila
+app.post('/api/exames/:id/pin', (req, res) => {
+  const { id } = req.params;
+  const { pin } = req.body;
+  const exams = loadExams();
+  if (exams[id]) {
+    exams[id].is_pinned = !!pin;
+    saveExams(exams);
+    return res.json({ sucesso: true, is_pinned: exams[id].is_pinned });
+  }
+  res.status(404).json({ error: "Prontuário não encontrado" });
+});
+
+// 4. Gerar Link de Anamnese IA para WhatsApp
+app.post('/api/exames/:id/whatsapp/gerar-link', (req, res) => {
+  const { id } = req.params;
+  const exams = loadExams();
+  const rec = exams[id];
+
+  if (!rec) {
+    return res.status(404).json({ error: 'Prontuário não encontrado' });
+  }
+
+  let phoneClean = rec.paciente_telefone.replace(/\D/g, '');
+  if (!phoneClean.startsWith('55')) {
+    phoneClean = '55' + phoneClean;
+  }
+
+  const urlQuestionario = `https://dioculos.app/anamnese?patientId=${rec.paciente_id}&prontuarioId=${rec.id}`;
+  
+  const messageText = `*Óticas Di Óculos - Consulta Optométrica Agendada* 👓\n\n` +
+    `Olá, *${rec.paciente_nome}*! Para agilizar seu exame de vista e proporcionar um atendimento personalizado, ` +
+    `nossa Inteligência Artificial preparou um rápido questionário prévio.\n\n` +
+    `👉 *Clique no link para preencher em 1 minuto:*\n${urlQuestionario}\n\n` +
+    `_Sua saúde visual é nossa prioridade!_`;
+
+  const whatsappLink = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(messageText)}`;
+
+  res.json({
+    paciente: rec.paciente_nome,
+    telefone: rec.paciente_telefone,
+    url_questionario: urlQuestionario,
+    whatsapp_link: whatsappLink,
+    mensagem_texto: messageText
+  });
+});
+
+// 5. Salvar Anamnese IA e Gerar Diagnóstico Preliminar com Gemini
+app.post('/api/exames/:id/anamnese-ia', async (req, res) => {
+  const { id } = req.params;
+  const { queixa_principal, tempo_sintomas, sintomas_visuais, doencas_sistemicas, historico_familiar, uso_atual_oculos } = req.body;
+  
+  const exams = loadExams();
+  const rec = exams[id];
+
+  if (!rec) {
+    return res.status(404).json({ error: 'Prontuário não encontrado' });
+  }
+
+  let summary = `🤖 Análise IA Pré-Exame: Paciente relatou '${queixa_principal}' há ${tempo_sintomas}. Sintomas mapeados: ${sintomas_visuais.join(', ')}. Histórico de óculos: ${uso_atual_oculos}.`;
+
+  try {
+    const ai = getGeminiClient();
+    const systemInstruction = `Você é uma Inteligência Artificial Médica e Clínica especialista em Optometria e Oftalmologia da 'Óticas Di Óculos' (Ituberá - BA).
+Analise as respostas de Anamnese fornecidas pelo paciente e gere um resumo clínico conciso de até 3 linhas para o optometrista.
+Identifique possíveis riscos com base no histórico médico e familiar (ex: se tiver Diabetes/Hipertensão, risco de retinopatia diabética/hipertensiva; se tiver histórico familiar de Glaucoma, indicar atenção extrema para tonometria).
+Mantenha um tom altamente profissional, clínico e direto.`;
+
+    const contents = [{
+      role: 'user',
+      parts: [{
+        text: `Respostas do Paciente ${rec.paciente_nome} (Prontuário: ${id}):
+- Queixa Principal: ${queixa_principal}
+- Tempo dos Sintomas: ${tempo_sintomas}
+- Sintomas Visuais Reclamados: ${sintomas_visuais.join(', ')}
+- Doenças Crônicas/Sistêmicas do Paciente: ${doencas_sistemicas.join(', ')}
+- Histórico Familiar de Doenças Oculares: ${historico_familiar.join(', ')}
+- Uso Atual de Óculos/Lentes: ${uso_atual_oculos}`
+      }]
+    }];
+
+    const aiRes = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents,
+      config: {
+        systemInstruction,
+        temperature: 0.3
+      }
+    });
+
+    if (aiRes.text) {
+      summary = `🤖 Análise IA Pré-Exame: ` + aiRes.text.trim();
+    }
+  } catch (err) {
+    console.error('Falha ao acionar IA para resumo de anamnese:', err);
+  }
+
+  rec.status = 'anamnese_concluida';
+  rec.anamnese_json = {
+    queixa_principal,
+    tempo_sintomas,
+    sintomas_visuais,
+    doencas_sistemicas,
+    historico_familiar,
+    uso_atual_oculos,
+    ia_summary: summary,
+    submitted_at: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+  };
+
+  exams[id] = rec;
+  saveExams(exams);
+
+  res.json({
+    mensagem: "Anamnese salva no prontuário com sucesso!",
+    resumo_ia: summary
+  });
+});
+
+// 6. Concluir Exame e Emitir Receita
+app.put('/api/exames/:id/concluir', (req, res) => {
+  const { id } = req.params;
+  const { od, oe, adicao, dnp_od, dnp_oe, altura_od, altura_oe, av_longe_od, av_longe_oe, av_perto_od, av_perto_oe, diagnostico_optometrico, recomendacao_lentes, observacoes_clinicas } = req.body;
+  
+  const exams = loadExams();
+  const rec = exams[id];
+
+  if (!rec) {
+    return res.status(404).json({ error: 'Prontuário não encontrado' });
+  }
+
+  rec.status = 'concluido';
+  if (od) {
+    rec.od_esferico = Number(od.esferico ?? 0);
+    rec.od_cilindrico = Number(od.cilindrico ?? 0);
+    rec.od_eixo = Number(od.eixo ?? 0);
+  }
+  if (oe) {
+    rec.oe_esferico = Number(oe.esferico ?? 0);
+    rec.oe_cilindrico = Number(oe.cilindrico ?? 0);
+    rec.oe_eixo = Number(oe.eixo ?? 0);
+  }
+  rec.adicao = Number(adicao ?? 0);
+  rec.dnp_od = Number(dnp_od ?? 31.5);
+  rec.dnp_oe = Number(dnp_oe ?? 31.5);
+  rec.altura_od = Number(altura_od ?? 20.0);
+  rec.altura_oe = Number(altura_oe ?? 20.0);
+  
+  if (av_longe_od) rec.av_longe_od = av_longe_od;
+  if (av_longe_oe) rec.av_longe_oe = av_longe_oe;
+  if (av_perto_od) rec.av_perto_od = av_perto_od;
+  if (av_perto_oe) rec.av_perto_oe = av_perto_oe;
+
+  rec.diagnostico_optometrico = diagnostico_optometrico || "";
+  rec.recomendacao_lentes = recomendacao_lentes || "";
+  rec.observacoes_clinicas = observacoes_clinicas || "";
+
+  exams[id] = rec;
+  saveExams(exams);
+
+  res.json({
+    mensagem: "Exame optométrico concluído e receita emitida com sucesso!",
+    prontuario_id: id
+  });
+});
+
+// 7. Transmitir Receita Direto para Balcão da Ótica
+app.post('/api/exames/:id/transmitir-otica', (req, res) => {
+  const { id } = req.params;
+  const exams = loadExams();
+  const rec = exams[id];
+
+  if (!rec) {
+    return res.status(404).json({ error: 'Prontuário não encontrado' });
+  }
+
+  rec.enviado_para_otica = true;
+  exams[id] = rec;
+  saveExams(exams);
+
+  const uuidPart = Math.random().toString(36).substring(2, 5).toUpperCase();
+  const osNumber = `OS-${new Date().getFullYear()}-${uuidPart}`;
+
+  res.json({
+    sucesso: true,
+    mensagem: "Receita transmitida com sucesso para o balcão de vendas!",
+    ordem_servico: {
+      os_numero: osNumber,
+      paciente: rec.paciente_nome,
+      grau_prescrito: {
+        OD: { esf: rec.od_esferico, cil: rec.od_cilindrico, eixo: rec.od_eixo },
+        OE: { esf: rec.oe_esferico, cil: rec.oe_cilindrico, eixo: rec.oe_eixo },
+        ADD: rec.adicao,
+        DNP_OD: rec.dnp_od,
+        DNP_OE: rec.dnp_oe
+      }
+    }
+  });
+});
+
+
 // -------------------------------------------------------------
 // VITE / STATIC MIDDLWARE
 // -------------------------------------------------------------

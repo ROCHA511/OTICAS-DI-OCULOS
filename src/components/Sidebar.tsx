@@ -24,6 +24,7 @@ import {
   ClipboardCheck,
   UserCheck,
   Building2,
+  Eye,
 } from 'lucide-react';
 import { OticasLogo } from './brand/OticasLogo';
 
@@ -41,7 +42,8 @@ export type ActiveTab =
   | 'camera'
   | 'pricetable'
   | 'ai-settings'
-  | 'saas-admin';
+  | 'saas-admin'
+  | 'exam-room';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -74,58 +76,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (setIsMobileOpen) setIsMobileOpen(false);
   };
 
-  // Categorias organizadas de navegação
+  // Categorias organizadas de navegação (conforme a imagem)
   const navGroups = [
     {
-      groupTitle: 'ATENDIMENTO & CLIENTES',
+      groupTitle: 'PRODUTOS & VENDAS',
       items: [
         {
-          id: 'chat' as ActiveTab,
-          title: 'Chat de Atendimento',
-          icon: MessageSquare,
-          badge: unreadCountTotal > 0 ? unreadCountTotal : undefined,
+          id: 'os' as ActiveTab,
+          title: 'Ordens de Serviço',
+          icon: ClipboardCheck,
+          badge: 2,
         },
         {
-          id: 'clients' as ActiveTab,
-          title: 'Clientes',
-          icon: Users,
+          id: 'cashflow' as ActiveTab,
+          title: 'Vendas & Financeiro',
+          icon: ShoppingCart,
         },
+      ],
+    },
+    {
+      groupTitle: 'CLÍNICA & OPTOMETRIA',
+      items: [
         {
-          id: 'sellers' as ActiveTab,
-          title: 'Vendedores',
-          icon: UserCheck,
+          id: 'exam-room' as ActiveTab,
+          title: 'Sala de Exames',
+          icon: Eye,
           isStar: true,
         },
       ],
     },
     {
-      groupTitle: 'PRODUTOS & CAIXA',
+      groupTitle: 'IA & RECURSOS',
       items: [
-        {
-          id: 'catalog' as ActiveTab,
-          title: 'Lentes e Armações',
-          icon: Glasses,
-        },
-        {
-          id: 'cashflow' as ActiveTab,
-          title: 'Movimento do Caixa',
-          icon: ShoppingCart,
-        },
-        {
-          id: 'ai-quotes' as ActiveTab,
-          title: 'Orçamentos & Ofertas',
-          icon: Tag,
-        },
-      ],
-    },
-    {
-      groupTitle: 'OUTRAS FUNÇÕES',
-      items: [
-        {
-          id: 'dashboard' as ActiveTab,
-          title: 'Painel de Informações',
-          icon: BarChart3,
-        },
         {
           id: 'camera' as ActiveTab,
           title: 'Câmeras IA & DNP',
@@ -137,14 +119,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: Layers,
         },
         {
-          id: 'ai-settings' as ActiveTab,
-          title: 'Nossas Soluções',
-          icon: Briefcase,
-          isStar: true,
+          id: 'chat' as ActiveTab,
+          title: 'Chat IA & Atendimento',
+          icon: MessageSquare,
+          badge: unreadCountTotal > 0 ? unreadCountTotal : undefined,
         },
       ],
     },
   ];
+
 
   if (userRole === 'ceo') {
     navGroups.push({

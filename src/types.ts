@@ -351,3 +351,71 @@ export interface AiQuote {
   dnpPhotoUrl?: string;
 }
 
+export interface AnamnesisIaInput {
+  queixa_principal: string;
+  tempo_sintomas: string;
+  sintomas_visuais: string[];
+  doencas_sistemicas: string[];
+  historico_familiar: string[];
+  uso_atual_oculos: string;
+  ia_summary?: string;
+  submitted_at?: string;
+}
+
+export interface ExamRecord {
+  id: string; // ex: PRONT-2026-881
+  paciente_id: string;
+  paciente_nome: string;
+  paciente_telefone: string;
+  paciente_cpf?: string;
+  optometrista_nome: string;
+  cbo_numero: string;
+  data_exame: string;
+  is_pinned: boolean;
+  status: 'aguardando_anamnese' | 'anamnese_concluida' | 'concluido' | 'reagendado' | 'cancelado';
+  prioridade: 'Normal' | 'Urgente';
+
+  // Refração Olho Direito (OD)
+  od_esferico: number;
+  od_cilindrico: number;
+  od_eixo: number;
+  
+  // Refração Olho Esquerdo (OE)
+  oe_esferico: number;
+  oe_cilindrico: number;
+  oe_eixo: number;
+
+  // Adição e Medidas Óticas
+  adicao: number;
+  dnp_od: number;
+  dnp_oe: number;
+  altura_od: number;
+  altura_oe: number;
+
+  // Acuidade Visual
+  av_longe_od: string;
+  av_longe_oe: string;
+  av_perto_od: string;
+  av_perto_oe: string;
+
+  // Diagnóstico e Recomendações
+  diagnostico_optometrico?: string;
+  recomendacao_lentes?: string;
+  observacoes_clinicas?: string;
+
+  // Anamnese IA (JSON)
+  anamnese_json?: AnamnesisIaInput;
+  enviado_para_otica: boolean;
+  created_at?: string;
+  
+  // OCR e Anexos de Documentos
+  anexos?: {
+    id: string;
+    nome: string;
+    tipo: 'receita_antiga' | 'foto_receita' | 'foto_oculos' | 'foto_olhos' | 'retinografia' | 'campo_visual' | 'oct' | 'laudo' | 'outros';
+    url: string;
+    data_upload: string;
+  }[];
+}
+
+

@@ -16,6 +16,7 @@ import {
   QrCode,
   Sparkles,
   ShieldAlert,
+  Info,
   ChevronRight,
   ChevronLeft,
   ArrowLeft,
@@ -471,14 +472,11 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
     { num: 2, name: 'Armação', icon: Glasses },
     { num: 3, name: 'Lentes', icon: Eye },
     { num: 4, name: 'Medição IA', icon: Camera },
-    { num: 5, name: 'Cálculos IA', icon: Calculator },
-    { num: 6, name: 'Montagem', icon: Sliders },
-    { num: 7, name: 'Receita', icon: FileText },
-    { num: 8, name: 'Geração OS', icon: QrCode },
-    { num: 9, name: 'Anexos', icon: ImageIcon },
-    { num: 10, name: 'Orçamento', icon: DollarSign },
-    { num: 11, name: 'PDF Técnico', icon: Printer },
-    { num: 12, name: 'Produção', icon: Lock },
+    { num: 5, name: 'Cálculos, Receita & Anexos', icon: Calculator },
+    { num: 6, name: 'Geração OS', icon: QrCode },
+    { num: 7, name: 'Orçamento', icon: DollarSign },
+    { num: 8, name: 'PDF Técnico', icon: Printer },
+    { num: 9, name: 'Produção', icon: Lock },
   ];
 
   return (
@@ -1139,287 +1137,278 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              ETAPA 05 - CÁLCULOS AUTOMÁTICOS DA BIOMETRIA
+                  {/* ====================================================
+              NOVA ETAPA 05 - PARÂMETROS CLÍNICOS, RECEITA & MONTAGEM
              ==================================================== */}
           {currentStage === 5 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
+              {/* Cabeçalho */}
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <Calculator className="w-5 h-5 text-[#C9A96E]" /> Etapa 05 - Cálculos Automáticos de Precisão Biométrica
+                    <Calculator className="w-5 h-5 text-[#C9A96E]" /> Etapa 05 - Parâmetros Clínicos, Receita & Montagem (Cálculos de IA & Anexos)
                   </h2>
                   <p className="text-xs text-slate-300">
-                    Parâmetros biológicos calculados com inteligência artificial para montagem de alta performance.
+                    Confirme os graus da receita, verifique as descentrações calculadas e os anexos na mesma tela.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">DNP Olho Direito</span>
-                  <div className="text-xl font-black text-[#E8D2A8]">{biometrics.dnpOD} mm</div>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">DNP Olho Esquerdo</span>
-                  <div className="text-xl font-black text-[#E8D2A8]">{biometrics.dnpOE} mm</div>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">DP Total</span>
-                  <div className="text-xl font-black text-emerald-400">{biometrics.dpTotal} mm</div>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Altura OD / OE</span>
-                  <div className="text-xl font-black text-[#E8D2A8]">{biometrics.alturaOD} / {biometrics.alturaOE} mm</div>
+              {/* Grid Principal de Conteúdo */}
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                {/* Coluna Esquerda: Receita + Cálculos e Montagem (8 Colunas) */}
+                <div className="xl:col-span-8 space-y-6">
+                  {/* Seção A: Digitação da Receita */}
+                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl space-y-4 shadow-md">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                      <FileText className="w-4.5 h-4.5 text-[#C9A96E]" />
+                      <span className="text-xs font-black text-[#E8D2A8] uppercase tracking-wider">Receita Médica Optométrica</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Olho Direito */}
+                      <div className="space-y-2 md:border-r border-slate-800 pr-0 md:pr-4">
+                        <span className="text-[11px] font-black text-slate-300 uppercase">Olho Direito (OD)</span>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] text-slate-400 block">Esférico</label>
+                            <input
+                              type="number"
+                              step="0.25"
+                              value={prescription.od.esferico}
+                              onChange={(e) => setPrescription({
+                                ...prescription,
+                                od: { ...prescription.od, esferico: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-slate-400 block">Cilindrico</label>
+                            <input
+                              type="number"
+                              step="0.25"
+                              value={prescription.od.cilindrico}
+                              onChange={(e) => setPrescription({
+                                ...prescription,
+                                od: { ...prescription.od, cilindrico: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-slate-400 block">Eixo (°)</label>
+                            <input
+                              type="number"
+                              value={prescription.od.eixo}
+                              onChange={(e) => setPrescription({
+                                ...prescription,
+                                od: { ...prescription.od, eixo: parseInt(e.target.value) || 0 }
+                              })}
+                              className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center text-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Olho Esquerdo */}
+                      <div className="space-y-2">
+                        <span className="text-[11px] font-black text-slate-300 uppercase">Olho Esquerdo (OE)</span>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[10px] text-slate-400 block">Esférico</label>
+                            <input
+                              type="number"
+                              step="0.25"
+                              value={prescription.oe.esferico}
+                              onChange={(e) => setPrescription({
+                                ...prescription,
+                                oe: { ...prescription.oe, esferico: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-slate-400 block">Cilindrico</label>
+                            <input
+                              type="number"
+                              step="0.25"
+                              value={prescription.oe.cilindrico}
+                              onChange={(e) => setPrescription({
+                                ...prescription,
+                                oe: { ...prescription.oe, cilindrico: parseFloat(e.target.value) || 0 }
+                              })}
+                              className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-slate-400 block">Eixo (°)</label>
+                            <input
+                              type="number"
+                              value={prescription.oe.eixo}
+                              onChange={(e) => setPrescription({
+                                ...prescription,
+                                oe: { ...prescription.oe, eixo: parseInt(e.target.value) || 0 }
+                              })}
+                              className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center text-white"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block">Adição (Multifocal)</label>
+                        <input
+                          type="number"
+                          step="0.25"
+                          value={prescription.adicao || 0}
+                          onChange={(e) => setPrescription({
+                            ...prescription,
+                            adicao: parseFloat(e.target.value) || 0
+                          })}
+                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-emerald-400 text-center"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block">Médico / Optometrista</label>
+                        <input
+                          type="text"
+                          value={prescription.medicoName || ''}
+                          onChange={(e) => setPrescription({
+                            ...prescription,
+                            medicoName: e.target.value
+                          })}
+                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seção B: Cálculos Biométricos & Parâmetros de Montagem */}
+                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl space-y-4 shadow-md">
+                    <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+                      <Calculator className="w-4.5 h-4.5 text-[#C9A96E]" />
+                      <span className="text-xs font-black text-[#E8D2A8] uppercase tracking-wider">Parâmetros Biométricos de IA & Descentração</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-xl text-center">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase block">DNP OD</span>
+                        <span className="text-sm font-black text-[#E8D2A8]">{biometrics.dnpOD} mm</span>
+                      </div>
+                      <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-xl text-center">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase block">DNP OE</span>
+                        <span className="text-sm font-black text-[#E8D2A8]">{biometrics.dnpOE} mm</span>
+                      </div>
+                      <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-xl text-center">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase block">DP Total</span>
+                        <span className="text-sm font-black text-emerald-400">{biometrics.dpTotal} mm</span>
+                      </div>
+                      <div className="bg-slate-950 border border-slate-800/80 p-2.5 rounded-xl text-center">
+                        <span className="text-[9px] text-slate-400 font-bold uppercase block">Alturas OD/OE</span>
+                        <span className="text-sm font-black text-[#E8D2A8]">{biometrics.alturaOD} / {biometrics.alturaOE} mm</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                      <div className="bg-slate-950 border border-slate-800/60 p-3.5 rounded-xl space-y-1">
+                        <span className="text-[10px] font-bold text-[#C9A96E] uppercase block">DBC & Centro Geométrico</span>
+                        <div className="text-xs text-slate-300">DBC: Aro({selectedFrame.eyeSize}) + Ponte({selectedFrame.bridge}) = <strong>{dbc} mm</strong></div>
+                        <div className="text-xs text-slate-300">CG: <strong>{centroGeometrico} mm</strong></div>
+                      </div>
+
+                      <div className="bg-slate-950 border border-slate-800/60 p-3.5 rounded-xl space-y-1">
+                        <span className="text-[10px] font-bold text-[#C9A96E] uppercase block">Descentração Necessária</span>
+                        <div className="text-xs text-slate-300">OD: <strong>{descentracaoOD.toFixed(1)} mm</strong> | OE: <strong>{descentracaoOE.toFixed(1)} mm</strong></div>
+                        <div className="text-xs text-emerald-400 font-bold">Total: {descentracaoTotal.toFixed(1)} mm</div>
+                      </div>
+
+                      <div className="bg-slate-950 border border-slate-800/60 p-3.5 rounded-xl space-y-1">
+                        <span className="text-[10px] font-bold text-[#C9A96E] uppercase block">Lente & Espessura</span>
+                        <div className="text-xs text-slate-300">Diâmetro Mínimo: <strong>{diametroMinimoLente.toFixed(1)} mm</strong></div>
+                        <div className="text-xs text-slate-300">Espessura/Peso: <strong>{espessuraEstimada} / {pesoEstimado}g</strong></div>
+                      </div>
+                    </div>
+
+                    {/* OpticMesh AI Validador */}
+                    <div className="p-4 rounded-xl bg-slate-950 border border-[#C9A96E]/20 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-amber-400" />
+                          <span className="text-[11px] font-bold text-[#E8D2A8] uppercase tracking-wider">Score de Adaptação Preditiva (OpticMesh AI)</span>
+                        </div>
+                        <span className={`px-2 py-0.5 text-xs font-black rounded-lg ${
+                          compatibilidadePreditiva.score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
+                          compatibilidadePreditiva.score >= 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
+                          'bg-red-500/20 text-red-400 border border-red-500/40'
+                        }`}>
+                          {compatibilidadePreditiva.score} / 100
+                        </span>
+                      </div>
+
+                      {compatibilidadePreditiva.riscos.length > 0 && (
+                        <div className="text-[11px] text-red-300 space-y-0.5 border-t border-slate-900 pt-2">
+                          {compatibilidadePreditiva.riscos.map((r, idx) => (
+                            <div key={idx} className="pl-3 relative before:content-['•'] before:absolute before:left-0 text-justify">{r}</div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Distância Vértice</span>
-                  <div className="text-lg font-bold text-slate-100">{biometrics.distanciaVertice} mm</div>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Face Form (Envolvente)</span>
-                  <div className="text-lg font-bold text-slate-100">{biometrics.faceForm}°</div>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Ângulo Pantoscópico</span>
-                  <div className="text-lg font-bold text-slate-100">{biometrics.anguloPantoscopico}°</div>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl space-y-1">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">Assimetria Facial</span>
-                  <div className="text-lg font-bold text-slate-100">{biometrics.assimetriaFacial} mm</div>
+                {/* Coluna Direita: Fotos e Anexos (4 Colunas) */}
+                <div className="xl:col-span-4 space-y-6">
+                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-md h-full flex flex-col justify-between space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2 border-b border-slate-800 pb-2 mb-4">
+                        <ImageIcon className="w-4.5 h-4.5 text-[#C9A96E]" />
+                        <span className="text-xs font-black text-[#E8D2A8] uppercase tracking-wider">Fotos e Documentos Anexados</span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center space-y-1">
+                          <img src={capturedFrontPhoto!} className="w-full h-20 object-cover rounded-lg" alt="Foto Frontal" />
+                          <span className="text-[9px] font-bold text-slate-300 block">Foto Frontal</span>
+                        </div>
+                        <div className="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center space-y-1">
+                          <img src={capturedRightPhoto!} className="w-full h-20 object-cover rounded-lg" alt="Foto Lateral D" />
+                          <span className="text-[9px] font-bold text-slate-300 block">Foto Lateral D</span>
+                        </div>
+                        <div className="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center space-y-1">
+                          <img src={selectedFrame.image} className="w-full h-20 object-cover rounded-lg" alt="Armação" />
+                          <span className="text-[9px] font-bold text-slate-300 block">Foto Armação</span>
+                        </div>
+                        <div className="bg-slate-950 border border-slate-800 p-2 rounded-xl text-center space-y-1">
+                          <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=80" className="w-full h-20 object-cover rounded-lg" alt="Receita" />
+                          <span className="text-[9px] font-bold text-slate-300 block">Foto Receita</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-950/60 border border-slate-800 p-4 rounded-xl text-[10px] text-slate-300 space-y-2">
+                      <div className="font-bold text-[#E8D2A8] uppercase">Resumo Clínico da OS:</div>
+                      <div><strong>Paciente:</strong> {selectedClient?.name || 'Não selecionado'}</div>
+                      <div><strong>Armação:</strong> {selectedFrame.brand} ({selectedFrame.model})</div>
+                      <div><strong>Lente:</strong> {selectedLens.name}</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
           {/* ====================================================
-              ETAPA 06 - CÁLCULO DA ARMAÇÃO E DESCENTRAÇÃO
+              NOVA ETAPA 06 - GERAÇÃO AUTOMÁTICA DA OS (3 VIAS OFICIAIS)
              ==================================================== */}
           {currentStage === 6 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <Sliders className="w-5 h-5 text-[#C9A96E]" /> Etapa 06 - Cálculos de Encaixe e Descentração da Armação
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Cálculo automático de DBC, Centro Geométrico, Descentração e Diâmetro Mínimo para o Laboratório.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2">
-                  <span className="text-xs font-bold text-[#C9A96E] uppercase">DBC & Centro Geométrico</span>
-                  <div className="text-sm text-slate-200">DBC = Aro ({selectedFrame.eyeSize}) + Ponte ({selectedFrame.bridge}) = <strong>{dbc} mm</strong></div>
-                  <div className="text-sm text-slate-200">CG = DBC / 2 = <strong>{centroGeometrico} mm</strong></div>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2">
-                  <span className="text-xs font-bold text-[#C9A96E] uppercase">Descentração Necessária</span>
-                  <div className="text-sm text-slate-200">Descentração OD: <strong>{descentracaoOD.toFixed(1)} mm</strong></div>
-                  <div className="text-sm text-slate-200">Descentração OE: <strong>{descentracaoOE.toFixed(1)} mm</strong></div>
-                  <div className="text-sm text-emerald-400 font-bold">Descentração Total: {descentracaoTotal.toFixed(1)} mm</div>
-                </div>
-
-                <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-2">
-                  <span className="text-xs font-bold text-[#C9A96E] uppercase">Lente & Espessura</span>
-                  <div className="text-sm text-slate-200">Diâmetro Mínimo: <strong>{diametroMinimoLente.toFixed(1)} mm</strong></div>
-                  <div className="text-sm text-slate-200">Espessura Estimada: <strong>{espessuraEstimada}</strong></div>
-                  <div className="text-sm text-slate-200">Peso Estimado: <strong>{pesoEstimado} g</strong></div>
-                </div>
-              </div>
-
-              {/* MÓDULO 10 - Validador de Armação e Lentes da IA */}
-              <div className="mt-6 p-4 rounded-2xl bg-slate-950/80 border border-[#C9A96E]/20 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-400" />
-                    <span className="text-xs font-bold text-[#E8D2A8] uppercase tracking-wider">Score de Adaptação Preditiva (OpticMesh AI)</span>
-                  </div>
-                  <span className={`px-3 py-1 text-sm font-black rounded-xl ${
-                    compatibilidadePreditiva.score >= 80 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' :
-                    compatibilidadePreditiva.score >= 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' :
-                    'bg-red-500/20 text-red-400 border border-red-500/40'
-                  }`}>
-                    {compatibilidadePreditiva.score} / 100
-                  </span>
-                </div>
-                
-                {compatibilidadePreditiva.riscos.length > 0 && (
-                  <div className="space-y-1.5 border-t border-slate-900 pt-3">
-                    <div className="text-xs font-bold text-red-400 uppercase tracking-wide flex items-center gap-1.5">
-                      <ShieldAlert className="w-4 h-4" /> Risco de Não-Adaptação ou Montagem:
-                    </div>
-                    {compatibilidadePreditiva.riscos.map((r, idx) => (
-                      <div key={idx} className="text-xs text-red-300 pl-5 relative before:content-['•'] before:absolute before:left-1 text-justify">{r}</div>
-                    ))}
-                  </div>
-                )}
-                
-                {compatibilidadePreditiva.recomendacoes.length > 0 && (
-                  <div className="space-y-1.5 border-t border-slate-900 pt-3">
-                    <div className="text-xs font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
-                      <Check className="w-4 h-4" /> Sugestões de Ajuste Recomendadas:
-                    </div>
-                    {compatibilidadePreditiva.recomendacoes.map((rec, idx) => (
-                      <div key={idx} className="text-xs text-emerald-300 pl-5 relative before:content-['•'] before:absolute before:left-1 text-justify">{rec}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ====================================================
-              ETAPA 07 - DIGITAÇÃO DA RECEITA
-             ==================================================== */}
-          {currentStage === 7 && (
-            <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
-                <div>
-                  <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-[#C9A96E]" /> Etapa 07 - Receita Médica Optométrica
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Insira ou confirme a refração esférica, cilíndrica, eixo e adição.
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Olho Direito */}
-                  <div className="space-y-2 border-r border-slate-800 pr-4">
-                    <span className="text-xs font-black text-[#E8D2A8] uppercase">Olho Direito (OD)</span>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="text-[10px] text-slate-400 block">Esférico</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={prescription.od.esferico}
-                          onChange={(e) => setPrescription({
-                            ...prescription,
-                            od: { ...prescription.od, esferico: parseFloat(e.target.value) || 0 }
-                          })}
-                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-slate-400 block">Cilindrico</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={prescription.od.cilindrico}
-                          onChange={(e) => setPrescription({
-                            ...prescription,
-                            od: { ...prescription.od, cilindrico: parseFloat(e.target.value) || 0 }
-                          })}
-                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-slate-400 block">Eixo (°)</label>
-                        <input
-                          type="number"
-                          value={prescription.od.eixo}
-                          onChange={(e) => setPrescription({
-                            ...prescription,
-                            od: { ...prescription.od, eixo: parseInt(e.target.value) || 0 }
-                          })}
-                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Olho Esquerdo */}
-                  <div className="space-y-2">
-                    <span className="text-xs font-black text-[#E8D2A8] uppercase">Olho Esquerdo (OE)</span>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="text-[10px] text-slate-400 block">Esférico</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={prescription.oe.esferico}
-                          onChange={(e) => setPrescription({
-                            ...prescription,
-                            oe: { ...prescription.oe, esferico: parseFloat(e.target.value) || 0 }
-                          })}
-                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-slate-400 block">Cilindrico</label>
-                        <input
-                          type="number"
-                          step="0.25"
-                          value={prescription.oe.cilindrico}
-                          onChange={(e) => setPrescription({
-                            ...prescription,
-                            oe: { ...prescription.oe, cilindrico: parseFloat(e.target.value) || 0 }
-                          })}
-                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-slate-400 block">Eixo (°)</label>
-                        <input
-                          type="number"
-                          value={prescription.oe.eixo}
-                          onChange={(e) => setPrescription({
-                            ...prescription,
-                            oe: { ...prescription.oe, eixo: parseInt(e.target.value) || 0 }
-                          })}
-                          className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-center"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-[10px] text-slate-400 block">Adição (Multifocal)</label>
-                    <input
-                      type="number"
-                      step="0.25"
-                      value={prescription.adicao || 0}
-                      onChange={(e) => setPrescription({
-                        ...prescription,
-                        adicao: parseFloat(e.target.value) || 0
-                      })}
-                      className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-emerald-400"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 block">Médico / Optometrista</label>
-                    <input
-                      type="text"
-                      value={prescription.medicoName || ''}
-                      onChange={(e) => setPrescription({
-                        ...prescription,
-                        medicoName: e.target.value
-                      })}
-                      className="w-full p-2 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ====================================================
-              ETAPA 08 - GERAÇÃO AUTOMÁTICA DA OS (3 VIAS OFICIAIS)
-             ==================================================== */}
-          {currentStage === 8 && (
-            <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
-                <div>
-                  <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <QrCode className="w-5 h-5 text-[#C9A96E]" /> Etapa 08 - Gerador Oficial de Impressão (Modelo DI Óticas)
+                    <QrCode className="w-5 h-5 text-[#C9A96E]" /> Etapa 06 - Gerador Oficial de Impressão (Modelo DI Óticas)
                   </h2>
                   <p className="text-xs text-slate-300">
                     Visualização idêntica ao documento impresso oficial de 3 vias (Laboratório, Ótica e Cliente).
@@ -1477,51 +1466,14 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              ETAPA 09 - ANEXOS E FOTOS DO CLIENTE
+              NOVA ETAPA 07 - ORÇAMENTO E CONDIÇÕES DE PAGAMENTO
              ==================================================== */}
-          {currentStage === 9 && (
+          {currentStage === 7 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <ImageIcon className="w-5 h-5 text-[#C9A96E]" /> Etapa 09 - Fotos do Cliente e Anexos Digitais
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Todas as fotos biométricas e arquivos da armação e receita vinculados à OS.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-900 border border-slate-800 p-2 rounded-2xl text-center space-y-1">
-                  <img src={capturedFrontPhoto!} className="w-full h-28 object-cover rounded-xl" alt="Foto Frontal" />
-                  <span className="text-[10px] font-bold text-[#E8D2A8]">Foto Frontal</span>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-2 rounded-2xl text-center space-y-1">
-                  <img src={capturedRightPhoto!} className="w-full h-28 object-cover rounded-xl" alt="Foto Lateral D" />
-                  <span className="text-[10px] font-bold text-[#E8D2A8]">Foto Lateral D</span>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-2 rounded-2xl text-center space-y-1">
-                  <img src={selectedFrame.image} className="w-full h-28 object-cover rounded-xl" alt="Armação" />
-                  <span className="text-[10px] font-bold text-[#E8D2A8]">Foto Armação</span>
-                </div>
-                <div className="bg-slate-900 border border-slate-800 p-2 rounded-2xl text-center space-y-1">
-                  <img src="https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500&auto=format&fit=crop&q=80" className="w-full h-28 object-cover rounded-xl" alt="Receita Médica" />
-                  <span className="text-[10px] font-bold text-[#E8D2A8]">Foto Receita</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ====================================================
-              ETAPA 10 - ORÇAMENTO E CONDIÇÕES DE PAGAMENTO
-             ==================================================== */}
-          {currentStage === 10 && (
-            <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
-                <div>
-                  <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-[#C9A96E]" /> Etapa 10 - Fechamento do Orçamento e Adiantamento
+                    <DollarSign className="w-5 h-5 text-[#C9A96E]" /> Etapa 07 - Fechamento do Orçamento e Adiantamento
                   </h2>
                   <p className="text-xs text-slate-300">
                     Defina descontos, entrada/adiantamento e parcelamento.
@@ -1567,7 +1519,7 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
                       type="number"
                       value={advancePayment}
                       onChange={(e) => setAdvancePayment(parseFloat(e.target.value) || 0)}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-emerald-400"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-sm font-bold text-emerald-400 animate-pulse-once"
                     />
                   </div>
 
@@ -1576,7 +1528,7 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value as any)}
-                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold"
+                      className="w-full p-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs font-bold text-white"
                     >
                       <option value="pix">Pix (Confirmação Instantânea)</option>
                       <option value="cartao_credito">Cartão de Crédito</option>
@@ -1595,14 +1547,14 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              ETAPA 11 - PDF TÉCNICO COMPLETO
+              NOVA ETAPA 08 - PDF TÉCNICO COMPLETO
              ==================================================== */}
-          {currentStage === 11 && (
+          {currentStage === 8 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <Printer className="w-5 h-5 text-[#C9A96E]" /> Etapa 11 - PDF Técnico do Laboratório
+                    <Printer className="w-5 h-5 text-[#C9A96E]" /> Etapa 08 - PDF Técnico do Laboratório
                   </h2>
                   <p className="text-xs text-slate-300">
                     Ficha Técnica completa com todas as especificações ópticas pronta para exportação.
@@ -1635,15 +1587,15 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              ETAPA 12 - BLOQUEIO E LIBERAÇÃO DE PRODUÇÃO
+              NOVA ETAPA 09 - BLOQUEIO E LIBERAÇÃO DE PRODUÇÃO
              ==================================================== */}
-          {currentStage === 12 && (
+          {currentStage === 9 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
                     {isPaid ? <Unlock className="w-5 h-5 text-emerald-400" /> : <Lock className="w-5 h-5 text-rose-500" />}
-                    Etapa 12 - Status de Produção & Trava de Segurança
+                    Etapa 09 - Status de Produção & Trava de Segurança
                   </h2>
                   <p className="text-xs text-slate-300">
                     A produção e os arquivos de corte no laboratório somente são liberados após confirmação do pagamento.
@@ -1675,7 +1627,7 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
                   <div className="flex justify-center gap-3 pt-2">
                     <button
                       onClick={() => handleFinalizeOS(false)}
-                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl cursor-pointer"
+                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl cursor-pointer shadow-md"
                     >
                       Salvar OS como Pendente
                     </button>
@@ -1728,12 +1680,12 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
         </div>
 
         <div className="text-xs font-bold text-[#E8D2A8] text-center">
-          Etapa {currentStage} de 12 • {stages[currentStage - 1].name}
+          Etapa {currentStage} de 9 • {stages[currentStage - 1].name}
         </div>
 
-        {currentStage < 12 ? (
+        {currentStage < 9 ? (
           <button
-            onClick={() => setCurrentStage(Math.min(12, currentStage + 1))}
+            onClick={() => setCurrentStage(Math.min(9, currentStage + 1))}
             className="px-5 py-2 bg-[#C9A96E] hover:bg-[#b8985d] text-[#071D49] font-extrabold text-xs rounded-xl shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
           >
             Avançar Etapa <ChevronRight className="w-4 h-4" />
