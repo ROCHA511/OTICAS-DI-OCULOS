@@ -39,6 +39,9 @@ import {
   ensureUUID
 } from './utils/supabaseSync';
 import { supabase } from './utils/supabaseClient';
+import { ExamRoomModule } from './components/exam/ExamRoomModule';
+import { RecipeValidatorScreen } from './components/exam/RecipeValidatorScreen';
+
 
 import {
   initialClients,
@@ -586,10 +589,25 @@ export default function App() {
   // Intercepta convite exclusivo de auto-onboarding SaaS do cliente final
   const queryParams = new URLSearchParams(window.location.search);
   const isAutoOnboarding = queryParams.get('saas') === 'true' && queryParams.get('onboarding') === 'true';
+  const recipeIdToValidate = queryParams.get('validarReceita');
+
+  if (recipeIdToValidate) {
+    return (
+      <RecipeValidatorScreen
+        prontuarioId={recipeIdToValidate}
+        onBackToApp={() => {
+          const newUrl = window.location.origin + window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+          window.location.reload();
+        }}
+      />
+    );
+  }
 
   if (isAutoOnboarding) {
     return <SaaSOnboardingView />;
   }
+
 
   if (!currentUser) {
     return (
@@ -918,6 +936,8 @@ export default function App() {
           )}
 
           {activeTab === 'saas-admin' && <SaaSAdminView />}
+
+          {activeTab === 'exam-room' && <ExamRoomModule />}
         </main>
       </div>
 
