@@ -31,16 +31,18 @@ import {
   Sliders,
   Scissors
 } from 'lucide-react';
-import { Client, Frame, Lens, ServiceOrder, OpticalPrescription, DnpMeasurement } from '../../types';
+import { Client, Frame, Lens, ServiceOrder, OpticalPrescription, DnpMeasurement, LensType } from '../../types';
 import { OticasLogo } from '../brand/OticasLogo';
 import { ServiceOrderDocument } from './ServiceOrderDocument';
 import FaceMeshOverlay from '../biometria/FaceMeshOverlay';
 import { calcularGeometriaOptica, estimarEspessuraLente, validarCompatibilidadePreditiva } from '../../utils/CalculadoraOptica';
+import { OFFICIAL_PRICE_TABLE } from '../../data/priceTableData';
 
 interface SmartOSWizardProps {
   clients: Client[];
   frames: Frame[];
   lenses: Lens[];
+  serviceOrders: ServiceOrder[];
   onSaveOS: (newOS: ServiceOrder) => void;
   onClose: () => void;
   onAddClient?: (client: Client) => void;
@@ -50,6 +52,7 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
   clients,
   frames,
   lenses,
+  serviceOrders,
   onSaveOS,
   onClose,
   onAddClient,
@@ -95,6 +98,98 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
     description: 'Lente multifocal digital com campo de visão estendido e antirreflexo contra reflexos de LED/sol.',
     idealForRange: 'Presbiopia e Graus Moderados a Altos',
   });
+
+  // Lentes oficiais mapeadas da tabela de preços
+  const officialLenses: Lens[] = React.useMemo(() => {
+    return OFFICIAL_PRICE_TABLE.map((item, index) => {
+      let type: LensType = 'visao_simples';
+      const categoryLower = item.category.toLowerCase();
+      const nameLower = item.name.toLowerCase();
+
+      if (categoryLower.includes('visao simples') || categoryLower.includes('visão simples')) {
+        type = 'visao_simples';
+      } else if (categoryLower.includes('multifocal')) {
+        type = 'multifocal_digital';
+      } else if (categoryLower.includes('bifocal')) {
+        type = 'bifocal';
+      }
+
+      if (nameLower.includes('sensity') || nameLower.includes('photofusion') || nameLower.includes('transitions') || nameLower.includes('foto')) {
+        type = 'fotocromatica';
+      } else if (nameLower.includes('bluecontrol') || nameLower.includes('blue') || nameLower.includes('crizal') || nameLower.includes('antirreflexo')) {
+        type = 'antirreflexo_blue';
+      }
+
+      let indexRefraction = 1.5;
+      const refMatch = nameLower.match(/1\.\d+/);
+      if (refMatch) {
+        indexRefraction = parseFloat(refMatch[0]);
+      } else if (item.refractionIndex) {
+        indexRefraction = parseFloat(item.refractionIndex);
+      }
+
+      return {
+        id: `lens_price_${item.code}_${index}`,
+        brand: item.brand,
+        name: item.name,
+        type: type,
+        indexRefraction: indexRefraction,
+        price: item.price,
+        description: `Lente ${item.category} ${item.brand} de alta precisão óptica digital com tratamentos especiais.`,
+        idealForRange: item.protections || 'Graus esféricos e cilíndricos variados',
+        fabricante: item.brand,
+        garantiaMeses: 24,
+        tratamentos: item.protections ? item.protections.split(',') : ['Antirreflexo', 'Proteção UV']
+      };
+    });
+  }, []);
+
+  // Filtros do Catálogo de Lentes (Etapa 3)
+  const [lensSearchTerm, setLensSearchTerm] = useState('');
+  const [lensFilterBrand, setLensFilterBrand] = useState('todos');
+  const [lensFilterCategory, setLensFilterCategory] = useState('todos');
+
+  // Consulta de Ordens de Serviço (Etapa 3)
+  const [osSearchTerm, setOsSearchTerm] = useState('');
+  const [selectedOldOS, setSelectedOldOS] = useState<ServiceOrder | null>(null);
+
+  const handleImportOSData = (oldOS: ServiceOrder) => {
+    const clientMatch = clients.find(c => c.id === oldOS.clientId || c.name.toLowerCase() === oldOS.clientName.toLowerCase());
+    if (clientMatch) {
+      setSelectedClient(clientMatch);
+    }
+    if (oldOS.frame) {
+      setSelectedFrame(oldOS.frame);
+    }
+    if (oldOS.lens) {
+      const matchInOfficial = officialLenses.find(l => l.name === oldOS.lens.name) || oldOS.lens;
+      setSelectedLens(matchInOfficial);
+    }
+    if (oldOS.dnp) {
+      setBiometrics({
+        dnpOD: oldOS.dnp.dnpOD || 32.0,
+        dnpOE: oldOS.dnp.dnpOE || 32.0,
+        dpTotal: oldOS.dnp.dpTotal || 64.0,
+        alturaOD: oldOS.dnp.alturaCentroOD || 29.0,
+        alturaOE: oldOS.dnp.alturaCentroOE || 29.0,
+        centroHorizOD: oldOS.dnp.dnpOD || 32.0,
+        centroHorizOE: oldOS.dnp.dnpOE || 32.0,
+        centroVertOD: oldOS.dnp.alturaCentroOD || 29.0,
+        centroVertOE: oldOS.dnp.alturaCentroOE || 29.0,
+        distanciaVertice: 12.5,
+        faceForm: 5.0,
+        anguloPantoscopico: 8.0,
+        assimetriaFacial: 0.4,
+        inclinacaoCabeca: 1.2,
+        confidenceScore: 99.8
+      });
+    }
+    if (oldOS.prescription) {
+      setPrescription(oldOS.prescription);
+    }
+    alert(`Dados da OS ${oldOS.osNumber} do paciente ${oldOS.clientName} importados com sucesso!`);
+    setSelectedOldOS(null);
+  };
 
   // Stage 4: Biometric AI Camera Capture
   const [isCapturingCam, setIsCapturingCam] = useState(false);
@@ -153,8 +248,22 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
   const [installments, setInstallments] = useState<number>(3);
   const [isPaid, setIsPaid] = useState<boolean>(false);
 
-  // OS Identification Number
-  const [osNumber] = useState(`OS-202607${Math.floor(1000 + Math.random() * 9000)}`);
+  // OS Identification Number - Sequencial iniciando de 1
+  const nextOSInt = React.useMemo(() => {
+    if (!serviceOrders || serviceOrders.length === 0) return 1;
+    const numbers = serviceOrders.map(os => {
+      const match = os.osNumber.match(/\d+/);
+      return match ? parseInt(match[0], 10) : 0;
+    });
+    const maxNum = Math.max(...numbers, 0);
+    return maxNum > 0 ? maxNum + 1 : serviceOrders.length + 1;
+  }, [serviceOrders]);
+
+  const [osNumber, setOsNumber] = useState(`OS-${nextOSInt}`);
+
+  useEffect(() => {
+    setOsNumber(`OS-${nextOSInt}`);
+  }, [nextOSInt]);
 
   // ESC Key listener to exit
   useEffect(() => {
@@ -683,69 +792,269 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
              ==================================================== */}
           {currentStage === 3 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
-              <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
+              {/* Cabeçalho */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[#C9A96E]/30 pb-4 gap-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <Eye className="w-5 h-5 text-[#C9A96E]" /> Etapa 03 - Catálogo Visual de Lentes (Varilux, Kodak, Hoya, Zeiss, Shamir, Tokai, Essilor)
+                    <Eye className="w-5 h-5 text-[#C9A96E]" /> Etapa 03 - Catálogo de Lentes Inteligente (Tabela Completa de Preços)
                   </h2>
                   <p className="text-xs text-slate-300">
-                    Lentes de Alta Precisão Digital com Proteção Blue UV, Antirreflexo e Transitions.
+                    Todas as marcas e lentes cadastradas na tabela oficial do laboratório. Filtre ou consulte uma OS anterior para importar.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {lenses.map((l) => {
-                  const isSelected = selectedLens.id === l.id;
-                  return (
-                    <div
-                      key={l.id}
-                      className={`bg-slate-900 border-2 rounded-2xl p-4 space-y-3 transition-all flex flex-col justify-between ${
-                        isSelected
-                          ? 'border-[#C9A96E] ring-2 ring-[#C9A96E] shadow-xl'
-                          : 'border-slate-800 hover:border-slate-600'
-                      }`}
-                    >
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="bg-[#0B255C] text-[#C9A96E] text-[10px] font-black px-2.5 py-1 rounded-lg border border-[#C9A96E]">
-                            Fabricante: {l.brand}
-                          </span>
-                          <span className="bg-slate-800 text-slate-200 text-[10px] font-bold px-2 py-0.5 rounded-md">
-                            Índice {l.indexRefraction}
-                          </span>
-                        </div>
-
-                        <h3 className="text-sm font-black text-slate-100">{l.name}</h3>
-                        <p className="text-[11px] text-slate-400 leading-snug">{l.description}</p>
-
-                        <div className="bg-slate-800/60 p-2.5 rounded-xl space-y-1 text-[10px] text-slate-300">
-                          <div><strong>Tipo:</strong> {l.type.replace('_', ' ').toUpperCase()}</div>
-                          <div><strong>Proteções:</strong> Blue UV, Antirreflexo, Hydrofóbico</div>
-                          <div><strong>Recomendado:</strong> {l.idealForRange || 'Graus variados'}</div>
-                          <div><strong>Garantia:</strong> 2 Anos de Fábrica</div>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                        <span className="text-sm font-black text-[#E8D2A8]">
-                          R$ {l.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                        <button
-                          onClick={() => setSelectedLens(l)}
-                          className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                            isSelected
-                              ? 'bg-[#C9A96E] text-[#071D49]'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          }`}
-                        >
-                          {isSelected ? '✓ SELECIONADO' : '[ SELECIONAR LENTE ]'}
-                        </button>
-                      </div>
+              {/* Seção 1: Filtros de Lente & Consulta de OS Anterior */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-[#0B255C]/40 p-5 rounded-2xl border border-[#C9A96E]/20">
+                {/* Lado Esquerdo: Filtros e Pesquisa de Lentes (8 Colunas) */}
+                <div className="lg:col-span-8 space-y-4">
+                  <h3 className="text-xs font-black text-[#C9A96E] uppercase tracking-wider flex items-center gap-1.5">
+                    <Sliders className="w-4 h-4" /> Filtros e Busca de Lentes
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {/* Input de Busca */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={lensSearchTerm}
+                        onChange={(e) => setLensSearchTerm(e.target.value)}
+                        placeholder="Buscar lente ou fabricante..."
+                        className="w-full bg-slate-950 border border-[#C9A96E]/30 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#C9A96E]"
+                      />
                     </div>
-                  );
-                })}
+
+                    {/* Filtro Fabricante */}
+                    <div>
+                      <select
+                        value={lensFilterBrand}
+                        onChange={(e) => setLensFilterBrand(e.target.value)}
+                        className="w-full bg-slate-950 border border-[#C9A96E]/30 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#C9A96E]"
+                      >
+                        <option value="todos">Todos os Fabricantes</option>
+                        <option value="ZEISS">Zeiss</option>
+                        <option value="HOYA">Hoya</option>
+                        <option value="VARILUX">Varilux</option>
+                        <option value="KODAK">Kodak</option>
+                        <option value="GALAXY">Galaxy</option>
+                        <option value="MULTIFOCAIS C.O">Multifocais C.O</option>
+                        <option value="VISÃO SIMPLES & TRATAMENTOS">Visão Simples & Tratamentos</option>
+                      </select>
+                    </div>
+
+                    {/* Filtro Categoria */}
+                    <div>
+                      <select
+                        value={lensFilterCategory}
+                        onChange={(e) => setLensFilterCategory(e.target.value)}
+                        className="w-full bg-slate-950 border border-[#C9A96E]/30 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-[#C9A96E]"
+                      >
+                        <option value="todos">Todas as Categorias</option>
+                        <option value="visao_simples">Visão Simples</option>
+                        <option value="multifocal_digital">Multifocal Digital</option>
+                        <option value="bifocal">Bifocal</option>
+                        <option value="fotocromatica">Fotocromática (Transitions/PhotoFusion)</option>
+                        <option value="antirreflexo_blue">Antirreflexo Blue Control</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lado Direito: Consulta de OS Anterior por Nome ou Nº (4 Colunas) */}
+                <div className="lg:col-span-4 space-y-4 border-t lg:border-t-0 lg:border-l border-[#C9A96E]/20 pt-4 lg:pt-0 lg:pl-6">
+                  <h3 className="text-xs font-black text-[#C9A96E] uppercase tracking-wider flex items-center gap-1.5">
+                    <FileText className="w-4 h-4" /> Consultar OS Anterior
+                  </h3>
+
+                  <div className="relative">
+                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={osSearchTerm}
+                      onChange={(e) => setOsSearchTerm(e.target.value)}
+                      placeholder="Nome do paciente ou Nº da OS..."
+                      className="w-full bg-slate-950 border border-[#C9A96E]/30 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#C9A96E]"
+                    />
+                  </div>
+
+                  {/* Resultados da Busca de OS */}
+                  {osSearchTerm.trim() && (
+                    <div className="absolute z-[100] mt-1 bg-slate-950 border border-[#C9A96E]/40 rounded-xl max-h-48 overflow-y-auto w-[calc(100%-2rem)] max-w-sm shadow-2xl p-2 space-y-1">
+                      <div className="text-[10px] text-slate-400 font-bold px-2 py-1">
+                        Resultados encontrados: {serviceOrders.filter(os => 
+                          os.clientName.toLowerCase().includes(osSearchTerm.toLowerCase()) || 
+                          os.osNumber.toLowerCase().includes(osSearchTerm.toLowerCase()) ||
+                          os.osNumber.replace('OS-', '').includes(osSearchTerm.toLowerCase())
+                        ).length}
+                      </div>
+                      
+                      {serviceOrders
+                        .filter(os => 
+                          os.clientName.toLowerCase().includes(osSearchTerm.toLowerCase()) || 
+                          os.osNumber.toLowerCase().includes(osSearchTerm.toLowerCase()) ||
+                          os.osNumber.replace('OS-', '').includes(osSearchTerm.toLowerCase())
+                        )
+                        .map(os => (
+                          <button
+                            key={os.id}
+                            onClick={() => setSelectedOldOS(os)}
+                            className="w-full text-left bg-slate-900/60 hover:bg-[#0B255C] border border-slate-800 hover:border-[#C9A96E]/50 rounded-lg p-2 transition-all flex flex-col gap-1 cursor-pointer text-xs"
+                          >
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-[#C9A96E] font-black">{os.osNumber}</span>
+                              <span className="text-slate-400">{os.status.replace('_', ' ').toUpperCase()}</span>
+                            </div>
+                            <div className="font-bold text-white truncate">{os.clientName}</div>
+                            <div className="text-[9px] text-slate-400 truncate">{os.lens?.name || 'Sem lente vinculada'}</div>
+                          </button>
+                        ))
+                      }
+                      
+                      {serviceOrders.filter(os => 
+                        os.clientName.toLowerCase().includes(osSearchTerm.toLowerCase()) || 
+                        os.osNumber.toLowerCase().includes(osSearchTerm.toLowerCase()) ||
+                        os.osNumber.replace('OS-', '').includes(osSearchTerm.toLowerCase())
+                      ).length === 0 && (
+                        <div className="text-xs text-slate-500 text-center py-4">Nenhuma OS encontrada.</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Detalhes da OS selecionada para importação (se houver) */}
+              {selectedOldOS && (
+                <div className="bg-[#0B255C]/90 border border-[#C9A96E] rounded-2xl p-5 space-y-4 shadow-xl relative animate-zoom-in">
+                  <button 
+                    onClick={() => setSelectedOldOS(null)}
+                    className="absolute top-3 right-3 text-slate-400 hover:text-white hover:bg-white/10 p-1 rounded-full cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <div className="flex items-center gap-2 border-b border-[#C9A96E]/20 pb-2">
+                    <Info className="w-5 h-5 text-[#C9A96E]" />
+                    <h4 className="text-sm font-black text-[#E8D2A8] uppercase">Visualizar e Copiar Dados da {selectedOldOS.osNumber}</h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+                    <div>
+                      <p className="text-slate-400 text-[10px] uppercase font-bold">Paciente</p>
+                      <p className="font-bold text-white">{selectedOldOS.clientName}</p>
+                      <p className="text-[11px]">{selectedOldOS.clientPhone}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400 text-[10px] uppercase font-bold">Armação</p>
+                      <p className="font-bold text-white">{selectedOldOS.frame?.brand} - {selectedOldOS.frame?.model}</p>
+                      <p className="text-[11px]">R$ {selectedOldOS.frame?.price?.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-400 text-[10px] uppercase font-bold">Lente Selecionada</p>
+                      <p className="font-bold text-white">{selectedOldOS.lens?.name}</p>
+                      <p className="text-[11px] text-[#C9A96E]">R$ {selectedOldOS.lens?.price?.toFixed(2)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button
+                      onClick={() => setSelectedOldOS(null)}
+                      className="px-4 py-2 border border-[#C9A96E]/30 hover:border-slate-400 text-slate-300 font-bold rounded-xl text-xs transition-all cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => handleImportOSData(selectedOldOS)}
+                      className="px-5 py-2 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-lg active:scale-95"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Copiar Todos os Dados para Nova OS</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Catálogo de Cards de Lentes */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {officialLenses
+                  .filter(l => {
+                    const matchesSearch = l.name.toLowerCase().includes(lensSearchTerm.toLowerCase()) || 
+                                          l.brand.toLowerCase().includes(lensSearchTerm.toLowerCase());
+                    const matchesBrand = lensFilterBrand === 'todos' || l.brand.toLowerCase() === lensFilterBrand.toLowerCase();
+                    const matchesCategory = lensFilterCategory === 'todos' || 
+                                            (lensFilterCategory === 'visao_simples' && l.type === 'visao_simples') || 
+                                            (lensFilterCategory === 'multifocal_digital' && l.type === 'multifocal_digital') ||
+                                            (lensFilterCategory === 'bifocal' && l.type === 'bifocal') ||
+                                            (lensFilterCategory === 'fotocromatica' && l.type === 'fotocromatica') ||
+                                            (lensFilterCategory === 'antirreflexo_blue' && l.type === 'antirreflexo_blue');
+                    return matchesSearch && matchesBrand && matchesCategory;
+                  })
+                  .slice(0, 18) // Exibe os 18 primeiros resultados mais relevantes para melhor performance
+                  .map((l) => {
+                    const isSelected = selectedLens.name === l.name; // Compara por nome para suportar lentes locais/remotas perfeitamente
+                    return (
+                      <div
+                        key={l.id}
+                        className={`bg-slate-900 border-2 rounded-2xl p-4 space-y-3 transition-all flex flex-col justify-between ${
+                          isSelected
+                            ? 'border-[#C9A96E] ring-2 ring-[#C9A96E] shadow-xl'
+                            : 'border-slate-800 hover:border-slate-600'
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="bg-[#0B255C] text-[#C9A96E] text-[10px] font-black px-2.5 py-1 rounded-lg border border-[#C9A96E]">
+                              Fabricante: {l.brand}
+                            </span>
+                            <span className="bg-slate-800 text-slate-200 text-[10px] font-bold px-2 py-0.5 rounded-md">
+                              Índice {l.indexRefraction}
+                            </span>
+                          </div>
+
+                          <h3 className="text-sm font-black text-slate-100 min-h-[40px] flex items-center">{l.name}</h3>
+                          <p className="text-[11px] text-slate-400 leading-snug">{l.description}</p>
+
+                          <div className="bg-slate-800/60 p-2.5 rounded-xl space-y-1 text-[10px] text-slate-300">
+                            <div><strong>Tipo:</strong> {l.type.replace('_', ' ').toUpperCase()}</div>
+                            <div><strong>Proteções:</strong> {l.idealForRange || 'Anti-Riscos, Antirreflexo, Proteção UV'}</div>
+                            <div><strong>Garantia:</strong> 2 Anos de Fábrica</div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                          <span className="text-sm font-black text-[#E8D2A8]">
+                            R$ {l.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                          <button
+                            onClick={() => setSelectedLens(l)}
+                            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-[#C9A96E] text-[#071D49]'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                          >
+                            {isSelected ? '✓ SELECIONADO' : '[ SELECIONAR LENTE ]'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {/* Caso de catálogo vazio */}
+              {officialLenses.filter(l => {
+                const matchesSearch = l.name.toLowerCase().includes(lensSearchTerm.toLowerCase()) || 
+                                      l.brand.toLowerCase().includes(lensSearchTerm.toLowerCase());
+                const matchesBrand = lensFilterBrand === 'todos' || l.brand.toLowerCase() === lensFilterBrand.toLowerCase();
+                const matchesCategory = lensFilterCategory === 'todos' || 
+                                        (lensFilterCategory === 'visao_simples' && l.type === 'visao_simples') || 
+                                        (lensFilterCategory === 'multifocal_digital' && l.type === 'multifocal_digital') ||
+                                        (lensFilterCategory === 'bifocal' && l.type === 'bifocal') ||
+                                        (lensFilterCategory === 'fotocromatica' && l.type === 'fotocromatica') ||
+                                        (lensFilterCategory === 'antirreflexo_blue' && l.type === 'antirreflexo_blue');
+                return matchesSearch && matchesBrand && matchesCategory;
+              }).length === 0 && (
+                <div className="text-slate-400 text-center py-8">Nenhuma lente corresponde aos filtros ativos.</div>
+              )}
             </div>
           )}
 

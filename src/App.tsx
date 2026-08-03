@@ -969,6 +969,7 @@ export default function App() {
           clients={clients}
           frames={frames}
           lenses={lenses}
+          serviceOrders={serviceOrders}
           onAddClient={(newClient) => setClients((prev) => [newClient, ...prev])}
           onSaveOS={async (newOS) => {
             let savedOS = newOS;
