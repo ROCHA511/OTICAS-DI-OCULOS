@@ -30,7 +30,9 @@ import {
   Scale,
   Ruler,
   Sliders,
-  Scissors
+  Scissors,
+  Send,
+  Share2
 } from 'lucide-react';
 import { Client, Frame, Lens, ServiceOrder, OpticalPrescription, DnpMeasurement, LensType } from '../../types';
 import { OticasLogo } from '../brand/OticasLogo';
@@ -475,9 +477,40 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
     { num: 5, name: 'Cálculos, Receita & Anexos', icon: Calculator },
     { num: 6, name: 'Geração OS', icon: QrCode },
     { num: 7, name: 'Orçamento', icon: DollarSign },
-    { num: 8, name: 'Produção', icon: Lock },
+    { num: 8, name: 'Imprimir OS', icon: Printer },
   ];
 
+  const formatClientWhatsappUrl = () => {
+    const text = `Olá *${selectedClient?.name || ''}*! Aqui está o resumo da sua Ordem de Serviço nas *Óticas Di Óculos*:\n\n` +
+      `*OS:* ${osNumber}\n` +
+      `*Data:* ${new Date().toLocaleDateString('pt-BR')}\n` +
+      `*Lente:* ${selectedLens?.brand || ''} ${selectedLens?.name || ''}\n` +
+      `*Armação:* ${selectedFrame?.brand || ''} ${selectedFrame?.model || ''}\n` +
+      `*Total:* R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*Adiantamento:* R$ ${advancePayment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n` +
+      `*Saldo a Receber:* R$ ${aReceber.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n\n` +
+      `Você pode acompanhar o status ou validar sua receita pelo nosso portal. Obrigado pela preferência!`;
+    const cleanPhone = (selectedClient?.phone || '').replace(/\D/g, '');
+    return `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`;
+  };
+
+  const formatLabWhatsappUrl = () => {
+    const text = `*FICHA TÉCNICA DE LABORATÓRIO - ÓTICAS DI ÓCULOS*\n\n` +
+      `*OS:* ${osNumber}\n` +
+      `*Cliente:* ${selectedClient?.name || ''}\n` +
+      `*Lente:* ${selectedLens?.brand || ''} ${selectedLens?.name || ''}\n` +
+      `*Armação:* ${selectedFrame?.brand || ''} ${selectedFrame?.model || ''}\n\n` +
+      `*MEDIDAS E PARÂMETROS:*\n` +
+      `• DP Total: ${biometrics.dpTotal} mm\n` +
+      `• DNP OD/OE: ${biometrics.dnpOD} / ${biometrics.dnpOE} mm\n` +
+      `• Altura OD/OE: ${biometrics.alturaOD} / ${biometrics.alturaOE} mm\n` +
+      `• Ângulo Pantoscópico: ${biometrics.anguloPantoscopico}°\n` +
+      `• Distância de Vértice: ${biometrics.distanciaVertice} mm\n` +
+      `• DBC: ${dbc} mm\n` +
+      `• Centro Geométrico: ${centroGeometrico} mm\n\n` +
+      `Favor iniciar a produção e nos confirmar o prazo de entrega.`;
+    return `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-[#071D49]/95 backdrop-blur-md flex flex-col overflow-hidden text-slate-100 font-sans">
@@ -1547,31 +1580,25 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
           )}
 
           {/* ====================================================
-              NOVA ETAPA 08 - CONSULTAR ORDEM DE SERVIÇO
+              NOVA ETAPA 08 - IMPRIMIR & COMPARTILHAR OS
              ==================================================== */}
           {currentStage === 8 && (
             <div className="bg-[#071D49]/80 border-2 border-[#C9A96E]/50 rounded-3xl p-6 space-y-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-[#C9A96E]/30 pb-4">
                 <div>
                   <h2 className="text-lg font-black text-[#E8D2A8] uppercase flex items-center gap-2">
-                    <ClipboardCheck className="w-5 h-5 text-[#C9A96E]" /> Etapa 08 - Consultar Ordem de Serviço
+                    <Printer className="w-5 h-5 text-[#C9A96E]" /> Etapa 08 - Imprimir & Compartilhar OS
                   </h2>
                   <p className="text-xs text-slate-300">
-                    Confira abaixo o resumo completo e a Ficha Técnica da Ordem de Serviço gerada.
+                    Gere a via física/PDF ou compartilhe a OS diretamente via WhatsApp com o cliente ou com o laboratório.
                   </p>
                 </div>
-                <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md flex items-center gap-2 cursor-pointer transition-all active:scale-95 border border-blue-400/30"
-                >
-                  <Printer className="w-4 h-4" /> Imprimir OS
-                </button>
               </div>
 
               {/* Ficha Técnica de Laboratório incorporada diretamente no painel */}
               <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl font-mono text-xs text-slate-200 space-y-3">
                 <div className="text-center font-bold text-[#E8D2A8] border-b border-slate-800 pb-2 uppercase">
-                  *** FICHA TÉCNICA DE LABORATÓRIO INTELIGENTE - DI ÓTICAS ***
+                  *** FICHA TÉCNICA DE LABORATÓRIO - DI ÓTICAS ***
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                   <div className="flex justify-between border-b border-slate-800/40 py-1">
@@ -1609,26 +1636,60 @@ export const SmartOSWizard: React.FC<SmartOSWizardProps> = ({
                 </div>
               </div>
 
-              {/* Botão de Ação Principal: Consultar OS */}
-              <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-4">
-                <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-                <div>
-                  <h3 className="text-base font-black text-white uppercase">Salvar e Visualizar no Painel</h3>
-                  <p className="text-xs text-slate-400 max-w-lg mx-auto mt-1">
-                    Ao finalizar, a Ordem de Serviço será consolidada na base de dados. Você poderá consultar o status de laboratório, efetuar alterações e reemitir vias a qualquer momento.
-                  </p>
-                </div>
-                <div className="pt-2 flex justify-center gap-3">
-                  <button
-                    onClick={() => {
-                      setIsPaid(true); // Confirma a OS
-                      handleFinalizeOS(true);
-                    }}
-                    className="px-8 py-3.5 bg-[#C9A96E] hover:bg-[#b8985d] text-[#071D49] font-black text-sm rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2"
-                  >
-                    <ClipboardCheck className="w-5 h-5" /> CONSULTAR OS
-                  </button>
-                </div>
+              {/* Botões de Ação de Compartilhamento */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Imprimir Física/PDF */}
+                <button
+                  onClick={() => window.print()}
+                  className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 hover:border-[#C9A96E]/50 p-5 rounded-2xl text-center space-y-2 transition-all hover:scale-102 cursor-pointer flex flex-col items-center justify-center group"
+                >
+                  <Printer className="w-8 h-8 text-[#C9A96E] group-hover:scale-110 transition-all duration-300" />
+                  <span className="text-xs font-black text-white uppercase block">Imprimir OS</span>
+                  <span className="text-[10px] text-slate-400 block max-w-[170px] mx-auto leading-tight">
+                    Gerar via física em 3 vias ou exportar PDF local
+                  </span>
+                </button>
+
+                {/* 2. Enviar ao Cliente */}
+                <a
+                  href={formatClientWhatsappUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-br from-emerald-950/20 to-emerald-900/10 border border-emerald-900/40 hover:border-emerald-500 p-5 rounded-2xl text-center space-y-2 transition-all hover:scale-102 cursor-pointer flex flex-col items-center justify-center group"
+                >
+                  <Send className="w-8 h-8 text-emerald-400 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300" />
+                  <span className="text-xs font-black text-emerald-300 uppercase block">WhatsApp Cliente</span>
+                  <span className="text-[10px] text-slate-400 block max-w-[170px] mx-auto leading-tight">
+                    Enviar resumo de valores e links de visualização
+                  </span>
+                </a>
+
+                {/* 3. Enviar ao Laboratório */}
+                <a
+                  href={formatLabWhatsappUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-br from-blue-950/20 to-blue-900/10 border border-blue-900/40 hover:border-blue-500 p-5 rounded-2xl text-center space-y-2 transition-all hover:scale-102 cursor-pointer flex flex-col items-center justify-center group"
+                >
+                  <Share2 className="w-8 h-8 text-blue-400 group-hover:scale-110 transition-all duration-300" />
+                  <span className="text-xs font-black text-blue-300 uppercase block">WhatsApp Laboratório</span>
+                  <span className="text-[10px] text-slate-400 block max-w-[170px] mx-auto leading-tight">
+                    Disparar a Ficha Técnica de produção e montagem
+                  </span>
+                </a>
+              </div>
+
+              {/* Botão de Finalização Principal */}
+              <div className="pt-2 flex justify-center">
+                <button
+                  onClick={() => {
+                    setIsPaid(true); // Confirma a OS
+                    handleFinalizeOS(true);
+                  }}
+                  className="w-full sm:w-auto px-10 py-4 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-sm rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-5 h-5" /> CONCLUIR CADASTRO OS
+                </button>
               </div>
             </div>
           )}
