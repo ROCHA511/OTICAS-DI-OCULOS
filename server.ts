@@ -735,8 +735,9 @@ app.post('/api/whatsapp/meta-webhook', async (req, res) => {
 // -------------------------------------------------------------
 // MERCADO PAGO SAAS SUBSCRIPTIONS INTEGRATION
 // -------------------------------------------------------------
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ulrrtzbxcsywmtshdnbp.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
+if (!SUPABASE_URL) console.error('[SEGURANÇA] SUPABASE_URL não definido nas variáveis de ambiente!');
 
 async function loadSubscriptions(): Promise<Record<string, any>> {
   try {

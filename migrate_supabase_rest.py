@@ -20,7 +20,7 @@ except ImportError:
     pass
 
 SUPABASE_URL = "https://ulrrtzbxcsywmtshdnbp.supabase.co"
-ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "sb_publishable_vJ0IlajBwDiTDQCV9kyExg_zYujA5o8")
+ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
 
 def supabase_request(method, path, body=None, extra_headers=None):
     url = f"{SUPABASE_URL}{path}"
