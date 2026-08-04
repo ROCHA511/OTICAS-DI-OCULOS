@@ -6,6 +6,10 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { OFFICIAL_PRICE_TABLE } from './src/data/priceTableData';
 import { OpticaMeshEngine } from './src/utils/opticaMeshEngine';
+import { spawn, ChildProcess } from 'child_process';
+
+let pythonProcess: ChildProcess | null = null;
+const pinList = new Set<string>();
 
 dotenv.config();
 
@@ -731,30 +735,67 @@ app.post('/api/whatsapp/meta-webhook', async (req, res) => {
 // -------------------------------------------------------------
 // MERCADO PAGO SAAS SUBSCRIPTIONS INTEGRATION
 // -------------------------------------------------------------
-const SUBSCRIPTIONS_FILE = path.join(process.cwd(), 'subscriptions.json');
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ulrrtzbxcsywmtshdnbp.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || '';
 
-function loadSubscriptions(): Record<string, any> {
+async function loadSubscriptions(): Promise<Record<string, any>> {
   try {
-    if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
-      const data = fs.readFileSync(SUBSCRIPTIONS_FILE, 'utf-8');
-      return JSON.parse(data);
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/assinaturas?select=*`, {
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    if (r.ok) {
+      const rows: any[] = await r.json();
+      const result: Record<string, any> = {};
+      for (const row of rows) {
+        result[row.tenant_id] = {
+          tenantId: row.tenant_id,
+          plan: row.plano,
+          status: row.status,
+          trialEndsAt: row.trial_ends_at,
+          customerEmail: row.customer_email,
+          mercadoPagoSubscriptionId: row.mp_subscription_id
+        };
+      }
+      return result;
     }
   } catch (err) {
-    console.error('Erro ao ler assinaturas:', err);
+    console.error('[SaaS] Erro ao carregar assinaturas do Supabase:', err);
   }
   return {};
 }
 
-function saveSubscriptions(subs: Record<string, any>) {
+async function saveSubscription(tenantId: string, sub: any): Promise<void> {
   try {
-    fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2), 'utf-8');
+    const payload = {
+      tenant_id: tenantId,
+      plano: sub.plan || sub.plano || 'trial',
+      status: sub.status || 'trialing',
+      trial_ends_at: sub.trialEndsAt || sub.trial_ends_at || new Date(Date.now() + 3 * 86400000).toISOString(),
+      customer_email: sub.customerEmail || sub.customer_email || null,
+      mp_subscription_id: sub.mercadoPagoSubscriptionId || sub.mp_subscription_id || null,
+      atualizado_em: new Date().toISOString()
+    };
+    await fetch(`${SUPABASE_URL}/rest/v1/assinaturas`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
   } catch (err) {
-    console.error('Erro ao salvar assinaturas:', err);
+    console.error('[SaaS] Erro ao salvar assinatura no Supabase:', err);
   }
 }
 
 // 1. Obter a assinatura do tenant atual
-app.get('/api/payments/subscription', (req, res) => {
+app.get('/api/payments/subscription', async (req, res) => {
   try {
     const email = req.query.email as string;
     const tenantId = (req.headers['x-tenant-id'] as string) || '00000000-0000-0000-0000-000000000000';
@@ -763,15 +804,12 @@ app.get('/api/payments/subscription', (req, res) => {
       return res.status(400).json({ error: 'E-mail do usuário é obrigatório.' });
     }
 
-    const subs = loadSubscriptions();
-    
-    // Busca por e-mail ou tenantId
+    const subs = await loadSubscriptions();
     let userSub = Object.values(subs).find((s: any) => s.customerEmail === email || s.tenantId === tenantId);
 
     if (!userSub) {
-      // Cria assinatura trial de 3 dias
       const trialEndsAt = new Date();
-      trialEndsAt.setDate(trialEndsAt.getDate() + 3);
+      trialEndsAt.setDate(trialEndsAt.getDate() + 30);
 
       userSub = {
         tenantId,
@@ -781,16 +819,13 @@ app.get('/api/payments/subscription', (req, res) => {
         customerEmail: email
       };
 
-      subs[tenantId] = userSub;
-      saveSubscriptions(subs);
-      console.log(`[SaaS] Criada nova assinatura de teste de 3 dias para o tenant ${tenantId} (${email})`);
+      await saveSubscription(tenantId, userSub);
+      console.log(`[SaaS] Nova assinatura trial criada no Supabase para ${tenantId} (${email})`);
     }
 
-    // Calcula os dias restantes
     const ends = new Date(userSub.trialEndsAt);
     const now = new Date();
-    const diffTime = ends.getTime() - now.getTime();
-    const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    const daysRemaining = Math.max(0, Math.ceil((ends.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
     return res.json({
       ...userSub,
@@ -806,64 +841,35 @@ app.get('/api/payments/subscription', (req, res) => {
 // 2. Criar ou renovar assinatura no Mercado Pago
 app.post('/api/payments/create-subscription', async (req, res) => {
   try {
-    const { email, plan } = req.body; // plan: 'basico' | 'promax'
+    const { email, plan } = req.body;
     const tenantId = (req.headers['x-tenant-id'] as string) || '00000000-0000-0000-0000-000000000000';
 
-    const priceMap: Record<string, number> = {
-      basico: 199.00,
-      promax: 249.00,
-    };
-
+    const priceMap: Record<string, number> = { basico: 199.00, promax: 249.00 };
     const amount = priceMap[plan];
-    if (!amount) {
-      return res.status(400).json({ error: 'Plano inválido especificado.' });
-    }
+    if (!amount) return res.status(400).json({ error: 'Plano inválido especificado.' });
 
     const MP_ACCESS_TOKEN = process.env.MERCADOPAGO_ACCESS_TOKEN || '';
 
-    // Simulador em modo dev
     if (!MP_ACCESS_TOKEN || MP_ACCESS_TOKEN.startsWith('dummy')) {
-      console.log('⚠️ MERCADOPAGO_ACCESS_TOKEN ausente ou dummy. Simulando checkout Mercado Pago e ativando plano pago.');
-      
-      const subs = loadSubscriptions();
       const nextBilling = new Date();
       nextBilling.setMonth(nextBilling.getMonth() + 1);
-
-      const updatedSub = {
-        tenantId,
-        plan,
-        status: 'active',
+      const sub = {
+        tenantId, plan, status: 'active',
         trialEndsAt: new Date().toISOString(),
         nextBillingDate: nextBilling.toISOString(),
         customerEmail: email,
         mercadoPagoSubscriptionId: `sub_simulated_${Math.random().toString(36).substring(7)}`
       };
-
-      subs[tenantId] = updatedSub;
-      saveSubscriptions(subs);
-
-      return res.json({
-        success: true,
-        subscriptionId: updatedSub.mercadoPagoSubscriptionId,
-        initPoint: `/subscription/success?plan=${plan}` // Redirecionamento local simulado
-      });
+      await saveSubscription(tenantId, sub);
+      return res.json({ success: true, subscriptionId: sub.mercadoPagoSubscriptionId, initPoint: `/subscription/success?plan=${plan}` });
     }
 
-    // Chamada oficial à API do Mercado Pago
     const mpResponse = await fetch('https://api.mercadopago.com/preapproval', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Authorization': `Bearer ${MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        reason: `Assinatura Sistema Ótica - Plano ${plan.toUpperCase()}`,
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: 'months',
-          transaction_amount: amount,
-          currency_id: 'BRL',
-        },
+        reason: `Assinatura Sistema Otica - Plano ${plan.toUpperCase()}`,
+        auto_recurring: { frequency: 1, frequency_type: 'months', transaction_amount: amount, currency_id: 'BRL' },
         payer_email: email,
         back_url: 'https://oticas-di-oculos.vercel.app/subscription/success',
         status: 'authorized',
@@ -871,28 +877,10 @@ app.post('/api/payments/create-subscription', async (req, res) => {
     });
 
     const data = await mpResponse.json();
+    if (!mpResponse.ok) return res.status(400).json({ error: 'Erro ao processar assinatura no Mercado Pago', details: data });
 
-    if (!mpResponse.ok) {
-      return res.status(400).json({ error: 'Erro ao processar assinatura no Mercado Pago', details: data });
-    }
-
-    // Salvar como assinatura trialing aguardando webhook
-    const subs = loadSubscriptions();
-    subs[tenantId] = {
-      tenantId,
-      plan,
-      status: 'trialing',
-      trialEndsAt: new Date().toISOString(),
-      customerEmail: email,
-      mercadoPagoSubscriptionId: data.id
-    };
-    saveSubscriptions(subs);
-
-    return res.json({
-      success: true,
-      subscriptionId: data.id,
-      initPoint: data.init_point, // URL oficial de checkout do MP
-    });
+    await saveSubscription(tenantId, { tenantId, plan, status: 'trialing', trialEndsAt: new Date().toISOString(), customerEmail: email, mercadoPagoSubscriptionId: data.id });
+    return res.json({ success: true, subscriptionId: data.id, initPoint: data.init_point });
   } catch (err: any) {
     console.error('Erro no servidor de pagamento:', err);
     return res.status(500).json({ error: 'Falha interna ao processar pagamento.' });
@@ -907,44 +895,37 @@ app.post('/api/payments/webhook', async (req, res) => {
 
     if ((type === 'subscription_preapproval' || type === 'payment') && data?.id) {
       const resourceId = data.id;
-
       const response = await fetch(`https://api.mercadopago.com/preapproval/${resourceId}`, {
-        headers: {
-          'Authorization': `Bearer ${MP_ACCESS_TOKEN}`,
-        },
+        headers: { 'Authorization': `Bearer ${MP_ACCESS_TOKEN}` },
       });
 
       if (response.ok) {
         const subData = await response.json();
         const payerEmail = subData.payer_email;
-        const status = subData.status; // 'authorized', 'paused', 'cancelled'
+        const mpStatus = subData.status;
 
-        console.log(`[Mercado Pago Webhook] Assinatura ${resourceId} de ${payerEmail} está ${status}`);
-
-        const subs = loadSubscriptions();
+        const subs = await loadSubscriptions();
         let foundTenantId = '';
         for (const [tid, s] of Object.entries(subs)) {
-          if (s.mercadoPagoSubscriptionId === resourceId || s.customerEmail === payerEmail) {
+          if ((s as any).mercadoPagoSubscriptionId === resourceId || (s as any).customerEmail === payerEmail) {
             foundTenantId = tid;
             break;
           }
         }
 
         if (foundTenantId) {
-          if (status === 'authorized') {
-            subs[foundTenantId].status = 'active';
-            const nextBilling = new Date();
-            nextBilling.setMonth(nextBilling.getMonth() + 1);
-            subs[foundTenantId].nextBillingDate = nextBilling.toISOString();
-          } else if (status === 'cancelled' || status === 'paused') {
-            subs[foundTenantId].status = 'canceled';
-          }
-          saveSubscriptions(subs);
-          console.log(`[SaaS Webhook] Assinatura do tenant ${foundTenantId} atualizada para ${subs[foundTenantId].status}`);
+          const newStatus = mpStatus === 'authorized' ? 'active' : 'canceled';
+          const nextBilling = new Date();
+          nextBilling.setMonth(nextBilling.getMonth() + 1);
+          await saveSubscription(foundTenantId, {
+            ...(subs[foundTenantId] as any),
+            status: newStatus,
+            nextBillingDate: newStatus === 'active' ? nextBilling.toISOString() : undefined
+          });
+          console.log(`[SaaS Webhook] Assinatura do tenant ${foundTenantId} -> ${newStatus} (Supabase)`);
         }
       }
     }
-
     return res.status(200).send('OK');
   } catch (error) {
     console.error('Erro no Webhook:', error);
@@ -1103,279 +1084,467 @@ function saveExams(exams: Record<string, LocalExamRecord>) {
 }
 
 // 1. Adicionar Paciente na Fila do Exame
-app.post('/api/exames/fila/novo', (req, res) => {
+app.post('/api/exames/fila/novo', async (req, res) => {
   const { paciente_nome, paciente_telefone, paciente_cpf, prioridade, observacoes } = req.body;
-  
   if (!paciente_nome || !paciente_telefone) {
     return res.status(400).json({ error: 'Nome e telefone do paciente são obrigatórios.' });
   }
 
-  const exams = loadExams();
-  const year = new Date().getFullYear();
-  const hex = Math.random().toString(16).substring(2, 6).toUpperCase();
-  const prontuario_id = `PRONT-${year}-${hex}`;
-  const paciente_id = `pac_${Math.random().toString(36).substring(2, 8)}`;
+  try {
+    let pacienteId: number | null = null;
+    if (paciente_cpf) {
+      const getPacientesRes = await fetch('http://127.0.0.1:8000/pacientes/');
+      if (getPacientesRes.ok) {
+        const pacientesList: any[] = await getPacientesRes.json();
+        const existing = pacientesList.find(p => p.cpf === paciente_cpf);
+        if (existing) {
+          pacienteId = existing.id;
+        }
+      }
+    }
 
-  const newExam: LocalExamRecord = {
-    id: prontuario_id,
-    paciente_id,
-    paciente_nome,
-    paciente_telefone,
-    paciente_cpf,
-    optometrista_nome: "Dr. Lauro Rocha",
-    cbo_numero: "CBO 14852-BA",
-    data_exame: new Date().toISOString().split('T')[0],
-    is_pinned: false,
-    status: "aguardando_anamnese",
-    prioridade: prioridade || "Normal",
-    od_esferico: 0.0,
-    od_cilindrico: 0.0,
-    od_eixo: 0,
-    oe_esferico: 0.0,
-    oe_cilindrico: 0.0,
-    oe_eixo: 0,
-    adicao: 0.0,
-    dnp_od: 31.5,
-    dnp_oe: 31.5,
-    altura_od: 20.0,
-    altura_oe: 20.0,
-    av_longe_od: "20/20",
-    av_longe_oe: "20/20",
-    av_perto_od: "J1",
-    av_perto_oe: "J1",
-    observacoes_clinicas: observacoes || "",
-    enviado_para_otica: false,
-    anexos: [],
-    created_at: new Date().toISOString()
-  };
+    if (!pacienteId) {
+      const email = `${paciente_nome.toLowerCase().replace(/\s+/g, '')}_${Math.floor(Math.random() * 1000)}@exemplo.com`;
+      const createPacRes = await fetch('http://127.0.0.1:8000/pacientes/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: paciente_nome,
+          cpf: paciente_cpf || `CPF-${Math.floor(Math.random() * 1000000000)}`,
+          data_nascimento: new Date(1990, 0, 1).toISOString(),
+          genero: "Não especificado",
+          telefone: paciente_telefone,
+          email: email,
+          endereco: "Não informado"
+        })
+      });
 
-  exams[prontuario_id] = newExam;
-  saveExams(exams);
+      if (createPacRes.ok) {
+        const novoPaciente: any = await createPacRes.json();
+        pacienteId = novoPaciente.id;
+      } else {
+        throw new Error('Falha ao criar paciente no FastAPI');
+      }
+    }
 
-  res.json({
-    mensagem: "Paciente adicionado na fila de exames com sucesso",
-    prontuario_id,
-    status: newExam.status
-  });
+    const createAtRes = await fetch('http://127.0.0.1:8000/atendimentos/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        paciente_id: pacienteId,
+        horario_agendado: new Date().toISOString(),
+        status: "Aguardando",
+        prioridade: prioridade === 'Urgente' ? 'Urgente' : 'Normal',
+        profissional_responsavel: "Dr. Lauro Rocha",
+        observacoes: observacoes || ""
+      })
+    });
+
+    if (createAtRes.ok) {
+      const atendimento: any = await createAtRes.json();
+      res.json({
+        mensagem: "Paciente adicionado na fila de exames com sucesso",
+        prontuario_id: `PRONT-${atendimento.id}`,
+        status: "aguardando_anamnese"
+      });
+    } else {
+      throw new Error('Falha ao criar atendimento no FastAPI');
+    }
+  } catch (error: any) {
+    console.error('Erro ao adicionar na fila:', error);
+    res.status(500).json({ error: error.message || String(error) });
+  }
 });
 
 // 2. Listar Fila de Atendimento Optométrico
-app.get('/api/exames/fila', (req, res) => {
-  const status = req.query.status as string;
-  const exams = loadExams();
-  let list = Object.values(exams);
-  
-  if (status && status !== 'todos') {
-    list = list.filter(e => e.status === status);
+app.get('/api/exames/fila', async (req, res) => {
+  try {
+    const statusFilter = req.query.status as string;
+    const response = await fetch('http://127.0.0.1:8000/atendimentos/');
+    if (!response.ok) {
+      throw new Error('Falha ao obter atendimentos do FastAPI');
+    }
+    const atendimentos: any[] = await response.json();
+    
+    const examsList = await Promise.all(atendimentos.map(async (at) => {
+      const pRes = await fetch(`http://127.0.0.1:8000/atendimentos/${at.id}/prontuario`);
+      const prontuario = pRes.ok ? await pRes.json() : null;
+
+      const aRes = await fetch(`http://127.0.0.1:8000/atendimentos/${at.id}/pre_anamnese`);
+      const preAnamnese = aRes.ok ? await aRes.json() : null;
+
+      const recRes = prontuario ? await fetch(`http://127.0.0.1:8000/prontuarios/${prontuario.id}/receita`) : null;
+      const receita = recRes && recRes.ok ? await recRes.json() : null;
+
+      let status = 'aguardando_anamnese';
+      if (at.status === 'Finalizado' || at.status === 'Finalizado_Pendente_Avaliacao' || at.status === 'Concluido') {
+        status = 'concluido';
+      } else if (at.pre_anamnese_concluida || preAnamnese) {
+        status = 'anamnese_concluida';
+      } else if (at.status === 'Cancelado') {
+        status = 'cancelado';
+      } else if (at.status === 'Reagendado') {
+        status = 'reagendado';
+      }
+
+      const isPinned = pinList.has(at.id.toString());
+
+      return {
+        id: `PRONT-${at.id}`,
+        paciente_id: at.paciente.id.toString(),
+        paciente_nome: at.paciente.nome,
+        paciente_telefone: at.paciente.telefone,
+        paciente_cpf: at.paciente.cpf,
+        optometrista_nome: at.profissional_responsavel || "Dr. Lauro Rocha",
+        cbo_numero: "CBO 14852-BA",
+        data_exame: at.horario_agendado ? at.horario_agendado.split('T')[0] : new Date().toISOString().split('T')[0],
+        is_pinned: isPinned,
+        status: status,
+        prioridade: at.prioridade === 'Urgente' ? 'Urgente' : 'Normal',
+        
+        od_esferico: prontuario?.ref_sub_od_esferico || 0,
+        od_cilindrico: prontuario?.ref_sub_od_cilindro || 0,
+        od_eixo: prontuario?.ref_sub_od_eixo || 0,
+        oe_esferico: prontuario?.ref_sub_oe_esferico || 0,
+        oe_cilindrico: prontuario?.ref_sub_oe_cilindro || 0,
+        oe_eixo: prontuario?.ref_sub_oe_eixo || 0,
+        adicao: prontuario?.ref_sub_od_adicao || 0,
+        dnp_od: prontuario?.dnp_od || 31.5,
+        dnp_oe: prontuario?.dnp_oe || 31.5,
+        altura_od: prontuario?.altura || 20.0,
+        altura_oe: prontuario?.altura || 20.0,
+        av_longe_od: prontuario?.acuidade_visual_od_sc || "20/20",
+        av_longe_oe: prontuario?.acuidade_visual_oe_sc || "20/20",
+        av_perto_od: prontuario?.acuidade_visual_od_cc || "J1",
+        av_perto_oe: prontuario?.acuidade_visual_oe_cc || "J1",
+        diagnostico_optometrico: prontuario?.diagnostico || "",
+        recomendacao_lentes: prontuario?.recomendacoes || "",
+        observacoes_clinicas: prontuario?.observacoes_prontuario || "",
+
+        anamnese_json: preAnamnese ? {
+          queixa_principal: preAnamnese.principal_queixa || "",
+          tempo_sintomas: preAnamnese.tempo_queixa || "",
+          sintomas_visuais: [
+            preAnamnese.visao_embacada ? "Visão Embaçada" : "",
+            preAnamnese.dores_cabeca ? "Dores de Cabeça" : "",
+            preAnamnese.visao_dupla ? "Visão Dupla" : "",
+            preAnamnese.olhos_secos ? "Olhos Secos" : "",
+            preAnamnese.sensibilidade_luz ? "Sensibilidade à Luz" : "",
+            preAnamnese.ardencia_ocular ? "Ardência" : "",
+            preAnamnese.coceira_ocular ? "Coceira" : ""
+          ].filter(Boolean),
+          doencas_sistemicas: [
+            preAnamnese.diabetes ? "Diabetes" : "",
+            preAnamnese.hipertensao ? "Hipertensão" : ""
+          ].filter(Boolean),
+          historico_familiar: [
+            preAnamnese.glaucoma ? "Glaucoma" : "",
+            preAnamnese.catarata ? "Catarata" : ""
+          ].filter(Boolean),
+          uso_atual_oculos: preAnamnese.uso_oculos ? "Sim" : "Não",
+          ia_summary: preAnamnese.resumo_ia || ""
+        } : undefined,
+
+        enviado_para_otica: receita ? receita.status === 'Concluída' : false,
+        created_at: at.data_criacao
+      };
+    }));
+
+    let filtered = examsList;
+    if (statusFilter && statusFilter !== 'todos') {
+      filtered = examsList.filter(e => e.status === statusFilter);
+    }
+
+    filtered.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    res.json(filtered);
+  } catch (error: any) {
+    console.error('Erro no /api/exames/fila:', error);
+    res.status(500).json({ error: error.message || String(error) });
   }
-  
-  // Ordena prioritários (pinned) no topo e depois por data
-  list.sort((a, b) => {
-    if (a.is_pinned && !b.is_pinned) return -1;
-    if (!a.is_pinned && b.is_pinned) return 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
-  
-  res.json(list);
 });
 
 // 3. Pin / Unpin Paciente na Fila
 app.post('/api/exames/:id/pin', (req, res) => {
   const { id } = req.params;
   const { pin } = req.body;
-  const exams = loadExams();
-  if (exams[id]) {
-    exams[id].is_pinned = !!pin;
-    saveExams(exams);
-    return res.json({ sucesso: true, is_pinned: exams[id].is_pinned });
+  const rawId = id.replace('PRONT-', '');
+  if (pin) {
+    pinList.add(rawId);
+  } else {
+    pinList.delete(rawId);
   }
-  res.status(404).json({ error: "Prontuário não encontrado" });
+  res.json({ sucesso: true, is_pinned: !!pin });
 });
 
 // 4. Gerar Link de Anamnese IA para WhatsApp
-app.post('/api/exames/:id/whatsapp/gerar-link', (req, res) => {
+app.post('/api/exames/:id/whatsapp/gerar-link', async (req, res) => {
   const { id } = req.params;
-  const exams = loadExams();
-  const rec = exams[id];
+  const rawId = parseInt(id.replace('PRONT-', ''), 10);
+  try {
+    const atRes = await fetch(`http://127.0.0.1:8000/atendimentos/${rawId}`);
+    if (!atRes.ok) {
+      return res.status(404).json({ error: 'Atendimento não encontrado' });
+    }
+    const at: any = await atRes.json();
+    
+    let phoneClean = at.paciente.telefone.replace(/\D/g, '');
+    if (!phoneClean.startsWith('55')) {
+      phoneClean = '55' + phoneClean;
+    }
 
-  if (!rec) {
-    return res.status(404).json({ error: 'Prontuário não encontrado' });
+    const urlQuestionario = `https://dioculos.app/anamnese?patientId=${at.paciente.id}&prontuarioId=${at.id}`;
+    
+    const messageText = `*Óticas Di Óculos - Consulta Optométrica Agendada* 👓\n\n` +
+      `Olá, *${at.paciente.nome}*! Para agilizar seu exame de vista e proporcionar um atendimento personalizado, ` +
+      `nossa Inteligência Artificial preparou um rápido questionário prévio.\n\n` +
+      `👉 *Clique no link para preencher em 1 minuto:*\n${urlQuestionario}\n\n` +
+      `_Sua saúde visual é nossa prioridade!_`;
+
+    const whatsappLink = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(messageText)}`;
+
+    res.json({
+      paciente: at.paciente.nome,
+      telefone: at.paciente.telefone,
+      url_questionario: urlQuestionario,
+      whatsapp_link: whatsappLink,
+      mensagem_texto: messageText
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || String(error) });
   }
-
-  let phoneClean = rec.paciente_telefone.replace(/\D/g, '');
-  if (!phoneClean.startsWith('55')) {
-    phoneClean = '55' + phoneClean;
-  }
-
-  const urlQuestionario = `https://dioculos.app/anamnese?patientId=${rec.paciente_id}&prontuarioId=${rec.id}`;
-  
-  const messageText = `*Óticas Di Óculos - Consulta Optométrica Agendada* 👓\n\n` +
-    `Olá, *${rec.paciente_nome}*! Para agilizar seu exame de vista e proporcionar um atendimento personalizado, ` +
-    `nossa Inteligência Artificial preparou um rápido questionário prévio.\n\n` +
-    `👉 *Clique no link para preencher em 1 minuto:*\n${urlQuestionario}\n\n` +
-    `_Sua saúde visual é nossa prioridade!_`;
-
-  const whatsappLink = `https://api.whatsapp.com/send?phone=${phoneClean}&text=${encodeURIComponent(messageText)}`;
-
-  res.json({
-    paciente: rec.paciente_nome,
-    telefone: rec.paciente_telefone,
-    url_questionario: urlQuestionario,
-    whatsapp_link: whatsappLink,
-    mensagem_texto: messageText
-  });
 });
 
 // 5. Salvar Anamnese IA e Gerar Diagnóstico Preliminar com Gemini
 app.post('/api/exames/:id/anamnese-ia', async (req, res) => {
   const { id } = req.params;
+  const rawId = parseInt(id.replace('PRONT-', ''), 10);
   const { queixa_principal, tempo_sintomas, sintomas_visuais, doencas_sistemicas, historico_familiar, uso_atual_oculos } = req.body;
-  
-  const exams = loadExams();
-  const rec = exams[id];
-
-  if (!rec) {
-    return res.status(404).json({ error: 'Prontuário não encontrado' });
-  }
-
-  let summary = `🤖 Análise IA Pré-Exame: Paciente relatou '${queixa_principal}' há ${tempo_sintomas}. Sintomas mapeados: ${sintomas_visuais.join(', ')}. Histórico de óculos: ${uso_atual_oculos}.`;
 
   try {
-    const ai = getGeminiClient();
-    const systemInstruction = `Você é uma Inteligência Artificial Médica e Clínica especialista em Optometria e Oftalmologia da 'Óticas Di Óculos' (Ituberá - BA).
-Analise as respostas de Anamnese fornecidas pelo paciente e gere um resumo clínico conciso de até 3 linhas para o optometrista.
-Identifique possíveis riscos com base no histórico médico e familiar (ex: se tiver Diabetes/Hipertensão, risco de retinopatia diabética/hipertensiva; se tiver histórico familiar de Glaucoma, indicar atenção extrema para tonometria).
-Mantenha um tom altamente profissional, clínico e direto.`;
+    const atRes = await fetch(`http://127.0.0.1:8000/atendimentos/${rawId}`);
+    if (!atRes.ok) {
+      return res.status(404).json({ error: 'Atendimento não encontrado' });
+    }
+    const at: any = await atRes.json();
 
-    const contents = [{
-      role: 'user',
-      parts: [{
-        text: `Respostas do Paciente ${rec.paciente_nome} (Prontuário: ${id}):
-- Queixa Principal: ${queixa_principal}
-- Tempo dos Sintomas: ${tempo_sintomas}
-- Sintomas Visuais Reclamados: ${sintomas_visuais.join(', ')}
-- Doenças Crônicas/Sistêmicas do Paciente: ${doencas_sistemicas.join(', ')}
-- Histórico Familiar de Doenças Oculares: ${historico_familiar.join(', ')}
-- Uso Atual de Óculos/Lentes: ${uso_atual_oculos}`
-      }]
-    }];
+    const payload = {
+      paciente_id: at.paciente.id,
+      atendimento_id: at.id,
+      link_acesso: `https://dioculos.app/anamnese?patientId=${at.paciente.id}&prontuarioId=${at.id}`,
+      principal_queixa: queixa_principal || "",
+      tempo_queixa: tempo_sintomas || "",
+      visao_embacada: (sintomas_visuais || []).includes("Visão Embaçada"),
+      dores_cabeca: (sintomas_visuais || []).includes("Dores de Cabeça"),
+      visao_dupla: (sintomas_visuais || []).includes("Visão Dupla"),
+      olhos_secos: (sintomas_visuais || []).includes("Olhos Secos"),
+      sensibilidade_luz: (sintomas_visuais || []).includes("Sensibilidade à Luz"),
+      ardencia_ocular: (sintomas_visuais || []).includes("Ardência"),
+      coceira_ocular: (sintomas_visuais || []).includes("Coceira"),
+      uso_oculos: uso_atual_oculos === "Sim",
+      diabetes: (doencas_sistemicas || []).includes("Diabetes"),
+      hipertensao: (doencas_sistemicas || []).includes("Hipertensão"),
+      glaucoma: (historico_familiar || []).includes("Glaucoma"),
+      catarata: (historico_familiar || []).includes("Catarata"),
+      data_preenchimento: new Date().toISOString()
+    };
 
-    const aiRes = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents,
-      config: {
-        systemInstruction,
-        temperature: 0.3
-      }
+    const createPreRes = await fetch('http://127.0.0.1:8000/pre_anamneses/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
 
-    if (aiRes.text) {
-      summary = `🤖 Análise IA Pré-Exame: ` + aiRes.text.trim();
+    if (createPreRes.ok) {
+      const preAnamnese: any = await createPreRes.json();
+      
+      await fetch(`http://127.0.0.1:8000/atendimentos/${rawId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pre_anamnese_concluida: true,
+          status: "Aguardando"
+        })
+      });
+
+      res.json({
+        mensagem: "Anamnese salva no prontuário com sucesso!",
+        resumo_ia: preAnamnese.resumo_ia
+      });
+    } else {
+      const errText = await createPreRes.text();
+      throw new Error(`Falha ao criar pré-anamnese: ${errText}`);
     }
-  } catch (err) {
-    console.error('Falha ao acionar IA para resumo de anamnese:', err);
+  } catch (error: any) {
+    console.error('Erro no anamnese-ia:', error);
+    res.status(500).json({ error: error.message || String(error) });
   }
-
-  rec.status = 'anamnese_concluida';
-  rec.anamnese_json = {
-    queixa_principal,
-    tempo_sintomas,
-    sintomas_visuais,
-    doencas_sistemicas,
-    historico_familiar,
-    uso_atual_oculos,
-    ia_summary: summary,
-    submitted_at: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  };
-
-  exams[id] = rec;
-  saveExams(exams);
-
-  res.json({
-    mensagem: "Anamnese salva no prontuário com sucesso!",
-    resumo_ia: summary
-  });
 });
 
 // 6. Concluir Exame e Emitir Receita
-app.put('/api/exames/:id/concluir', (req, res) => {
+app.put('/api/exames/:id/concluir', async (req, res) => {
   const { id } = req.params;
+  const rawId = parseInt(id.replace('PRONT-', ''), 10);
   const { od, oe, adicao, dnp_od, dnp_oe, altura_od, altura_oe, av_longe_od, av_longe_oe, av_perto_od, av_perto_oe, diagnostico_optometrico, recomendacao_lentes, observacoes_clinicas } = req.body;
-  
-  const exams = loadExams();
-  const rec = exams[id];
 
-  if (!rec) {
-    return res.status(404).json({ error: 'Prontuário não encontrado' });
+  try {
+    const atRes = await fetch(`http://127.0.0.1:8000/atendimentos/${rawId}`);
+    if (!atRes.ok) {
+      return res.status(404).json({ error: 'Atendimento não encontrado' });
+    }
+    const at: any = await atRes.json();
+
+    const prontuarioPayload = {
+      paciente_id: at.paciente.id,
+      atendimento_id: at.id,
+      data_consulta: new Date().toISOString(),
+      profissional_responsavel: at.profissional_responsavel || "Dr. Lauro Rocha",
+      queixa_principal: "Visão embaçada",
+      historia_atual: observacoes_clinicas || "Exame de refração de rotina.",
+      acuidade_visual_od_sc: av_longe_od || "20/20",
+      acuidade_visual_oe_sc: av_longe_oe || "20/20",
+      acuidade_visual_od_cc: av_perto_od || "J1",
+      acuidade_visual_oe_cc: av_perto_oe || "J1",
+      ref_sub_od_esferico: Number(od?.esferico ?? 0),
+      ref_sub_od_cilindro: Number(od?.cilindrico ?? 0),
+      ref_sub_od_eixo: Number(od?.eixo ?? 0),
+      ref_sub_oe_esferico: Number(oe?.esferico ?? 0),
+      ref_sub_oe_cilindro: Number(oe?.cilindrico ?? 0),
+      ref_sub_oe_eixo: Number(oe?.eixo ?? 0),
+      ref_sub_od_adicao: Number(adicao ?? 0),
+      ref_sub_oe_adicao: Number(adicao ?? 0),
+      dnp_od: Number(dnp_od ?? 31.5),
+      dnp_oe: Number(dnp_oe ?? 31.5),
+      altura: Number(altura_od ?? 20.0),
+      dp: Number(dnp_od ?? 31.5) + Number(dnp_oe ?? 31.5),
+      diagnostico: diagnostico_optometrico || "Refração normal",
+      conduta: recomendacao_lentes || "Acompanhamento anual.",
+      observacoes_prontuario: observacoes_clinicas || ""
+    };
+
+    const createProntRes = await fetch('http://127.0.0.1:8000/prontuarios/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(prontuarioPayload)
+    });
+
+    if (!createProntRes.ok) {
+      const errPront = await createProntRes.text();
+      throw new Error(`Falha ao criar prontuário no FastAPI: ${errPront}`);
+    }
+    const prontuario: any = await createProntRes.json();
+
+    const numUnico = `REC-${new Date().toISOString().replace(/\D/g, '').substring(0, 8)}-${rawId}`;
+    const hash = `SHA256-${rawId}-${Math.floor(Math.random() * 10000)}`;
+
+    const receitaPayload = {
+      paciente_id: at.paciente.id,
+      prontuario_id: prontuario.id,
+      profissional_id: 1,
+      data_emissao: new Date().toISOString(),
+      data_validade: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+      numero_unico: numUnico,
+      hash_criptografico: hash,
+      url_pdf: "",
+      url_qr_code: "",
+      status: "Pendente",
+      od_esferico: Number(od?.esferico ?? 0),
+      od_cilindro: Number(od?.cilindrico ?? 0),
+      od_eixo: Number(od?.eixo ?? 0),
+      od_adicao: Number(adicao ?? 0),
+      od_dnp: Number(dnp_od ?? 31.5),
+      oe_esferico: Number(oe?.esferico ?? 0),
+      oe_cilindro: Number(oe?.cilindrico ?? 0),
+      oe_eixo: Number(oe?.eixo ?? 0),
+      oe_adicao: Number(adicao ?? 0),
+      oe_dnp: Number(dnp_oe ?? 31.5),
+      dp_receita: Number(dnp_od ?? 31.5) + Number(dnp_oe ?? 31.5),
+      adicao_receita: Number(adicao ?? 0),
+      observacoes_receita: observacoes_clinicas || ""
+    };
+
+    const createRecRes = await fetch('http://127.0.0.1:8000/receitas/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(receitaPayload)
+    });
+
+    if (!createRecRes.ok) {
+      const errRec = await createRecRes.text();
+      throw new Error(`Falha ao criar receita digital no FastAPI: ${errRec}`);
+    }
+
+    await fetch(`http://127.0.0.1:8000/atendimentos/${rawId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: "Finalizado"
+      })
+    });
+
+    res.json({
+      mensagem: "Exame optométrico concluído e receita emitida com sucesso!",
+      prontuario_id: id
+    });
+  } catch (error: any) {
+    console.error('Erro ao concluir exame:', error);
+    res.status(500).json({ error: error.message || String(error) });
   }
-
-  rec.status = 'concluido';
-  if (od) {
-    rec.od_esferico = Number(od.esferico ?? 0);
-    rec.od_cilindrico = Number(od.cilindrico ?? 0);
-    rec.od_eixo = Number(od.eixo ?? 0);
-  }
-  if (oe) {
-    rec.oe_esferico = Number(oe.esferico ?? 0);
-    rec.oe_cilindrico = Number(oe.cilindrico ?? 0);
-    rec.oe_eixo = Number(oe.eixo ?? 0);
-  }
-  rec.adicao = Number(adicao ?? 0);
-  rec.dnp_od = Number(dnp_od ?? 31.5);
-  rec.dnp_oe = Number(dnp_oe ?? 31.5);
-  rec.altura_od = Number(altura_od ?? 20.0);
-  rec.altura_oe = Number(altura_oe ?? 20.0);
-  
-  if (av_longe_od) rec.av_longe_od = av_longe_od;
-  if (av_longe_oe) rec.av_longe_oe = av_longe_oe;
-  if (av_perto_od) rec.av_perto_od = av_perto_od;
-  if (av_perto_oe) rec.av_perto_oe = av_perto_oe;
-
-  rec.diagnostico_optometrico = diagnostico_optometrico || "";
-  rec.recomendacao_lentes = recomendacao_lentes || "";
-  rec.observacoes_clinicas = observacoes_clinicas || "";
-
-  exams[id] = rec;
-  saveExams(exams);
-
-  res.json({
-    mensagem: "Exame optométrico concluído e receita emitida com sucesso!",
-    prontuario_id: id
-  });
 });
 
 // 7. Transmitir Receita Direto para Balcão da Ótica
-app.post('/api/exames/:id/transmitir-otica', (req, res) => {
+app.post('/api/exames/:id/transmitir-otica', async (req, res) => {
   const { id } = req.params;
-  const exams = loadExams();
-  const rec = exams[id];
-
-  if (!rec) {
-    return res.status(404).json({ error: 'Prontuário não encontrado' });
-  }
-
-  rec.enviado_para_otica = true;
-  exams[id] = rec;
-  saveExams(exams);
-
-  const uuidPart = Math.random().toString(36).substring(2, 5).toUpperCase();
-  const osNumber = `OS-${new Date().getFullYear()}-${uuidPart}`;
-
-  res.json({
-    sucesso: true,
-    mensagem: "Receita transmitida com sucesso para o balcão de vendas!",
-    ordem_servico: {
-      os_numero: osNumber,
-      paciente: rec.paciente_nome,
-      grau_prescrito: {
-        OD: { esf: rec.od_esferico, cil: rec.od_cilindrico, eixo: rec.od_eixo },
-        OE: { esf: rec.oe_esferico, cil: rec.oe_cilindrico, eixo: rec.oe_eixo },
-        ADD: rec.adicao,
-        DNP_OD: rec.dnp_od,
-        DNP_OE: rec.dnp_oe
-      }
+  const rawId = parseInt(id.replace('PRONT-', ''), 10);
+  try {
+    const prontRes = await fetch(`http://127.0.0.1:8000/atendimentos/${rawId}/prontuario`);
+    if (!prontRes.ok) {
+      return res.status(404).json({ error: 'Prontuário não encontrado para esse atendimento' });
     }
-  });
+    const prontuario: any = await prontRes.ok ? await prontRes.json() : null;
+    if (!prontuario) {
+      return res.status(404).json({ error: 'Nenhum prontuário registrado para esse atendimento' });
+    }
+
+    const recRes = await fetch(`http://127.0.0.1:8000/prontuarios/${prontuario.id}/receita`);
+    if (!recRes.ok) {
+      return res.status(404).json({ error: 'Receita não encontrada para esse prontuário' });
+    }
+    const receita: any = await recRes.json();
+
+    const autoRes = await fetch(`http://127.0.0.1:8000/automacoes/automatizar_criacao_os_otica/${receita.id}`, {
+      method: 'POST'
+    });
+
+    if (autoRes.ok) {
+      const uuidPart = Math.random().toString(36).substring(2, 5).toUpperCase();
+      const osNumber = `OS-${new Date().getFullYear()}-${uuidPart}`;
+
+      res.json({
+        sucesso: true,
+        mensagem: "Receita transmitida com sucesso para o balcão de vendas!",
+        ordem_servico: {
+          os_numero: osNumber,
+          paciente: prontuario.paciente_id.toString(),
+          grau_prescrito: {
+            OD: { esf: prontuario.ref_sub_od_esferico, cil: prontuario.ref_sub_od_cilindro, eixo: prontuario.ref_sub_od_eixo },
+            OE: { esf: prontuario.ref_sub_oe_esferico, cil: prontuario.ref_sub_oe_cilindro, eixo: prontuario.ref_sub_oe_eixo },
+            ADD: prontuario.ref_sub_od_adicao,
+            DNP_OD: prontuario.dnp_od,
+            DNP_OE: prontuario.dnp_oe
+          }
+        }
+      });
+    } else {
+      throw new Error('Falha ao acionar integração no FastAPI');
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || String(error) });
+  }
 });
 
 
@@ -1399,7 +1568,33 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Ótica Inteligente full-stack server running on http://0.0.0.0:${PORT}`);
+    
+    // Inicia o backend Python em paralelo
+    console.log('🐍 Iniciando backend de exames Python FastAPI (sala_de_exames_completo.py)...');
+    pythonProcess = spawn('python', ['sala_de_exames_completo.py'], {
+      stdio: 'inherit',
+      shell: true
+    });
+
+    pythonProcess.on('error', (err) => {
+      console.error('❌ Falha ao iniciar backend Python:', err);
+    });
+
+    pythonProcess.on('close', (code) => {
+      console.log(`🐍 Backend Python fechado com código: ${code}`);
+    });
   });
 }
+
+const killPython = () => {
+  if (pythonProcess) {
+    console.log('Encerrando backend Python...');
+    pythonProcess.kill();
+    pythonProcess = null;
+  }
+};
+process.on('SIGINT', () => { killPython(); process.exit(); });
+process.on('SIGTERM', () => { killPython(); process.exit(); });
+process.on('exit', () => { killPython(); });
 
 startServer();
