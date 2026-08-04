@@ -54,7 +54,17 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
   onConfirmPixPayment,
   currentOS,
 }) => {
-  const selectedClient = clients.find((c) => c.id === selectedClientId) || clients[0];
+  const selectedClient = clients.find((c) => c.id === selectedClientId) || clients[0] || {
+    id: 'empty',
+    name: 'Nenhum cliente',
+    phone: '',
+    status: 'inativo',
+    isAiHandled: false,
+    lastInteraction: '',
+    unreadCount: 0,
+    tags: [],
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  };
   const [activeTab, setActiveTab] = useState<ActiveTabType>('overview');
 
   const handleSelectClient = (id: string) => {

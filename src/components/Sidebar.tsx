@@ -89,18 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
-      groupTitle: 'CLÍNICA & OPTOMETRIA',
-      items: [
-        {
-          id: 'exam-room' as ActiveTab,
-          title: 'Sala de Exames',
-          icon: Eye,
-          isStar: true,
-        },
-      ],
-    },
-    {
-      groupTitle: 'IA & RECURSOS',
+      groupTitle: 'CLÍNICA & IA',
       items: [
         {
           id: 'camera' as ActiveTab,
@@ -111,6 +100,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'lab' as ActiveTab,
           title: 'Laboratório & Status',
           icon: Layers,
+        },
+        {
+          id: 'exam-room' as ActiveTab,
+          title: 'Sala de Exames',
+          icon: Eye,
+          isStar: true,
         },
         {
           id: 'chat' as ActiveTab,
