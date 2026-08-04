@@ -6,8 +6,6 @@ import {
 } from 'lucide-react';
 import { ExamRecord, AnamnesisIaInput } from '../../types';
 import { loadExamsFromSupabase, saveExamToSupabase } from '../../utils/examSync';
-import { supabase } from '../../utils/supabaseClient';
-import { examSystemApi } from '../../utils/examSystemApi';
 
 export const ExamRoomModule: React.FC = () => {
   const [exams, setExams] = useState<ExamRecord[]>([]);
@@ -193,38 +191,37 @@ export const ExamRoomModule: React.FC = () => {
 
     setLoading(true);
     try {
-      const examAtualizado = { ...selectedExam, status: 'concluido' as any };
-      await saveExamToSupabase(examAtualizado);
-
-      // Gerar Receita Digital
-      await examSystemApi.generateReceitaDigital({
-        tenant_id: '00000000-0000-0000-0000-000000000001',
-        paciente_id: selectedExam.paciente_id,
-        prontuario_id: selectedExam.id, // Em transição, o id do ExamRecord = atendimento_id
-        od_esferico: selectedExam.od_esferico,
-        od_cilindro: selectedExam.od_cilindrico,
-        od_eixo: selectedExam.od_eixo,
-        od_adicao: selectedExam.adicao,
-        od_dnp: selectedExam.dnp_od,
-        oe_esferico: selectedExam.oe_esferico,
-        oe_cilindro: selectedExam.oe_cilindrico,
-        oe_eixo: selectedExam.oe_eixo,
-        oe_adicao: selectedExam.adicao,
-        oe_dnp: selectedExam.dnp_oe,
-        dp_receita: selectedExam.dnp_od + selectedExam.dnp_oe,
-        adicao_receita: selectedExam.adicao,
-        observacoes_receita: selectedExam.recomendacao_lentes || ''
+      const res = await fetch(`/api/exames/${selectedExam.id}/concluir`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          od: { esferico: selectedExam.od_esferico, cilindrico: selectedExam.od_cilindrico, eixo: selectedExam.od_eixo },
+          oe: { esferico: selectedExam.oe_esferico, cilindrico: selectedExam.oe_cilindrico, eixo: selectedExam.oe_eixo },
+          adicao: selectedExam.adicao,
+          dnp_od: selectedExam.dnp_od,
+          dnp_oe: selectedExam.dnp_oe,
+          altura_od: selectedExam.altura_od,
+          altura_oe: selectedExam.altura_oe,
+          av_longe_od: selectedExam.av_longe_od,
+          av_longe_oe: selectedExam.av_longe_oe,
+          av_perto_od: selectedExam.av_perto_od,
+          av_perto_oe: selectedExam.av_perto_oe,
+          diagnostico_optometrico: selectedExam.diagnostico_optometrico,
+          recomendacao_lentes: selectedExam.recomendacao_lentes || '',
+          observacoes_clinicas: selectedExam.observacoes_clinicas || ''
+        })
       });
 
-      setSelectedExam(examAtualizado);
-      alert("Exame concluído com sucesso e Receita Digital Gerada!");
-      
-      // Abre o modal de emissão de OS para a ótica (opcional)
-      setIsRecipeModalOpen(true);
-      await fetchExams();
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao concluir exame. Tente novamente.");
+      if (res.ok) {
+        // Recarrega
+        await fetchExams();
+        // Transmite automaticamente para a ótica (vendas)
+        await fetch(`/api/exames/${selectedExam.id}/transmitir-otica`, { method: 'POST' });
+        alert("Receita digital emitida e transmitida com sucesso para o balcão de vendas!");
+        setIsRecipeModalOpen(true);
+      }
+    } catch (err) {
+      alert("Falha ao concluir exame.");
     } finally {
       setLoading(false);
     }
@@ -312,45 +309,25 @@ export const ExamRoomModule: React.FC = () => {
       return;
     }
     try {
-      // Cria/Encontra o paciente usando a tabela de clientes
-      const { data: clientes } = await supabase
-        .from('clientes')
-        .select('*')
-        .eq('telefone', newPatientForm.telefone)
-        .limit(1);
-        
-      let cliente_id = null;
-      if (clientes && clientes.length > 0) {
-        cliente_id = clientes[0].id;
-      } else {
-        const { data: novoCliente, error: errCli } = await supabase
-          .from('clientes')
-          .insert([{ 
-            nome: newPatientForm.nome, 
-            telefone: newPatientForm.telefone, 
-            cpf: newPatientForm.cpf 
-          }])
-          .select().single();
-        if (errCli) throw errCli;
-        cliente_id = novoCliente.id;
-      }
-
-      await examSystemApi.createAtendimento({
-        tenant_id: '00000000-0000-0000-0000-000000000001',
-        paciente_id: cliente_id,
-        horario_agendado: new Date().toISOString(),
-        status: 'Aguardando',
-        prioridade: newPatientForm.prioridade,
-        profissional_responsavel: 'Dr. Lauro Rocha',
-        observacoes: newPatientForm.observacoes
+      const res = await fetch('/api/exames/fila/novo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paciente_nome: newPatientForm.nome,
+          paciente_telefone: newPatientForm.telefone,
+          paciente_cpf: newPatientForm.cpf,
+          prioridade: newPatientForm.prioridade,
+          observacoes: newPatientForm.observacoes
+        })
       });
-      
-      alert("Paciente inserido na fila com sucesso!");
-      setIsNewPatientModalOpen(false);
-      setNewPatientForm({ nome: '', telefone: '', cpf: '', prioridade: 'Normal', observacoes: '' });
-      await fetchExams();
-    } catch (e) {
-      console.error(e);
+      if (res.ok) {
+        const data = await res.json();
+        alert("Paciente inserido na fila com sucesso!");
+        setIsNewPatientModalOpen(false);
+        setNewPatientForm({ nome: '', telefone: '', cpf: '', prioridade: 'Normal', observacoes: '' });
+        await fetchExams();
+      }
+    } catch {
       alert("Erro ao enfileirar paciente.");
     }
   };
@@ -359,35 +336,17 @@ export const ExamRoomModule: React.FC = () => {
   const handleSaveAnamneseForm = async () => {
     if (!selectedExam) return;
     try {
-      // Cria registro de Pré Anamnese com os dados
-      await examSystemApi.createPreAnamnese({
-        tenant_id: '00000000-0000-0000-0000-000000000001',
-        paciente_id: selectedExam.paciente_id,
-        atendimento_id: selectedExam.id,
-        principal_queixa: anamneseForm.queixa_principal,
-        tempo_queixa: anamneseForm.tempo_sintomas,
+      const res = await fetch(`/api/exames/${selectedExam.id}/anamnese-ia`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(anamneseForm)
       });
-
-      // Roda a IA
-      const resIa = await examSystemApi.iaAnalisarAnamnese(selectedExam.id, anamneseForm);
-      
-      const examAtualizado = {
-        ...selectedExam,
-        status: 'anamnese_concluida' as any,
-        anamnese_json: {
-          ...anamneseForm,
-          ia_summary: resIa.resumo,
-          pontos_atencao: resIa.pontos
-        }
-      };
-      await saveExamToSupabase(examAtualizado);
-      setSelectedExam(examAtualizado);
-      
-      alert("Anamnese processada pela IA e salva no prontuário!");
-      setIsAnamneseModalOpen(false);
-      await fetchExams();
-    } catch (e) {
-      console.error(e);
+      if (res.ok) {
+        alert("Anamnese processada pela IA e salva no prontuário!");
+        setIsAnamneseModalOpen(false);
+        await fetchExams();
+      }
+    } catch {
       alert("Erro ao salvar anamnese.");
     }
   };

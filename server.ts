@@ -48,6 +48,72 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', app: 'Ótica Inteligente Server', time: new Date().toISOString() });
 });
 
+// -------------------------------------------------------------
+// API EXAM ROOM (NATIVE GEMINI ROUTES FOR OPTOMETRY)
+// -------------------------------------------------------------
+
+app.post('/api/exam/analisar-anamnese', async (req, res) => {
+  try {
+    const { preAnamneseId, dadosAnamnese } = req.body;
+    const ai = getGeminiClient();
+    
+    const prompt = `Você é um assistente oftalmológico/optométrico especialista. Analise os seguintes dados de pré-anamnese e retorne um JSON estruturado com duas chaves: 'resumo' (um resumo clínico direto) e 'pontos' (lista de pontos de atenção graves, se houver). 
+Dados: ${JSON.stringify(dadosAnamnese, null, 2)}
+Retorne APENAS um JSON válido.`;
+
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      }
+    });
+
+    const text = result.text();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(text);
+    } catch(e) {
+      jsonResponse = { resumo: text, pontos: "Verifique os dados manualmente." };
+    }
+    res.json(jsonResponse);
+  } catch (err: any) {
+    console.error('Error in /api/exam/analisar-anamnese:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/exam/sugerir-diagnostico', async (req, res) => {
+  try {
+    const { prontuarioId, dadosProntuario } = req.body;
+    const ai = getGeminiClient();
+
+    const prompt = `Você é um Optometrista Sênior. Analise o prontuário completo a seguir (anamnese, refração objetiva/subjetiva, exames) e sugira um diagnóstico optométrico e lista de alertas de possíveis patologias para encaminhamento. Retorne um JSON com 'diagnostico_sugerido' e 'alertas' (array de strings).
+Dados: ${JSON.stringify(dadosProntuario, null, 2)}
+Retorne APENAS um JSON válido.`;
+
+    const result = await ai.models.generateContent({
+      model: 'gemini-2.5-pro',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      }
+    });
+
+    const text = result.text();
+    let jsonResponse;
+    try {
+      jsonResponse = JSON.parse(text);
+    } catch(e) {
+      jsonResponse = { diagnostico_sugerido: text, alertas: [] };
+    }
+    res.json(jsonResponse);
+  } catch (err: any) {
+    console.error('Error in /api/exam/sugerir-diagnostico:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 1. WhatsApp AI Chat Agent Endpoint (Mary - Master AI Executive & Optical Specialist with Audio/Video Multimodal Consciousness)
 app.post('/api/gemini/chat', async (req, res) => {
   try {
