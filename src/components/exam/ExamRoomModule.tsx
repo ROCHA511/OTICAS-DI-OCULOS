@@ -409,63 +409,65 @@ export const ExamRoomModule: React.FC = () => {
   const recipeHash = selectedExam ? `SHA256-DIGITAL-${selectedExam.id.replace(/\D/g, '')}-B8F7` : 'N/A';
 
   return (
-    <div className="flex flex-col h-[calc(100vh-16px)] my-2 mr-2 bg-[#040f26]/95 border-2 border-[#C9A96E]/80 rounded-[24px] shadow-[0_0_35px_rgba(201,169,110,0.2)] text-white overflow-hidden select-none select-none">
+    <div className="flex flex-col min-h-screen sm:min-h-0 sm:h-[calc(100vh-16px)] my-0 sm:my-2 mx-0 sm:mr-2 bg-[#040f26]/95 border-0 sm:border-2 border-[#C9A96E]/80 rounded-none sm:rounded-[24px] shadow-[0_0_35px_rgba(201,169,110,0.2)] text-white overflow-y-auto sm:overflow-hidden select-none">
       
       {/* 1. Header de Ações Rápidas (Superior) */}
-      <header className="px-6 py-3 border-b border-[#C9A96E]/30 bg-[#071D49] flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-[#C9A96E]/30 bg-[#071D49] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button 
             onClick={() => window.location.reload()} 
-            className="flex items-center gap-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-4 py-2 rounded-xl transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md"
+            className="flex items-center gap-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md"
           >
-            ← Voltar ao Início
+            ← Início
           </button>
-          <span className="text-slate-400 text-xs font-semibold">
+          <span className="text-slate-400 text-[11px] sm:text-xs font-semibold truncate max-w-[200px] sm:max-w-none">
             🏠 Óticas Di Óculos • Módulo Clínico Ativo
           </span>
         </div>
         <button 
           onClick={() => fetchExams()}
-          className="text-xs bg-[#0b255c] hover:bg-[#153270] border border-[#C9A96E]/40 text-[#C9A96E] px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+          className="text-[11px] sm:text-xs bg-[#0b255c] hover:bg-[#153270] border border-[#C9A96E]/40 text-[#C9A96E] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ml-auto sm:ml-0"
         >
           <RefreshCw className="w-3.5 h-3.5" /> Atualizar Fila
         </button>
       </header>
 
       {/* 2. Banner de Módulo "Sala de Exames Optométricos" (Conforme Imagem) */}
-      <section className="mx-6 mt-4 p-4 bg-gradient-to-r from-[#071D49] to-[#0A2E70] border-2 border-[#C9A96E]/60 rounded-2xl flex items-center justify-between shadow-[0_4px_25px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[#C9A96E] bg-[#0b255c] flex items-center justify-center text-[#C9A96E] shadow-lg">
-            <TrialFrameIcon className="w-7 h-7 text-[#C9A96E]" />
+      <section className="mx-2 sm:mx-6 mt-2 sm:mt-4 p-3 sm:p-4 bg-gradient-to-r from-[#071D49] to-[#0A2E70] border border-sm:border-2 border-[#C9A96E]/60 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_4px_25px_rgba(0,0,0,0.4)] shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#C9A96E] bg-[#0b255c] flex items-center justify-center text-[#C9A96E] shadow-lg shrink-0">
+            <TrialFrameIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#C9A96E]" />
           </div>
-          <div>
-            <span className="text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-              Módulo Clínico Inteligente
+          <div className="min-w-0">
+            <span className="text-[8px] sm:text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-2 py-0.5 rounded-full uppercase tracking-wider inline-block">
+              SISTEMA OFICIAL MÚLTIPLOS CLIENTES
             </span>
-            <h1 className="text-lg font-black text-white mt-1 tracking-tight">
+            <h1 className="text-base sm:text-lg font-black text-white mt-0.5 tracking-tight truncate">
               Sala de Exames Optométricos & Prontuário IA
             </h1>
-            <p className="text-[10px] text-slate-300">
-              Anamnese prévia por inteligência artificial, emissão de receita com QR Code e transmissão instantânea para vendas.
+            <p className="text-[9px] sm:text-[10px] text-slate-300 line-clamp-2 sm:line-clamp-none">
+              Atendimento completo com inteligência artificial, emissão de prescrições e laudos, transmissão instantânea para vendas.
             </p>
           </div>
         </div>
         
         {/* Optometrista Responsável */}
-        <div className="bg-[#040f26]/80 border border-[#C9A96E]/50 rounded-xl px-4 py-2 text-right">
+        <div className="bg-[#040f26]/80 border border-[#C9A96E]/50 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-left sm:text-right w-full sm:w-auto shrink-0 flex sm:block items-center justify-between">
           <span className="text-[8px] text-[#C9A96E] font-black uppercase tracking-widest block">
             Optometrista Responsável
           </span>
-          <span className="text-sm font-black text-white flex items-center gap-1.5 justify-end">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            {optometristaNome}
-          </span>
-          <span className="text-[10px] text-slate-400 font-bold block">{cboNumero}</span>
+          <div>
+            <span className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5 sm:justify-end">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+              {optometristaNome}
+            </span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block">{cboNumero}</span>
+          </div>
         </div>
       </section>
 
       {/* Submenus Auxiliares */}
-      <nav className="mx-6 mt-3 flex border-b border-[#C9A96E]/20">
+      <nav className="mx-2 sm:mx-6 mt-2 sm:mt-3 flex overflow-x-auto border-b border-[#C9A96E]/20 scrollbar-none whitespace-nowrap shrink-0">
         {[
           { id: 'atendimento', title: 'Fila e Atendimento', icon: Stethoscope },
           { id: 'dashboard', title: 'Métricas & Dashboard', icon: BarChart3 },
@@ -476,7 +478,7 @@ export const ExamRoomModule: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id as any)}
-            className={`px-4 py-2 border-b-2 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3 sm:px-4 py-2 border-b-2 text-[11px] sm:text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
               activeSubTab === tab.id
                 ? 'border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -489,12 +491,12 @@ export const ExamRoomModule: React.FC = () => {
       </nav>
 
       {/* 3. Área de Trabalho Principal */}
-      <div className="flex-1 p-6 grid grid-cols-12 gap-6 overflow-hidden min-h-0">
+      <div className="flex-1 p-2 sm:p-6 grid grid-cols-12 gap-3 sm:gap-6 overflow-y-auto sm:overflow-hidden min-h-0">
 
         {activeSubTab === 'atendimento' && (
           <>
             {/* COLUNA ESQUERDA: Fila de Atendimento */}
-            <div className="col-span-12 lg:col-span-4 flex flex-col h-full bg-[#071D49]/40 border border-[#C9A96E]/30 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
+            <div className="col-span-12 lg:col-span-4 flex flex-col min-h-[380px] lg:h-full bg-[#071D49]/40 border border-[#C9A96E]/30 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
               <div className="p-4 border-b border-slate-700/50 space-y-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-sm font-black tracking-wider text-slate-100 flex items-center gap-1.5">
