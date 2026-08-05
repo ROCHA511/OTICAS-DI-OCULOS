@@ -1108,59 +1108,79 @@ export default function App() {
         }}
       />
 
-      {/* Barra de Navegação Inferior Fixa para Mobile (Exibida apenas em telas < 640px via `sm:hidden`) */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#071D49]/98 backdrop-blur-xl border-t-2 border-[#C9A96E]/70 px-2 py-1 flex items-center justify-around text-white shadow-[0_-5px_25px_rgba(0,0,0,0.5)]">
+      {/* ═══ BOTTOM NAVIGATION — Premium Floating Dock (Mobile Only) ═══ */}
+      <nav className="sm:hidden fixed bottom-3 left-3 right-3 z-[100] bg-[#0B0F17]/95 backdrop-blur-2xl border border-[#D4AF37]/25 px-3 py-2 flex items-center justify-around text-white shadow-[0_8px_40px_rgba(0,0,0,0.6)] rounded-2xl">
+        {/* Subtle inner glow line at top */}
+        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent rounded-full" />
+
         <button
           onClick={() => handleTabChange('dashboard')}
-          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
-            activeTab === 'dashboard' ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 rounded-xl transition-all ${
+            activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-400'
           }`}
         >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Início</span>
+          {activeTab === 'dashboard' && (
+            <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#D4AF37] rounded-full" />
+          )}
+          <Home className={`w-5 h-5 ${activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Início</span>
         </button>
 
         <button
           onClick={() => handleTabChange('os')}
-          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
-            activeTab === 'os' ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 rounded-xl transition-all ${
+            activeTab === 'os' ? 'text-[#D4AF37]' : 'text-slate-400'
           }`}
         >
-          <FileText className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Ordens</span>
+          {activeTab === 'os' && (
+            <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#D4AF37] rounded-full" />
+          )}
+          <FileText className={`w-5 h-5 ${activeTab === 'os' ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${activeTab === 'os' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Ordens</span>
         </button>
 
+        {/* Chat IA — Center Hero Button */}
         <button
           onClick={() => handleTabChange('chat')}
-          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all relative ${
-            activeTab === 'chat' ? 'text-[#25D366] font-black scale-105' : 'text-slate-300 font-medium'
-          }`}
+          className="relative flex flex-col items-center justify-center -mt-4"
         >
-          <MessageSquare className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Chat IA</span>
-          {unreadCountTotal > 0 && (
-            <span className="absolute top-0 right-1 w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-          )}
+          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+            activeTab === 'chat'
+              ? 'bg-gradient-to-br from-[#D4AF37] to-amber-500 shadow-[#D4AF37]/30'
+              : 'bg-gradient-to-br from-[#161D2A] to-[#0B0F17] border border-[#D4AF37]/30'
+          }`}>
+            <MessageSquare className={`w-6 h-6 ${activeTab === 'chat' ? 'text-slate-950' : 'text-[#D4AF37]'}`} />
+            {unreadCountTotal > 0 && (
+              <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-rose-500 border-2 border-[#0B0F17] rounded-full animate-pulse" />
+            )}
+          </div>
+          <span className={`text-[9px] mt-1 font-semibold tracking-wide ${activeTab === 'chat' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Chat IA</span>
         </button>
 
         <button
           onClick={() => handleTabChange('clients')}
-          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
-            activeTab === 'clients' ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 rounded-xl transition-all ${
+            activeTab === 'clients' ? 'text-[#D4AF37]' : 'text-slate-400'
           }`}
         >
-          <Users className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Clientes</span>
+          {activeTab === 'clients' && (
+            <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#D4AF37] rounded-full" />
+          )}
+          <Users className={`w-5 h-5 ${activeTab === 'clients' ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${activeTab === 'clients' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Clientes</span>
         </button>
 
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all ${
-            isMobileMenuOpen ? 'text-[#C9A96E] font-black scale-105' : 'text-slate-300 font-medium'
+          className={`relative flex flex-col items-center justify-center px-3 py-1.5 rounded-xl transition-all ${
+            isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-400'
           }`}
         >
-          <Menu className="w-5 h-5" />
-          <span className="text-[10px] mt-0.5">Menu</span>
+          {isMobileMenuOpen && (
+            <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#D4AF37] rounded-full" />
+          )}
+          <Menu className={`w-5 h-5 ${isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Menu</span>
         </button>
       </nav>
 

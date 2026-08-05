@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, ShieldCheck, Copy, Check, ExternalLink, Users, AlertTriangle, Maximize2, X, Share2, Bot } from 'lucide-react';
+import { Sparkles, Copy, Check, ExternalLink, Maximize2, X, Share2, Bot, ShieldCheck, Zap } from 'lucide-react';
 
 interface AlitaOticaInteligenteBannerProps {
   shareUrl?: string;
@@ -16,43 +16,47 @@ export const AlitaOticaInteligenteBanner: React.FC<AlitaOticaInteligenteBannerPr
 
   return (
     <>
-      <div className="bg-gradient-to-br from-[#020A1C] via-[#071D49] to-[#0D1B3E] border-2 border-[#C9A96E] rounded-3xl p-5 text-white shadow-2xl relative overflow-hidden font-sans">
-        {/* Background Ambient Cyber Glow */}
-        <div className="absolute -top-12 -right-12 w-64 h-64 bg-cyan-500/25 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-amber-500/25 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Luxury Glassmorphic Executive Container */}
+      <div className="bg-gradient-to-br from-[#0F172A] via-[#141C2D] to-[#0A0E17] border border-[#D4AF37]/30 rounded-3xl p-4 sm:p-6 text-white shadow-2xl relative overflow-hidden font-sans backdrop-blur-xl">
+        {/* Soft Ambient Gold & Cyan Blurs */}
+        <div className="absolute -top-16 -right-16 w-72 h-72 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -left-16 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6 relative z-10">
           
-          {/* Left / Top: Android Alita Hyper-Realistic Artwork holding plaque */}
+          {/* Left: Alita AI 3D Cyber Portrait Card */}
           <div className="shrink-0 flex flex-col items-center justify-center">
-            <div className="relative group cursor-pointer" onClick={() => setShowFullArt(true)}>
-              {/* Holographic Glowing Outer Aura */}
-              <div className="absolute -inset-1.5 bg-gradient-to-r from-amber-400 via-cyan-400 to-amber-500 rounded-3xl blur-md opacity-80 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
+            <div 
+              className="relative group cursor-pointer" 
+              onClick={() => setShowFullArt(true)}
+              title="Clique para expandir a arte da Alita AI"
+            >
+              {/* Subtle Gold Pulse Outline */}
+              <div className="absolute -inset-1 bg-gradient-to-tr from-[#D4AF37] via-amber-200 to-[#D4AF37]/40 rounded-2xl blur-sm opacity-60 group-hover:opacity-100 transition duration-500" />
 
-              {/* Android Alita Cyber Artwork Frame */}
-              <div className="relative w-52 h-56 sm:w-60 sm:h-64 bg-slate-950 rounded-2xl border-2 border-cyan-400/90 p-2 shadow-2xl flex flex-col items-center justify-between overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+              {/* Compact Frame */}
+              <div className="relative w-44 h-48 sm:w-52 sm:h-56 bg-[#0B0F17] rounded-xl border border-[#D4AF37]/40 p-2 shadow-2xl flex flex-col items-center justify-between overflow-hidden">
                 
-                {/* Click to expand hover hint */}
-                <div className="absolute top-2 right-2 z-30 bg-slate-900/80 backdrop-blur-md text-amber-300 border border-amber-400/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 z-30 bg-[#0F172A]/90 backdrop-blur-md text-[#D4AF37] border border-[#D4AF37]/40 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
                   <Maximize2 className="w-3.5 h-3.5" />
                 </div>
 
-                {/* Alita Cyber Face & Smart Glasses Artwork SVG (Exact Hyper-Realistic 3D Cybernetic Render matching IMAGEM 1) */}
-                <div className="w-full h-44 relative flex items-center justify-center">
+                <div className="w-full h-36 relative flex items-center justify-center overflow-hidden rounded-lg">
                   <img 
                     src="/alita_premium.png" 
-                    alt="Android Alita Premium" 
-                    className="w-full h-full object-cover rounded-2xl shadow-2xl" 
+                    alt="Alita AI Executive Assistant" 
+                    className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-500" 
                   />
                 </div>
 
-                {/* Glowing Plaque held by Alita Android */}
-                <div className="w-full bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] border-2 border-[#C9A96E] rounded-xl p-2 text-center shadow-xl transform -translate-y-1 relative z-10">
-                  <div className="text-[11px] font-black text-amber-300 tracking-wider uppercase flex items-center justify-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin" /> ÓTICA INTELIGENTE
+                {/* Status Plaque */}
+                <div className="w-full bg-[#161D2A]/95 border border-[#D4AF37]/40 rounded-lg p-1.5 text-center shadow-lg transform -translate-y-0.5">
+                  <div className="text-[10px] font-black text-[#D4AF37] tracking-wider uppercase flex items-center justify-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#D4AF37]" /> ALITA AI SPECIALIST
                   </div>
-                  <div className="text-[8px] text-cyan-300 font-mono font-black tracking-widest uppercase mt-0.5">
-                    SISTEMA ANDROID DE ALTA PERFORMANCE
+                  <div className="text-[8px] text-emerald-400 font-mono font-bold tracking-wider uppercase mt-0.5 flex items-center justify-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    ONLINE &bull; ALTA PERFORMANCE
                   </div>
                 </div>
 
@@ -62,41 +66,45 @@ export const AlitaOticaInteligenteBanner: React.FC<AlitaOticaInteligenteBannerPr
             <button
               type="button"
               onClick={() => setShowFullArt(true)}
-              className="text-[10px] text-[#C9A96E] font-extrabold mt-1.5 uppercase tracking-wider flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
+              className="text-[10px] text-[#D4AF37] font-bold mt-2 uppercase tracking-widest flex items-center gap-1 hover:text-white transition-colors cursor-pointer"
             >
-              <Maximize2 className="w-3 h-3 text-cyan-400" />
-              <span>🤖 Android Alita • Clique para Expandir</span>
+              <Maximize2 className="w-3 h-3 text-[#D4AF37]" />
+              <span>Expandir Visualização</span>
             </button>
           </div>
 
-          {/* Right / Content: Public Link Release & Instructions for the 10 Testers */}
-          <div className="flex-1 space-y-3.5 text-left">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="bg-[#10B981] text-slate-950 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide flex items-center gap-1.5 shadow-md">
-                <ShieldCheck className="w-3.5 h-3.5 stroke-[3]" /> LINK PÚBLICO LIBERADO (SEM ERRO 403)
-              </span>
-              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" /> Grupo dos 10 Testadores
-              </span>
+          {/* Right: Executive Info & Access Link */}
+          <div className="flex-1 space-y-3.5 text-left w-full">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <span className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" /> Sistema Conectado VIP
+                </span>
+                <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-emerald-400" /> Multi-Equipe
+                </span>
+              </div>
             </div>
 
             <div>
-              <h3 className="text-base sm:text-lg font-black text-amber-200 tracking-tight flex items-center gap-2">
-                <span>Link Oficial do Sistema Ótica Inteligente</span>
-                <Bot className="w-5 h-5 text-cyan-400" />
+              <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
+                <span>Painel de Inteligência &amp; Gestão Ótica</span>
+                <Bot className="w-5 h-5 text-[#D4AF37]" />
               </h3>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                O seu grupo de 10 testadores pode acessar o sistema diretamente pelo link público abaixo no celular ou computador, sem precisar fazer login na conta do Google AI Studio!
+                Acesso direto e ilimitado para toda a equipe de consultores e optometristas.
               </p>
             </div>
 
-            {/* High visibility Public URL Container */}
-            <div className="p-3.5 bg-slate-950/95 border-2 border-amber-400 rounded-2xl space-y-2 shadow-2xl">
-              <div className="flex items-center justify-between text-[11px] font-bold text-amber-300">
-                <span>🔗 Seu Link Público para Enviar ao Time:</span>
+            {/* Clean Access Bar Container */}
+            <div className="p-3 bg-[#0B0F17]/90 border border-[#D4AF37]/30 rounded-2xl space-y-2 shadow-xl">
+              <div className="flex items-center justify-between text-[11px] font-medium text-slate-300">
+                <span className="flex items-center gap-1.5 font-semibold text-white">
+                  🔗 Link Oficial de Acesso da Sua Ótica:
+                </span>
                 <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  ● Online &amp; Funcionando
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  Ativo &amp; Seguro
                 </span>
               </div>
 
@@ -105,16 +113,16 @@ export const AlitaOticaInteligenteBanner: React.FC<AlitaOticaInteligenteBannerPr
                   type="text"
                   readOnly
                   value={shareUrl}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs font-mono font-bold text-cyan-300 select-all focus:outline-none"
+                  className="w-full bg-[#161D2A] border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-semibold text-[#D4AF37] select-all focus:outline-none"
                 />
 
                 <button
                   type="button"
                   onClick={onCopy}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-lg ${
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 shadow-lg ${
                     copied
                       ? 'bg-emerald-500 text-slate-950 font-black scale-105'
-                      : 'bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950'
+                      : 'bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 shadow-[#D4AF37]/10'
                   }`}
                 >
                   {copied ? (
@@ -130,38 +138,26 @@ export const AlitaOticaInteligenteBanner: React.FC<AlitaOticaInteligenteBannerPr
               </div>
             </div>
 
-            {/* Explanation Box on Why 403/404 happened */}
-            <div className="p-3 bg-amber-500/15 border border-amber-400/40 rounded-xl text-[11px] text-amber-100 flex items-start gap-2.5">
-              <AlertTriangle className="w-4.5 h-4.5 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <strong>Como resolver o "Erro 404 / Page Not Found" ou "403"?</strong>
-                <span className="block text-slate-300 mt-0.5 leading-relaxed">
-                  • <strong>Link Ativo Agora:</strong> Use o link acima (<code className="text-cyan-300 font-mono font-bold">{shareUrl}</code>) que já está rodando e online sem erros.<br />
-                  • <strong>Para ativar o link "ais-pre":</strong> No menu superior do Google AI Studio, clique no botão <strong>"Share" (Compartilhar)</strong> para publicar a versão `ais-pre` oficial.
-                </span>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="pt-1 flex items-center justify-between gap-2 text-xs flex-wrap">
+            {/* Executive Actions */}
+            <div className="pt-1 flex items-center justify-between gap-3 text-xs flex-wrap">
               <a
                 href={shareUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-amber-300 hover:text-white font-extrabold underline flex items-center gap-1"
+                className="text-[#D4AF37] hover:text-white font-bold underline flex items-center gap-1 transition-colors"
               >
-                <ExternalLink className="w-3.5 h-3.5" /> Abrir Link Público em Nova Aba
+                <ExternalLink className="w-3.5 h-3.5" /> Abrir Sistema em Nova Aba
               </a>
 
               <a
                 href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                  `🤖 *ÓTICA INTELIGENTE • Link de Acesso do Sistema*\n\nOlá time! Aqui está o link oficial para testar o sistema no celular ou PC:\n\n🔗 ${shareUrl}\n\nQualquer dúvida, pode me chamar!`
+                  `🤖 *ÓTICA INTELIGENTE • Link de Acesso do Sistema*\n\nOlá equipe! Aqui está o link oficial para acessar o sistema:\n\n🔗 ${shareUrl}`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md text-[11px]"
+                className="bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md text-[11px] transition-all border border-emerald-400/30"
               >
-                <Share2 className="w-3.5 h-3.5" /> Disparar no WhatsApp do Grupo
+                <Share2 className="w-3.5 h-3.5" /> Enviar para a Equipe no WhatsApp
               </a>
             </div>
 
@@ -172,43 +168,42 @@ export const AlitaOticaInteligenteBanner: React.FC<AlitaOticaInteligenteBannerPr
 
       {/* Full Screen Image Art Modal for Alita Android */}
       {showFullArt && (
-        <div className="fixed inset-0 z-[200] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="relative bg-gradient-to-br from-[#040D21] via-[#071D49] to-[#0A1128] border-2 border-amber-400 rounded-3xl p-6 max-w-lg w-full text-center shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-[200] bg-[#05080E]/95 backdrop-blur-2xl flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="relative bg-gradient-to-br from-[#0B0F17] via-[#141C2D] to-[#0A0E17] border border-[#D4AF37]/50 rounded-3xl p-6 max-w-lg w-full text-center shadow-2xl space-y-4">
             
             <button
               onClick={() => setShowFullArt(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full bg-slate-900 border border-slate-700 cursor-pointer"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-2 rounded-full bg-[#161D2A] border border-white/10 cursor-pointer transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center justify-center gap-2 text-amber-300 font-black text-sm uppercase">
-              <Sparkles className="w-4 h-4 text-amber-300" /> Mascote Oficial Ótica Inteligente
+            <div className="flex items-center justify-center gap-2 text-[#D4AF37] font-black text-sm uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-[#D4AF37]" /> Alita AI Specialist &bull; Assistente Executiva
             </div>
 
-            {/* Detailed Art Render Container matching IMAGEM 1 */}
-            <div className="w-full h-[400px] mx-auto bg-slate-950 border-2 border-cyan-400 rounded-2xl p-1 shadow-2xl relative flex flex-col justify-between items-center overflow-hidden">
+            <div className="w-full h-[380px] mx-auto bg-[#0B0F17] border border-[#D4AF37]/40 rounded-2xl p-1 shadow-2xl relative flex flex-col justify-between items-center overflow-hidden">
               <div className="w-full h-full relative">
                 <img 
                   src="/alita_premium.png" 
-                  alt="Android Alita Premium" 
+                  alt="Alita AI Executive Assistant" 
                   className="w-full h-full object-cover rounded-xl shadow-2xl" 
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <h4 className="text-sm font-bold text-white">
-                Android Feminina Alita - Representante do Sistema
+                Inteligência Artificial Nativa da Ótica Inteligente
               </h4>
               <p className="text-xs text-slate-300">
-                Esta arte representa a inteligência artificial humanizada do sistema Ótica Inteligente para o grupo dos 10 testadores.
+                Atua no suporte a vendas, cotações de lentes de alta tecnologia e fidelização de clientes.
               </p>
             </div>
 
             <button
               onClick={() => setShowFullArt(false)}
-              className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-2.5 rounded-xl text-xs cursor-pointer shadow-lg"
+              className="w-full bg-[#D4AF37] hover:bg-[#E5C158] text-slate-950 font-extrabold py-2.5 rounded-xl text-xs cursor-pointer shadow-lg transition-colors"
             >
               Fechar Visualização
             </button>
@@ -218,4 +213,5 @@ export const AlitaOticaInteligenteBanner: React.FC<AlitaOticaInteligenteBannerPr
     </>
   );
 };
+
 

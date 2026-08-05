@@ -36,17 +36,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showNotificationsMenu, setShowNotificationsMenu] = useState(false);
 
   return (
-    <header className="bg-[#071D49]/95 backdrop-blur-md text-white px-2.5 sm:px-5 py-2 sticky top-0 z-[100] border-b-2 border-[#C9A96E]/70 shadow-xl flex items-center justify-between relative shrink-0 w-full min-w-0 box-border">
-      {/* Subtle Blue/Gold Ambient Glow (Contained in isolated overflow-hidden wrapper) */}
+    <header className="bg-[#090D16]/95 backdrop-blur-xl text-white px-3 sm:px-6 py-2.5 sticky top-0 z-[100] border-b border-[#D4AF37]/30 shadow-2xl flex items-center justify-between relative shrink-0 w-full min-w-0 box-border">
+      {/* Subtle Gold Ambient Glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-1/3 w-96 h-24 bg-[#C9A96E]/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-12 w-64 h-16 bg-[#0B255C]/50 rounded-full blur-2xl" />
+        <div className="absolute top-0 right-1/4 w-96 h-20 bg-[#D4AF37]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-10 w-64 h-16 bg-indigo-900/20 rounded-full blur-2xl" />
       </div>
 
       {/* Backdrop overlay to close dropdowns when clicking outside */}
       {(showMessagesMenu || showNotificationsMenu) && (
         <div
-          className="fixed inset-0 z-[102] bg-black/10"
+          className="fixed inset-0 z-[102] bg-black/20 backdrop-blur-xs"
           onClick={() => {
             setShowMessagesMenu(false);
             setShowNotificationsMenu(false);
@@ -54,22 +54,22 @@ export const Navbar: React.FC<NavbarProps> = ({
         />
       )}
 
-      {/* Left Branding - Clickable to Return Home */}
+      {/* Left Branding - Single Clean Logo */}
       <div
         onClick={() => onNavigateTab && onNavigateTab('dashboard')}
-        className="flex items-center space-x-2 sm:space-x-3 relative z-10 shrink-0 min-w-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all group"
+        className="flex items-center space-x-2.5 sm:space-x-3 relative z-10 shrink-0 min-w-0 cursor-pointer hover:opacity-90 active:scale-95 transition-all group"
         title="Voltar para a Página Inicial (Dashboard)"
       >
-        <div className="p-1.5 bg-[#0B255C]/80 backdrop-blur-sm rounded-2xl border-2 border-[#C9A96E] shadow-md flex items-center justify-center shrink-0 group-hover:border-[#E8D2A8] transition-all">
+        <div className="p-1.5 bg-[#161D2A] backdrop-blur-md rounded-xl border border-[#D4AF37]/50 shadow-md flex items-center justify-center shrink-0 group-hover:border-[#D4AF37] transition-all">
           <OticasLogo size="md" variant="light-text" />
         </div>
 
         {/* Mobile-only compact store name */}
         <div className="block sm:hidden text-left min-w-0">
-          <div className="text-[11px] font-black text-[#E8D2A8] group-hover:text-white tracking-tight truncate max-w-[130px] transition-colors">
+          <div className="text-[11px] font-extrabold text-[#D4AF37] group-hover:text-white tracking-tight truncate max-w-[130px] transition-colors">
             Óticas Di Óculos
           </div>
-          <div className="text-[9px] text-[#C9A96E] font-bold flex items-center gap-1">
+          <div className="text-[9px] text-slate-300 font-medium flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             <span>Matriz Ituberá</span>
           </div>
@@ -78,48 +78,45 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Desktop store & address info */}
         <div className="hidden sm:block min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-[9px] bg-[#C9A96E]/20 text-[#E8D2A8] font-bold px-2 py-0.5 rounded-full border border-[#C9A96E]/60 flex items-center gap-1 shrink-0">
-              <ShieldCheck className="w-3 h-3 text-[#10B981]" /> PRIME ENTERPRISE
+            <span className="text-[9px] bg-[#D4AF37]/15 text-[#D4AF37] font-bold px-2.5 py-0.5 rounded-full border border-[#D4AF37]/40 flex items-center gap-1 shrink-0">
+              <ShieldCheck className="w-3 h-3 text-[#D4AF37]" /> ENTERPRISE VIP
             </span>
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-[#C9A96E] font-medium mt-0.5 min-w-0">
-            <Building2 className="w-3.5 h-3.5 text-[#C9A96E] shrink-0" />
+          <div className="flex items-center gap-1 text-[11px] text-slate-300 font-medium mt-0.5 min-w-0">
+            <Building2 className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
             <select
               value={selectedBranch}
               onClick={(e) => e.stopPropagation()}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="bg-transparent text-[#E8D2A8] font-medium focus:outline-none cursor-pointer hover:text-white truncate max-w-[180px] md:max-w-[220px]"
+              className="bg-transparent text-white font-semibold focus:outline-none cursor-pointer hover:text-[#D4AF37] truncate max-w-[180px] md:max-w-[220px] transition-colors"
             >
-              <option value="Filial Matriz Centro" className="bg-[#071D49] text-white">
+              <option value="Filial Matriz Centro" className="bg-[#0B0F17] text-white">
                 Matriz Centro (Ituberá - BA)
               </option>
-              <option value="Shopping Prime" className="bg-[#071D49] text-white">
+              <option value="Shopping Prime" className="bg-[#0B0F17] text-white">
                 Shopping Prime
               </option>
-              <option value="Filial Zona Sul" className="bg-[#071D49] text-white">
+              <option value="Filial Zona Sul" className="bg-[#0B0F17] text-white">
                 Zona Sul
               </option>
             </select>
           </div>
-          <div className="text-[10px] text-slate-300/80 font-normal truncate max-w-[220px] md:max-w-[320px] block">
-            Rua 23 de Abril, 51, Centro • Tel: (73) 98112-8923
-          </div>
         </div>
       </div>
 
-      {/* Center Title Logo (Desktop XL only) - Clickable to Return Home */}
+      {/* Center Title Logo (Desktop XL only) */}
       <div
         onClick={() => onNavigateTab && onNavigateTab('dashboard')}
         className="hidden xl:flex flex-col items-center relative z-10 shrink-0 px-2 cursor-pointer hover:opacity-90 active:scale-95 transition-all group"
         title="Voltar para a Página Inicial (Dashboard)"
       >
         <OticasLogo size="lg" variant="light-text" showSubtext={true} />
-        <div className="h-0.5 w-24 bg-[#C9A96E] group-hover:bg-[#E8D2A8] rounded-full mt-1 shadow-[0_0_8px_#C9A96E] transition-colors"></div>
+        <div className="h-0.5 w-20 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent rounded-full mt-1"></div>
       </div>
 
       {/* Right Controls & User Profile */}
-      <div className="flex items-center space-x-1 sm:space-x-2 relative z-10 shrink-0">
-        {/* PWA Install Button & Online/Offline Status */}
+      <div className="flex items-center space-x-1.5 sm:space-x-2 relative z-10 shrink-0">
+        {/* PWA Install Button */}
         <div className="shrink-0">
           <InstallButton />
         </div>
@@ -128,10 +125,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         {onOpenQuickSearch && (
           <button
             onClick={onOpenQuickSearch}
-            className="bg-[#0B255C]/80 hover:bg-[#153270] text-[#E8D2A8] font-black text-xs px-2 sm:px-3 py-1.5 rounded-xl border border-[#C9A96E]/60 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
+            className="bg-[#161D2A] hover:bg-[#1E293B] text-white font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#D4AF37]/40 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
             title="Abrir Busca Geral e Atalhos (Ctrl + K)"
           >
-            <span className="text-[#C9A96E]">🔍</span>
+            <span className="text-[#D4AF37]">🔍</span>
             <span className="hidden lg:inline font-mono text-[11px]">Busca (Ctrl+K)</span>
           </button>
         )}
@@ -139,31 +136,31 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Compartilhar com Equipe Button */}
         <button
           onClick={onOpenShareModal}
-          className="bg-[#0B255C]/80 hover:bg-[#153270] text-[#C9A96E] font-bold text-xs px-2 sm:px-3 py-1.5 rounded-full transition-all shadow-xs hidden md:flex items-center gap-1.5 cursor-pointer border border-[#C9A96E] active:scale-95 shrink-0"
+          className="bg-[#161D2A] hover:bg-[#1E293B] text-[#D4AF37] font-semibold text-xs px-2.5 sm:px-3 py-1.5 rounded-full transition-all hidden md:flex items-center gap-1.5 cursor-pointer border border-[#D4AF37]/40 active:scale-95 shrink-0"
           title="Compartilhar Link do Sistema com a Equipe"
         >
-          <Share2 className="w-3.5 h-3.5 text-[#C9A96E]" />
+          <Share2 className="w-3.5 h-3.5 text-[#D4AF37]" />
           <span className="hidden 2xl:inline">Link Equipe</span>
         </button>
 
         {/* Cadastrar Profissional Button */}
         <button
           onClick={onOpenProfessionalsModal}
-          className="bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-extrabold text-xs px-2.5 sm:px-3 py-1.5 rounded-full transition-all shadow-md hidden sm:flex items-center gap-1.5 cursor-pointer border border-white/30 active:scale-95 shrink-0"
+          className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-full transition-all shadow-md hidden sm:flex items-center gap-1.5 cursor-pointer border border-amber-300/40 active:scale-95 shrink-0"
           title="Cadastrar e Gerenciar Médicos, Optometristas e Equipe"
         >
-          <UserPlus className="w-3.5 h-3.5 text-[#071D49]" />
+          <UserPlus className="w-3.5 h-3.5 text-slate-950" />
           <span className="hidden lg:inline">+ Profissionais</span>
         </button>
 
-        {/* Painel SaaS Master (Dioenne Rocha) */}
+        {/* Painel SaaS Master */}
         {currentUser?.role === 'ceo' && onNavigateTab && (
           <button
             onClick={() => onNavigateTab('saas-admin')}
-            className="bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] font-black text-xs px-2.5 sm:px-3.5 py-1.5 rounded-full border-2 border-[#C9A96E] shadow-[0_0_12px_rgba(201,169,110,0.4)] flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
-            title="Acessar o Painel SaaS Multitenant (Cadastro de Novas Óticas)"
+            className="bg-[#0B0F17] hover:bg-[#161D2A] text-[#D4AF37] font-bold text-xs px-3 py-1.5 rounded-full border border-[#D4AF37]/60 shadow-lg flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
+            title="Acessar o Painel SaaS Multitenant"
           >
-            <Building2 className="w-3.5 h-3.5 text-[#C9A96E]" />
+            <Building2 className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span className="hidden md:inline">Painel SaaS ⚙️</span>
           </button>
         )}
@@ -173,14 +170,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={() =>
             setAiSettings((prev) => ({ ...prev, active: !prev.active }))
           }
-          className={`flex items-center space-x-1 px-2 sm:px-3 py-1.5 rounded-full text-xs font-semibold transition-all shadow-xs border cursor-pointer shrink-0 ${
+          className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-semibold transition-all border cursor-pointer shrink-0 ${
             aiSettings.active
-              ? 'bg-[#10B981]/20 text-[#10B981] border-[#10B981]/60 hover:bg-[#10B981]/30'
-              : 'bg-[#0B255C]/80 text-slate-300 border-[#C9A96E]/50 hover:bg-[#0B255C]'
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/20'
+              : 'bg-[#161D2A] text-slate-300 border-[#D4AF37]/30 hover:bg-[#1E293B]'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#C9A96E]" />
-          <span className="hidden md:inline">● IA {aiSettings.active ? 'Mary' : 'Pausada'}</span>
+          <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+          <span className="hidden md:inline">IA {aiSettings.active ? 'Mary' : 'Pausada'}</span>
         </button>
 
         {/* Message Indicator (3 Unread Customer Messages) */}
