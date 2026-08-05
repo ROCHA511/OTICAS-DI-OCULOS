@@ -8,6 +8,7 @@ import { ExamRecord, AnamnesisIaInput } from '../../types';
 import { loadExamsFromSupabase, saveExamToSupabase } from '../../utils/examSync';
 import { supabase } from '../../utils/supabaseClient';
 import { examSystemApi } from '../../utils/examSystemApi';
+import { TrialFrameIcon } from '../brand/TrialFrameIcon';
 
 export const ExamRoomModule: React.FC = () => {
   const [exams, setExams] = useState<ExamRecord[]>([]);
@@ -434,8 +435,8 @@ export const ExamRoomModule: React.FC = () => {
       {/* 2. Banner de Módulo "Sala de Exames Optométricos" (Conforme Imagem) */}
       <section className="mx-6 mt-4 p-4 bg-gradient-to-r from-[#071D49] to-[#0A2E70] border-2 border-[#C9A96E]/60 rounded-2xl flex items-center justify-between shadow-[0_4px_25px_rgba(0,0,0,0.4)]">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-[#C9A96E] bg-[#0b255c] flex items-center justify-center text-2xl text-[#C9A96E] shadow-lg animate-pulse">
-            👁
+          <div className="w-12 h-12 rounded-full border-2 border-[#C9A96E] bg-[#0b255c] flex items-center justify-center text-[#C9A96E] shadow-lg">
+            <TrialFrameIcon className="w-7 h-7 text-[#C9A96E]" />
           </div>
           <div>
             <span className="text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
@@ -745,7 +746,9 @@ export const ExamRoomModule: React.FC = () => {
                     {/* REFRAÇÃO SUBJETIVA (GRAU FINAL PRESCRITO) */}
                     <div className="space-y-3.5">
                       <h3 className="text-xs font-black uppercase tracking-widest text-[#C9A96E] border-b border-[#C9A96E]/20 pb-1 flex items-center justify-between">
-                        <span>👁 REFRAÇÃO SUBJETIVA (GRAU FINAL PRESCRITO)</span>
+                        <span className="flex items-center gap-1.5">
+                          <TrialFrameIcon className="w-4 h-4 text-[#C9A96E]" /> REFRAÇÃO SUBJETIVA (GRAU FINAL PRESCRITO)
+                        </span>
                         <span className="text-[9px] text-slate-400 font-normal lowercase">Valores em dioptrias (D)</span>
                       </h3>
 

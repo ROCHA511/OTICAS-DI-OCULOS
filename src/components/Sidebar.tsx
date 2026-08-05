@@ -27,6 +27,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { OticasLogo } from './brand/OticasLogo';
+import { TrialFrameIcon } from './brand/TrialFrameIcon';
 
 export type ActiveTab =
   | 'dashboard'
@@ -130,7 +131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {
           id: 'exam-room' as ActiveTab,
           title: 'Sala de Exames',
-          icon: Eye,
+          icon: TrialFrameIcon,
           isStar: true,
         },
         {
