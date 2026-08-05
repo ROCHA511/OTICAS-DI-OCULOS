@@ -76,11 +76,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (setIsMobileOpen) setIsMobileOpen(false);
   };
 
-  // Categorias organizadas de navegação (conforme a imagem)
+  // Categorias organizadas de navegação (restauradas e completas)
   const navGroups = [
     {
-      groupTitle: 'PRODUTOS & VENDAS',
+      groupTitle: 'PRODUTOS & CATÁLOGO',
       items: [
+        {
+          id: 'pricetable' as ActiveTab,
+          title: 'Tabela de Preços (Lentes)',
+          icon: TableProperties,
+        },
+        {
+          id: 'catalog' as ActiveTab,
+          title: 'Catálogo de Armações & Lentes',
+          icon: Glasses,
+        },
         {
           id: 'cashflow' as ActiveTab,
           title: 'Vendas & Financeiro',
@@ -89,18 +99,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ],
     },
     {
-      groupTitle: 'CLÍNICA & IA',
+      groupTitle: 'ATENDIMENTO & GESTÃO',
       items: [
         {
-          id: 'camera' as ActiveTab,
-          title: 'Câmeras IA & DNP',
-          icon: Camera,
+          id: 'chat' as ActiveTab,
+          title: 'Chat IA & Atendimento',
+          icon: MessageSquare,
+          badge: unreadCountTotal > 0 ? unreadCountTotal : undefined,
         },
         {
-          id: 'lab' as ActiveTab,
-          title: 'Laboratório & Status',
-          icon: Layers,
+          id: 'clients' as ActiveTab,
+          title: 'Clientes & Prescrições',
+          icon: Users,
         },
+        {
+          id: 'sellers' as ActiveTab,
+          title: 'Equipe de Vendas',
+          icon: UserCheck,
+        },
+        {
+          id: 'ai-quotes' as ActiveTab,
+          title: 'Orçamentos IA',
+          icon: Sparkles,
+        },
+      ],
+    },
+    {
+      groupTitle: 'CLÍNICA & LABORATÓRIO',
+      items: [
         {
           id: 'exam-room' as ActiveTab,
           title: 'Sala de Exames',
@@ -108,15 +134,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isStar: true,
         },
         {
-          id: 'chat' as ActiveTab,
-          title: 'Chat IA & Atendimento',
-          icon: MessageSquare,
-          badge: unreadCountTotal > 0 ? unreadCountTotal : undefined,
+          id: 'lab' as ActiveTab,
+          title: 'Laboratório & Status',
+          icon: Layers,
+        },
+        {
+          id: 'camera' as ActiveTab,
+          title: 'Câmeras IA & DNP',
+          icon: Camera,
+        },
+        {
+          id: 'dashboard' as ActiveTab,
+          title: 'Painel & Indicadores',
+          icon: BarChart3,
         },
       ],
     },
   ];
-
 
   if (userRole === 'ceo') {
     navGroups.push({

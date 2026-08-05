@@ -7,6 +7,7 @@ import { ChatLayout } from './components/chat/ChatLayout';
 import { ServiceOrdersView } from './components/os/ServiceOrdersView';
 import { LabTrackingView } from './components/lab/LabTrackingView';
 import { CatalogView } from './components/catalog/CatalogView';
+import { PriceTableView } from './components/catalog/PriceTableView';
 import { AiSettingsView } from './components/ai/AiSettingsView';
 import { ExecutiveDashboardView } from './components/dashboard/ExecutiveDashboardView';
 import { EnterpriseNewsView } from './components/dashboard/EnterpriseNewsView';
@@ -928,6 +929,8 @@ export default function App() {
               }}
             />
           )}
+
+          {activeTab === 'pricetable' && <PriceTableView />}
 
           {activeTab === 'camera' && <CameraAiScannerView />}
 
