@@ -1,4 +1,4 @@
-export type UserRole = 'CEO' | 'GERENTE' | 'VENDEDOR';
+export type UserRole = 'CEO' | 'Gerente' | 'Supervisor' | 'Vendedor' | 'Recepcionista' | 'Caixa' | 'Laboratório' | 'Administrador';
 
 export type SellerStatus = 'Ativo' | 'Inativo' | 'Férias' | 'Afastado';
 
@@ -22,6 +22,7 @@ export interface Seller {
   status: SellerStatus;
   login: string;
   role: UserRole;
+  permissions?: string[];
   notes?: string;
   createdAt: string;
 }

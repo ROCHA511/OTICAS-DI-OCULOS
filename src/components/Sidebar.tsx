@@ -171,17 +171,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Overlay Escuro com Desfoque ao Abrir no Celular */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-[180] sm:hidden animate-in fade-in"
+          className="fixed inset-0 bg-[#090D16]/90 backdrop-blur-md z-[180] sm:hidden animate-in fade-in"
           onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
         />
       )}
 
       {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
       <aside
-        className={`bg-[#071D49]/98 sm:bg-[#071D49]/95 backdrop-blur-xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none ${
+        className={`bg-[#090D16]/98 sm:bg-[#090D16]/95 backdrop-blur-xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none ${
           isMobileOpen
-            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E] shadow-2xl flex'
-            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#C9A96E] sm:shadow-[0_0_25px_rgba(201,169,110,0.3)] sm:h-[calc(100%-16px)]'
+            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#D4AF37]/40 shadow-2xl flex'
+            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#D4AF37]/25 sm:shadow-[0_0_30px_rgba(0,0,0,0.8)] sm:h-[calc(100%-16px)]'
         } ${
           isExpanded || isMobileOpen ? 'w-[280px] sm:w-[280px]' : 'sm:w-[72px]'
         }`}
@@ -189,7 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Botão de Expandir / Recolher na borda - Sem piscadas */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute -right-3.5 top-6 z-50 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] p-1.5 rounded-full shadow-lg border-2 border-[#071D49] hover:scale-110 active:scale-95 transition-all cursor-pointer hidden sm:flex"
+        className="absolute -right-3.5 top-6 z-50 bg-[#D4AF37] hover:bg-[#E8D2A8] text-slate-950 p-1.5 rounded-full shadow-lg border-2 border-[#090D16] hover:scale-110 active:scale-95 transition-all cursor-pointer hidden sm:flex"
         title={isExpanded ? 'Recolher Barra Lateral' : 'Expandir Barra Lateral'}
       >
         {isExpanded ? (
@@ -200,19 +200,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </button>
 
       {/* Brand Header - Clickable to Return Home */}
-      <div className="px-2 flex flex-col items-center border-b border-[#C9A96E]/30 pb-3 mb-1">
+      <div className="px-2 flex flex-col items-center border-b border-[#D4AF37]/15 pb-3 mb-1">
         {isExpanded || isMobileOpen ? (
           <button
             onClick={() => handleSelectTab('chat')}
-            className="w-full bg-white hover:bg-slate-100 text-[#071D49] py-2 px-3 rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95"
+            className="w-full bg-[#161D2A] hover:bg-[#1E293B] border border-[#D4AF37]/30 text-white py-2 px-3 rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95"
             title="Voltar para o Chat de Atendimento"
           >
-            <OticasLogo size="sm" variant="full" />
+            <OticasLogo size="sm" variant="light-text" />
           </button>
         ) : (
           <button
             onClick={() => handleSelectTab('chat')}
-            className="w-11 h-10 rounded-2xl bg-[#0B255C] hover:bg-[#153270] border-2 border-[#C9A96E] flex items-center justify-center p-1 cursor-pointer hover:scale-105 transition-all shadow-md active:scale-95"
+            className="w-11 h-10 rounded-2xl bg-[#161D2A] hover:bg-[#1E293B] border-2 border-[#D4AF37]/50 flex items-center justify-center p-1 cursor-pointer hover:scale-105 transition-all shadow-md active:scale-95"
             title="Voltar para o Chat de Atendimento"
           >
             <OticasLogo size="sm" variant="icon-only" />
@@ -222,7 +222,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Informações da loja - Visível apenas no Mobile quando aberto */}
         {(isExpanded || isMobileOpen) && (
           <div className="mt-2 text-center flex flex-col items-center gap-1 select-text sm:hidden">
-            <span className="text-[9px] bg-[#C9A96E]/20 text-[#E8D2A8] font-bold px-2 py-0.5 rounded-full border border-[#C9A96E]/60 flex items-center gap-1 shrink-0">
+            <span className="text-[9px] bg-[#D4AF37]/10 text-[#D4AF37] font-bold px-2 py-0.5 rounded-full border border-[#D4AF37]/30 flex items-center gap-1 shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
               PRIME ENTERPRISE
             </span>
@@ -243,10 +243,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => {
               handleSelectTab('os');
             }}
-            className="w-full bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] font-black text-xs py-2.5 px-3 rounded-2xl border-2 border-[#C9A96E] flex items-center justify-between shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95 group"
+            className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5C158] hover:to-amber-500 text-slate-950 font-black text-xs py-2.5 px-3 rounded-2xl border-2 border-amber-300/30 flex items-center justify-between shadow-lg shadow-[#D4AF37]/20 transition-all cursor-pointer active:scale-95 group"
           >
             <div className="flex items-center gap-2.5">
-              <ClipboardCheck className="w-5 h-5 text-[#C9A96E] group-hover:scale-110 transition-transform" />
+              <ClipboardCheck className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
               <span className="tracking-wider uppercase text-sm font-black">Ordens de Serviço</span>
             </div>
           </button>
@@ -255,10 +255,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => {
               handleSelectTab('os');
             }}
-            className="w-11 h-11 mx-auto bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] rounded-2xl border-2 border-[#C9A96E] flex items-center justify-center shadow-[0_0_15px_rgba(201,169,110,0.4)] transition-all cursor-pointer active:scale-95"
+            className="w-11 h-11 mx-auto bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5C158] hover:to-amber-500 text-slate-950 rounded-2xl border-2 border-amber-300/30 flex items-center justify-center shadow-lg shadow-[#D4AF37]/20 transition-all cursor-pointer active:scale-95"
             title="Ordens de Serviço"
           >
-            <ClipboardCheck className="w-6 h-6 text-[#C9A96E]" />
+            <ClipboardCheck className="w-6 h-6 text-slate-950" />
           </button>
         )}
       </div>
@@ -268,7 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {navGroups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
             {(isExpanded || isMobileOpen) && (
-              <div className="px-2 pt-1 pb-0.5 text-[9px] font-black text-[#C9A96E]/80 tracking-widest uppercase">
+              <div className="px-2 pt-1 pb-0.5 text-[9px] font-black text-[#D4AF37]/50 tracking-widest uppercase">
                 {group.groupTitle}
               </div>
             )}
@@ -283,12 +283,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   title={item.title}
                   className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 cursor-pointer relative ${
                     isActive
-                      ? 'bg-[#0B255C] text-[#C9A96E] border border-[#C9A96E] font-bold shadow-md'
-                      : 'text-slate-200 hover:text-[#C9A96E] hover:bg-[#0B255C]/60 border border-transparent font-medium'
+                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/40 font-bold shadow-md'
+                      : 'text-slate-200 hover:text-[#D4AF37] hover:bg-[#D4AF37]/8 border border-transparent font-medium'
                   } ${!(isExpanded || isMobileOpen) ? 'justify-center' : 'justify-between'}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#C9A96E]' : 'text-slate-300'}`} />
+                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#D4AF37]' : 'text-slate-300'}`} />
                     {(isExpanded || isMobileOpen) && (
                       <span className="text-xs truncate tracking-tight text-left">
                         {item.title}
@@ -302,7 +302,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                       )}
                       {item.badge !== undefined && item.badge > 0 && (
-                        <span className="bg-[#C9A96E] text-[#071D49] font-black text-[10px] px-1.5 py-0.2 rounded-full">
+                        <span className="bg-[#D4AF37] text-slate-950 font-black text-[10px] px-1.5 py-0.2 rounded-full">
                           {item.badge}
                         </span>
                       )}
@@ -310,7 +310,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
 
                   {!(isExpanded || isMobileOpen) && item.badge !== undefined && item.badge > 0 && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-amber-400 rounded-full border-2 border-[#071D49]" />
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#090D16]" />
                   )}
                 </button>
               );
@@ -320,18 +320,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Floating Chat Button at Bottom */}
-      <div className="px-2 pt-2 border-t border-[#C9A96E]/30 space-y-2 mt-1 shrink-0">
+      <div className="px-2 pt-2 border-t border-[#D4AF37]/15 space-y-2 mt-1 shrink-0">
         {isExpanded || isMobileOpen ? (
           <button
             onClick={() => handleSelectTab('chat')}
-            className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold text-xs py-2.5 px-3 rounded-2xl flex items-center justify-between shadow-lg transition-all cursor-pointer active:scale-95"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-2.5 px-3 rounded-2xl flex items-center justify-between shadow-lg transition-all cursor-pointer active:scale-95"
           >
             <div className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4 fill-current shrink-0" />
               <span className="tracking-wide">Chat de Atendimento</span>
             </div>
             {unreadCountTotal > 0 && (
-              <span className="bg-white text-[#25D366] text-[10px] font-black px-1.5 py-0.5 rounded-full">
+              <span className="bg-white text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full">
                 {unreadCountTotal}
               </span>
             )}
@@ -339,12 +339,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <button
             onClick={() => handleSelectTab('chat')}
-            className="w-11 h-11 mx-auto bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95 relative"
+            className="w-11 h-11 mx-auto bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95 relative"
             title="Chat de Atendimento"
           >
             <MessageSquare className="w-5 h-5 fill-current" />
             {unreadCountTotal > 0 && (
-              <span className="absolute -top-1 -right-1 bg-amber-400 text-[#071D49] text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-[#071D49]">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-[#090D16]">
                 {unreadCountTotal}
               </span>
             )}
@@ -358,22 +358,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             title="Configurações do Agente IA"
             className={`p-2 rounded-xl transition-all cursor-pointer ${
               activeTab === 'ai-settings'
-                ? 'bg-[#0B255C] text-[#C9A96E] border border-[#C9A96E]'
-                : 'text-slate-300 hover:text-[#C9A96E] hover:bg-[#0B255C]/70'
+                ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
+                : 'text-slate-300 hover:text-[#D4AF37] hover:bg-[#D4AF37]/8'
             } ${isExpanded || isMobileOpen ? 'flex items-center gap-2 text-xs font-bold' : ''}`}
           >
-            <Settings className="w-4 h-4 text-[#C9A96E]" />
+            <Settings className="w-4 h-4 text-[#D4AF37]" />
             {isExpanded || isMobileOpen ? <span>Ajustes</span> : null}
           </button>
 
           <button
             onClick={onLogout ? onLogout : () => alert('Sessão encerrada.')}
             title="Sair do Sistema"
-            className={`p-2 rounded-xl text-slate-300 hover:text-[#C9A96E] hover:bg-[#0B255C]/80 transition-all cursor-pointer ${
+            className={`p-2 rounded-xl text-slate-300 hover:text-rose-400 hover:bg-rose-500/8 transition-all cursor-pointer ${
               isExpanded || isMobileOpen ? 'flex items-center gap-2 text-xs font-bold' : ''
             }`}
           >
-            <LogOut className="w-4 h-4 text-[#C9A96E]" />
+            <LogOut className="w-4 h-4 text-[#D4AF37]" />
             {isExpanded || isMobileOpen ? <span>Sair</span> : null}
           </button>
         </div>
@@ -382,4 +382,3 @@ export const Sidebar: React.FC<SidebarProps> = ({
   </>
 );
 };
-

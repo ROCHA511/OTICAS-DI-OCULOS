@@ -172,7 +172,7 @@ export const SellersModule: React.FC = () => {
           <span className="text-[10px] font-extrabold text-[#E8D2A8] uppercase px-2 hidden sm:inline">
             Modo Visualização:
           </span>
-          {(['CEO', 'GERENTE', 'VENDEDOR'] as UserRole[]).map((r) => (
+          {(['CEO', 'Gerente', 'Supervisor', 'Vendedor', 'Recepcionista', 'Caixa', 'Laboratório', 'Administrador'] as UserRole[]).map((r) => (
             <button
               key={r}
               onClick={() => setCurrentRole(r)}

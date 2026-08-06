@@ -121,17 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <InstallButton />
         </div>
 
-        {/* Global Quick Search Button (Ctrl + K) */}
-        {onOpenQuickSearch && (
-          <button
-            onClick={onOpenQuickSearch}
-            className="bg-[#161D2A] hover:bg-[#1E293B] text-white font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-xl border border-[#D4AF37]/40 shadow-sm flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shrink-0"
-            title="Abrir Busca Geral e Atalhos (Ctrl + K)"
-          >
-            <span className="text-[#D4AF37]">🔍</span>
-            <span className="hidden lg:inline font-mono text-[11px]">Busca (Ctrl+K)</span>
-          </button>
-        )}
+
 
         {/* Compartilhar com Equipe Button */}
         <button
@@ -143,15 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span className="hidden 2xl:inline">Link Equipe</span>
         </button>
 
-        {/* Cadastrar Profissional Button */}
-        <button
-          onClick={onOpenProfessionalsModal}
-          className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-full transition-all shadow-md hidden sm:flex items-center gap-1.5 cursor-pointer border border-amber-300/40 active:scale-95 shrink-0"
-          title="Cadastrar e Gerenciar Médicos, Optometristas e Equipe"
-        >
-          <UserPlus className="w-3.5 h-3.5 text-slate-950" />
-          <span className="hidden lg:inline">+ Profissionais</span>
-        </button>
+
 
         {/* Painel SaaS Master */}
         {currentUser?.role === 'ceo' && onNavigateTab && (
