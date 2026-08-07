@@ -3,6 +3,8 @@ import { Glasses, Search, Plus, Sparkles, Camera, X, Upload } from 'lucide-react
 import { Frame, Lens } from '../../types';
 import { PriceTableView } from './PriceTableView';
 
+import { initialFrames } from '../../data/mockData';
+
 interface CatalogViewProps {
   frames: Frame[];
   lenses: Lens[];
@@ -34,7 +36,15 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
     description: '',
   });
 
-  const filteredFrames = frames.filter(
+  // Garante a presença contínua das 5 armações demonstrativas principais
+  const allFrames = [...frames];
+  initialFrames.forEach(demo => {
+    if (!allFrames.some(f => f.brand.toLowerCase() === demo.brand.toLowerCase() && f.model.toLowerCase() === demo.model.toLowerCase())) {
+      allFrames.push(demo);
+    }
+  });
+
+  const filteredFrames = allFrames.filter(
     (f) =>
       f.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
       f.model.toLowerCase().includes(searchTerm.toLowerCase()) ||

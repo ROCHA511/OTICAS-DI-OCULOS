@@ -941,6 +941,13 @@ export default function App() {
 
           {activeTab === 'saas-admin' && <MultiticasDashboard />}
 
+          {activeTab === 'onboarding' && (
+            <SaaSOnboardingView
+              onClose={() => setActiveTab('saas-admin')}
+              onSuccess={() => setActiveTab('saas-admin')}
+            />
+          )}
+
           {activeTab === 'exam-room' && <ExamRoomModule />}
         </main>
       </div>
@@ -1114,17 +1121,18 @@ export default function App() {
         {/* Subtle inner glow line at top */}
         <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent rounded-full" />
 
+        {/* Leftmost Button: Menu */}
         <button
-          onClick={() => handleTabChange('dashboard')}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className={`relative flex flex-col items-center justify-center px-3 py-1.5 rounded-xl transition-all ${
-            activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-400'
+            isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-400'
           }`}
         >
-          {activeTab === 'dashboard' && (
+          {isMobileMenuOpen && (
             <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#D4AF37] rounded-full" />
           )}
-          <Home className={`w-5 h-5 ${activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
-          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Início</span>
+          <Menu className={`w-5 h-5 ${isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Menu</span>
         </button>
 
         <button
@@ -1171,17 +1179,18 @@ export default function App() {
           <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${activeTab === 'clients' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Clientes</span>
         </button>
 
+        {/* Rightmost Button: Início */}
         <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onClick={() => handleTabChange('dashboard')}
           className={`relative flex flex-col items-center justify-center px-3 py-1.5 rounded-xl transition-all ${
-            isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-400'
+            activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-400'
           }`}
         >
-          {isMobileMenuOpen && (
+          {activeTab === 'dashboard' && (
             <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#D4AF37] rounded-full" />
           )}
-          <Menu className={`w-5 h-5 ${isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
-          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${isMobileMenuOpen ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Menu</span>
+          <Home className={`w-5 h-5 ${activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+          <span className={`text-[9px] mt-0.5 font-semibold tracking-wide ${activeTab === 'dashboard' ? 'text-[#D4AF37]' : 'text-slate-500'}`}>Início</span>
         </button>
       </nav>
 

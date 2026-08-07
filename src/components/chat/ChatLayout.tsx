@@ -75,7 +75,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full flex-1 w-full max-w-full overflow-hidden bg-gradient-to-br from-[#ECE8E1] via-[#E2E6ED] to-[#D8DEE4] p-2 sm:p-3 md:p-3.5 box-border">
+    <div className="flex flex-col h-full flex-1 w-full max-w-full overflow-hidden bg-gradient-to-br from-[#ECE8E1] via-[#E2E6ED] to-[#D8DEE4] p-2 sm:p-3 md:p-3.5 pb-20 sm:pb-3 box-border">
       {/* Top Navigation Bar with Golden Active Tab Border & + Novo Cliente Button */}
       <div className="flex items-center justify-between bg-[#0B1E36] text-white rounded-2xl p-1.5 mb-2 shrink-0 shadow-md border border-[#C5A059]/40 w-full max-w-full box-border gap-2">
         <div className="flex items-center gap-1.5 overflow-x-auto w-full scrollbar-none">

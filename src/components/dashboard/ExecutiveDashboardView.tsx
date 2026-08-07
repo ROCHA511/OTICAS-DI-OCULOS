@@ -162,40 +162,40 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#080C14] p-4 sm:p-6 space-y-5">
+    <div className="flex-1 overflow-y-auto bg-[#F8FAFC] p-4 sm:p-6 space-y-5 text-slate-800">
 
       {/* ═══════════════════════════════════════════
           HERO HEADER — Executive Identity Bar
       ═══════════════════════════════════════════ */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#131B2E] to-[#0A0E17] border border-[#D4AF37]/25 rounded-2xl p-4 sm:p-5 shadow-2xl">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#071D49] via-[#0B255C] to-[#071D49] border border-[#C9A96E]/30 rounded-3xl p-4 sm:p-5 shadow-xl text-white">
         {/* Ambient glows */}
-        <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#D4AF37]/8 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-indigo-600/8 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#C9A96E]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Brand Identity Icon */}
             <div className="relative shrink-0">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-600 flex items-center justify-center shadow-lg shadow-[#D4AF37]/20">
-                <Glasses className="w-7 h-7 text-slate-950" />
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-500 flex items-center justify-center shadow-lg shadow-[#D4AF37]/20">
+                <Glasses className="w-7 h-7 text-slate-950 stroke-[2.5]" />
               </div>
-              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-[#0F172A] rounded-full" />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-[#071D49] rounded-full" />
             </div>
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-widest bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 uppercase">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest bg-[#C9A96E] text-[#071D49] uppercase">
                   <ShieldCheck className="w-3 h-3" /> Prime Enterprise
                 </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Sistema Ativo
                 </span>
               </div>
-              <h1 className="text-lg sm:text-xl font-bold text-white mt-1 tracking-tight">
+              <h1 className="text-lg sm:text-xl font-black text-[#E8D2A8] mt-1 tracking-tight">
                 Dashboard Executivo <span className="text-[#D4AF37]">&</span> CRM
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5 font-normal">
+              <p className="text-xs text-slate-200 font-medium mt-0.5">
                 Métricas estratégicas · Faturamento · Conversão · Rankings Corporativos
               </p>
             </div>
@@ -205,12 +205,12 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
           <div className="flex items-center gap-2 flex-wrap shrink-0">
             <button
               onClick={onOpenProfessionalsModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-bold text-xs shadow-lg shadow-[#D4AF37]/10 transition-all active:scale-95 cursor-pointer border border-amber-300/30"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer border border-amber-300/30"
             >
               <UserPlus className="w-4 h-4" />
               <span>+ Cadastrar Profissional</span>
             </button>
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#161D2A] hover:bg-[#1E293B] text-white font-semibold text-xs transition-all border border-white/10 cursor-pointer active:scale-95">
+            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all border border-white/20 cursor-pointer active:scale-95">
               <RefreshCw className="w-3.5 h-3.5 text-[#D4AF37]" /> Atualizar
             </button>
           </div>
@@ -226,31 +226,23 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
           return (
             <div
               key={idx}
-              className={`relative overflow-hidden bg-gradient-to-br ${card.bg} backdrop-blur-sm border border-white/8 rounded-2xl p-4 shadow-xl hover:border-white/15 transition-all group`}
-              style={{ background: `linear-gradient(135deg, ${card.accent}12 0%, #0F172A 100%)` }}
+              className="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all group space-y-1.5"
             >
-              {/* Corner glow */}
-              <div
-                className="absolute top-0 right-0 w-20 h-20 rounded-full blur-2xl opacity-20 pointer-events-none"
-                style={{ background: card.accent }}
-              />
-              <div className="relative z-10">
-                <div className="flex items-start justify-between mb-3">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">{card.label}</span>
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: `${card.accent}20` }}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: card.accent }} />
-                  </div>
-                </div>
-                <div className="text-lg sm:text-xl font-bold text-white tracking-tight">{card.value}</div>
+              <div className="flex items-start justify-between">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{card.label}</span>
                 <div
-                  className={`flex items-center gap-1 text-[11px] font-semibold mt-1.5 ${card.deltaUp ? 'text-emerald-400' : 'text-rose-400'}`}
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: `${card.accent}15` }}
                 >
-                  {card.deltaUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                  {card.delta}
+                  <Icon className="w-4 h-4" style={{ color: card.accent }} />
                 </div>
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{card.value}</div>
+              <div
+                className={`flex items-center gap-1 text-[11px] font-bold mt-1 ${card.deltaUp ? 'text-emerald-600' : 'text-rose-600'}`}
+              >
+                {card.deltaUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                {card.delta}
               </div>
             </div>
           );
@@ -266,18 +258,18 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
           return (
             <div
               key={idx}
-              className="bg-[#0F172A] border border-white/8 rounded-2xl p-4 shadow-lg hover:border-[#D4AF37]/20 transition-all space-y-2"
+              className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all space-y-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">{card.label}</span>
-                <Icon className={`w-4 h-4 ${card.color}`} />
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{card.label}</span>
+                <Icon className={`w-4 h-4 ${card.color.replace('text-emerald-400', 'text-emerald-600').replace('text-[#D4AF37]', 'text-amber-600').replace('text-rose-400', 'text-rose-600')}`} />
               </div>
-              <div className={`text-base sm:text-lg font-bold ${card.color} tracking-tight`}>{card.value}</div>
+              <div className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">{card.value}</div>
               {card.progress !== undefined ? (
                 <div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-400 transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-500 transition-all"
                       style={{ width: `${card.progress}%` }}
                     />
                   </div>
