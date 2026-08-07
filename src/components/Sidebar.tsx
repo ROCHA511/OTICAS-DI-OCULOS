@@ -25,6 +25,7 @@ import {
   UserCheck,
   Building2,
   Eye,
+  Clock,
 } from 'lucide-react';
 import { OticasLogo } from './brand/OticasLogo';
 import { TrialFrameIcon } from './brand/TrialFrameIcon';
@@ -44,7 +45,8 @@ export type ActiveTab =
   | 'pricetable'
   | 'ai-settings'
   | 'saas-admin'
-  | 'exam-room';
+  | 'exam-room'
+  | 'timecard';
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -117,6 +119,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           id: 'sellers' as ActiveTab,
           title: 'Equipe de Vendas',
           icon: UserCheck,
+        },
+        {
+          id: 'timecard' as ActiveTab,
+          title: 'Ponto & Horas Extras',
+          icon: Clock,
         },
         {
           id: 'ai-quotes' as ActiveTab,

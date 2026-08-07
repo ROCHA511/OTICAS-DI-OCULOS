@@ -28,6 +28,7 @@ import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
 import { SaaSAdminView } from './components/saas/SaaSAdminView';
 import { SaaSOnboardingView } from './components/saas/SaaSOnboardingView';
 import { MultiticasDashboard } from './pages/MultiticasDashboard';
+import { TimecardModule } from './components/timecard/TimecardModule';
 import { PwaInstallPromptModal } from './components/pwa/PwaInstallPromptModal';
 import {
   loadClientsFromSupabase,
@@ -949,6 +950,8 @@ export default function App() {
           )}
 
           {activeTab === 'exam-room' && <ExamRoomModule />}
+
+          {activeTab === 'timecard' && <TimecardModule />}
         </main>
       </div>
 
