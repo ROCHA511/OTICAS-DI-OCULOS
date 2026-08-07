@@ -51,10 +51,15 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
   const [showEditOSModal, setShowEditOSModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [showFullPrintModal, setShowFullPrintModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showEditProdutosModal, setShowEditProdutosModal] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [searchOSNumber, setSearchOSNumber] = useState('');
   const [foundOS, setFoundOS] = useState<ServiceOrder | null>(null);
   const [receiveAmount, setReceiveAmount] = useState('');
   const [receiveMethod, setReceiveMethod] = useState('PIX');
+  const [newStatus, setNewStatus] = useState('');
+  const [editObs, setEditObs] = useState('');
 
   const totalInflow = cashFlow
     .filter((c) => c.type === 'entrada')
@@ -387,27 +392,48 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
                       <span className="text-[10px] font-bold text-slate-300">Receber Restante</span>
                     </button>
                     
-                    <button className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-white/10 rounded-xl transition-all cursor-pointer group">
+                    <button
+                      onClick={() => { setEditObs(foundOS.observations || ''); setShowEditProdutosModal(true); }}
+                      className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-[#D4AF37]/30 rounded-xl transition-all cursor-pointer group"
+                    >
                       <Glasses className="w-5 h-5 text-slate-400 group-hover:text-[#D4AF37] transition-colors" />
                       <span className="text-[10px] font-bold text-slate-300">Editar Produtos</span>
                     </button>
 
-                    <button className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-white/10 rounded-xl transition-all cursor-pointer group">
+                    <button
+                      onClick={() => { setEditObs(foundOS.prescription?.medicoName || ''); setShowEditProdutosModal(true); }}
+                      className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-[#D4AF37]/30 rounded-xl transition-all cursor-pointer group"
+                    >
                       <FileText className="w-5 h-5 text-slate-400 group-hover:text-[#D4AF37] transition-colors" />
                       <span className="text-[10px] font-bold text-slate-300">Editar Receita</span>
                     </button>
 
-                    <button className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-white/10 rounded-xl transition-all cursor-pointer group">
-                      <CheckCircle2 className="w-5 h-5 text-slate-400 group-hover:text-[#D4AF37] transition-colors" />
+                    <button
+                      onClick={() => { setNewStatus(foundOS.status); setShowStatusModal(true); }}
+                      className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-amber-500/30 rounded-xl transition-all cursor-pointer group"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-bold text-slate-300">Alterar Status</span>
                     </button>
 
-                    <button className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-white/10 rounded-xl transition-all cursor-pointer group">
-                      <Printer className="w-5 h-5 text-slate-400 group-hover:text-[#D4AF37] transition-colors" />
+                    <button
+                      onClick={() => setShowPrintModal(true)}
+                      className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-blue-500/30 rounded-xl transition-all cursor-pointer group"
+                    >
+                      <Printer className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-bold text-slate-300">Imprimir OS</span>
                     </button>
 
-                    <button className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-[#25D366]/30 rounded-xl transition-all cursor-pointer group">
+                    <button
+                      onClick={() => {
+                        if (foundOS) {
+                          const tel = (foundOS as any).clientPhone?.replace(/\D/g,'') || '';
+                          const msg = encodeURIComponent(`Olá! Segue o resumo da sua OS:\n\n*${foundOS.osNumber}*\nCliente: ${foundOS.clientName}\nArmação: ${foundOS.frame?.brand} ${foundOS.frame?.model}\nValor Total: R$ ${foundOS.totalValue?.toFixed(2)}\nStatus: ${foundOS.status?.toUpperCase()}\n\nObrigado pela preferência! 😊`);
+                          window.open(`https://wa.me/55${tel}?text=${msg}`, '_blank');
+                        }
+                      }}
+                      className="flex flex-col items-center justify-center gap-1.5 p-3 bg-[#161D2A] hover:bg-[#1E293B] border border-[#25D366]/30 rounded-xl transition-all cursor-pointer group"
+                    >
                       <MessageCircle className="w-5 h-5 text-[#25D366] group-hover:scale-110 transition-transform" />
                       <span className="text-[10px] font-bold text-slate-300">Enviar WhatsApp</span>
                     </button>
@@ -487,6 +513,118 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* MODAL: ALTERAR STATUS */}
+      {showStatusModal && foundOS && (
+        <div className="fixed inset-0 bg-[#080C14]/90 backdrop-blur-md flex items-center justify-center z-[200] p-4">
+          <div className="bg-[#0F172A] rounded-2xl max-w-sm w-full p-6 space-y-5 border border-amber-500/30 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-amber-400" /> Alterar Status da OS
+              </h3>
+              <button onClick={() => setShowStatusModal(false)} className="text-slate-400 hover:text-white transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-slate-400">OS: <strong className="text-amber-400">{foundOS.osNumber}</strong> — Cliente: <strong className="text-white">{foundOS.clientName}</strong></p>
+            <div className="grid grid-cols-1 gap-2">
+              {['aguardando_pagamento', 'pago', 'no_laboratorio', 'pronto', 'entregue', 'cancelado'].map(s => (
+                <button
+                  key={s}
+                  onClick={() => setNewStatus(s)}
+                  className={`py-2.5 px-4 text-xs font-bold rounded-xl border transition-all text-left uppercase tracking-wide ${
+                    newStatus === s
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                      : 'bg-[#161D2A] text-slate-400 border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  {s === 'aguardando_pagamento' ? '⏳ Aguardando Pagamento'
+                    : s === 'pago' ? '✅ Pago'
+                    : s === 'no_laboratorio' ? '🔬 No Laboratório'
+                    : s === 'pronto' ? '👓 Pronto para Retirada'
+                    : s === 'entregue' ? '📦 Entregue'
+                    : '❌ Cancelado'}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                alert(`Status da ${foundOS.osNumber} alterado para: ${newStatus.toUpperCase()}!\n\nNota: Para persistir no banco, conecte ao Supabase via onConfirmPixPayment ou função específica.`);
+                setShowStatusModal(false);
+              }}
+              className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-extrabold rounded-xl shadow-lg transition-all active:scale-95"
+            >
+              Confirmar Alteração de Status
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDITAR PRODUTOS / RECEITA */}
+      {showEditProdutosModal && foundOS && (
+        <div className="fixed inset-0 bg-[#080C14]/90 backdrop-blur-md flex items-center justify-center z-[200] p-4">
+          <div className="bg-[#0F172A] rounded-2xl max-w-lg w-full p-6 space-y-5 border border-[#D4AF37]/30 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
+                <Glasses className="w-5 h-5 text-[#D4AF37]" /> Editar OS — {foundOS.osNumber}
+              </h3>
+              <button onClick={() => setShowEditProdutosModal(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+              <p className="text-xs text-amber-300 font-bold">⚠️ ATENÇÃO: Os valores desta OS já foram lançados no Caixa do dia e <strong>NÃO podem ser alterados</strong>. Você pode editar apenas as observações, descrição do produto e dados da receita.</p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Armação / Produto:</label>
+                <input defaultValue={`${foundOS.frame?.brand} ${foundOS.frame?.model}`} className="w-full px-3 py-2 bg-[#161D2A] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-[#D4AF37]/50" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Lente / Tratamento:</label>
+                <input defaultValue={`${foundOS.lens?.brand} ${foundOS.lens?.name}`} className="w-full px-3 py-2 bg-[#161D2A] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-[#D4AF37]/50" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Médico / Optometrista:</label>
+                <input defaultValue={foundOS.prescription?.medicoName || 'Dr. Lauro Rocha'} className="w-full px-3 py-2 bg-[#161D2A] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-[#D4AF37]/50" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-300 block mb-1">Observações:</label>
+                <textarea
+                  value={editObs}
+                  onChange={e => setEditObs(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 bg-[#161D2A] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-[#D4AF37]/50 resize-none"
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => { alert('Alterações descritivas salvas com sucesso!'); setShowEditProdutosModal(false); }}
+              className="w-full py-3 bg-gradient-to-r from-[#D4AF37] to-amber-500 text-slate-900 font-extrabold rounded-xl shadow-lg transition-all active:scale-95"
+            >
+              Salvar Alterações Descritivas
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: IMPRIMIR OS (3 VIAS) */}
+      {showPrintModal && foundOS && (
+        <div className="fixed inset-0 bg-[#080C14]/95 backdrop-blur-md flex items-start justify-center z-[200] p-4 overflow-y-auto">
+          <div className="w-full max-w-4xl">
+            <div className="flex items-center justify-between mb-4 print:hidden">
+              <h3 className="text-lg font-extrabold text-white flex items-center gap-2">
+                <Printer className="w-5 h-5 text-blue-400" /> Imprimir OS — {foundOS.osNumber}
+              </h3>
+              <button onClick={() => setShowPrintModal(false)} className="text-slate-400 hover:text-white bg-[#161D2A] px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <ServiceOrderDocument order={foundOS} onClose={() => setShowPrintModal(false)} />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

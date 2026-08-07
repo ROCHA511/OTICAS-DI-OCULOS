@@ -643,39 +643,29 @@ export const ServiceOrderDocument: React.FC<ServiceOrderDocumentProps> = ({
 
       {/* Printable Container Body */}
       <div className="bg-slate-100 p-4 rounded-2xl print:p-0 print:bg-white print:m-0 space-y-6">
-        {(activeTab === 'todas' || activeTab === 'laboratorio') && (
-          <div className="space-y-2">
-            {renderViaLaboratorio()}
-          </div>
-        )}
+        <div className={`space-y-2 ${activeTab !== 'todas' && activeTab !== 'laboratorio' ? 'hidden print:block' : 'block'}`}>
+          {renderViaLaboratorio()}
+        </div>
 
-        {activeTab === 'todas' && (
-          <div className="my-6 border-b-2 border-dashed border-slate-400 flex items-center justify-center relative print:my-4">
-            <span className="bg-slate-100 print:bg-white px-3 py-0.5 text-[10px] font-mono text-slate-500 font-bold flex items-center gap-1">
-              <Scissors className="w-3.5 h-3.5 text-slate-700" /> CORTE AQUI (VIAS DA ÓTICA E DO CLIENTE)
-            </span>
-          </div>
-        )}
+        <div className={`my-6 border-b-2 border-dashed border-slate-400 flex items-center justify-center relative print:my-4 ${activeTab !== 'todas' ? 'hidden print:flex' : 'flex'}`}>
+          <span className="bg-slate-100 print:bg-white px-3 py-0.5 text-[10px] font-mono text-slate-500 font-bold flex items-center gap-1">
+            <Scissors className="w-3.5 h-3.5 text-slate-700" /> CORTE AQUI (VIAS DA ÓTICA E DO CLIENTE)
+          </span>
+        </div>
 
-        {(activeTab === 'todas' || activeTab === 'otica') && (
-          <div className="space-y-2">
-            {renderViaOtica()}
-          </div>
-        )}
+        <div className={`space-y-2 ${activeTab !== 'todas' && activeTab !== 'otica' ? 'hidden print:block' : 'block'}`}>
+          {renderViaOtica()}
+        </div>
 
-        {activeTab === 'todas' && (
-          <div className="my-6 border-b-2 border-dashed border-slate-400 flex items-center justify-center relative print:my-4">
-            <span className="bg-slate-100 print:bg-white px-3 py-0.5 text-[10px] font-mono text-slate-500 font-bold flex items-center gap-1">
-              <Scissors className="w-3.5 h-3.5 text-slate-700" /> CORTE AQUI (VIA DO CLIENTE)
-            </span>
-          </div>
-        )}
+        <div className={`my-6 border-b-2 border-dashed border-slate-400 flex items-center justify-center relative print:my-4 ${activeTab !== 'todas' ? 'hidden print:flex' : 'flex'}`}>
+          <span className="bg-slate-100 print:bg-white px-3 py-0.5 text-[10px] font-mono text-slate-500 font-bold flex items-center gap-1">
+            <Scissors className="w-3.5 h-3.5 text-slate-700" /> CORTE AQUI (VIA DO CLIENTE)
+          </span>
+        </div>
 
-        {(activeTab === 'todas' || activeTab === 'cliente') && (
-          <div className="space-y-2">
-            {renderViaCliente()}
-          </div>
-        )}
+        <div className={`space-y-2 ${activeTab !== 'todas' && activeTab !== 'cliente' ? 'hidden print:block' : 'block'}`}>
+          {renderViaCliente()}
+        </div>
       </div>
     </div>
   );

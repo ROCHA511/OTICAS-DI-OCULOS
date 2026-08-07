@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Glasses, Search, Plus, Tag, ShieldCheck, DollarSign, Sparkles } from 'lucide-react';
+import { Glasses, Search, Plus, Sparkles, Camera, X, Upload } from 'lucide-react';
 import { Frame, Lens } from '../../types';
 import { PriceTableView } from './PriceTableView';
 
@@ -18,6 +18,21 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'frames' | 'lenses'>('frames');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAddFrameModal, setShowAddFrameModal] = useState(false);
+  const [framePhoto, setFramePhoto] = useState<string | null>(null);
+  const [frameForm, setFrameForm] = useState({
+    brand: '',
+    model: '',
+    color: '',
+    material: 'Acetato',
+    eyeSize: '',
+    bridge: '',
+    temple: '',
+    ed: '',
+    price: '',
+    stock: '',
+    description: '',
+  });
 
   const filteredFrames = frames.filter(
     (f) =>
@@ -32,6 +47,40 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       l.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       l.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setFramePhoto(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveFrame = () => {
+    if (!frameForm.brand || !frameForm.model || !frameForm.price) {
+      alert('Preencha ao menos Marca, Modelo e Preço.');
+      return;
+    }
+    onAddFrame({
+      brand: frameForm.brand,
+      model: frameForm.model,
+      color: frameForm.color || 'Não informado',
+      material: frameForm.material,
+      eyeSize: Number(frameForm.eyeSize) || 0,
+      bridge: Number(frameForm.bridge) || 0,
+      temple: Number(frameForm.temple) || 0,
+      ed: Number(frameForm.ed) || 55,
+      price: Number(frameForm.price),
+      stock: Number(frameForm.stock) || 0,
+      image: framePhoto || 'https://placehold.co/400x200/e2e8f0/64748b?text=Armação',
+      description: frameForm.description,
+    } as any);
+    setShowAddFrameModal(false);
+    setFrameForm({ brand: '', model: '', color: '', material: 'Acetato', eyeSize: '', bridge: '', temple: '', ed: '', price: '', stock: '', description: '' });
+    setFramePhoto(null);
+    alert('Armação cadastrada com sucesso!');
+  };
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-65px)]">
@@ -48,7 +97,15 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          {activeTab === 'frames' && (
+            <button
+              onClick={() => setShowAddFrameModal(true)}
+              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 hover:from-amber-400 hover:to-amber-500 transition-all active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" /> Cadastrar Armação
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('frames')}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
@@ -107,8 +164,11 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   </div>
                   <h3 className="text-sm font-bold text-slate-900">{f.model}</h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    {f.color} • {f.material} {f.peso ? `• ${f.peso}g` : ''}
+                    {f.color} • {f.material} {(f as any).peso ? `• ${(f as any).peso}g` : ''}
                   </p>
+                  {(f as any).description && (
+                    <p className="text-xs text-slate-400 mt-1 italic">{(f as any).description}</p>
+                  )}
                   
                   {/* Dimensões Geométricas Avançadas */}
                   <div className="grid grid-cols-2 gap-x-2 gap-y-1 bg-slate-50 p-2 rounded-xl border border-slate-100 text-[10px] font-mono text-slate-600 mt-2">
@@ -116,8 +176,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                     <div>Ponte: <strong>{f.bridge} mm</strong></div>
                     <div>Haste: <strong>{f.temple} mm</strong></div>
                     <div>ED (Diâmetro): <strong>{f.ed || 55} mm</strong></div>
-                    {f.diagonalMaior && <div>Diagonal: <strong>{f.diagonalMaior} mm</strong></div>}
-                    {f.baseCurva && <div>Curvatura: <strong>Base {f.baseCurva}</strong></div>}
+                    {(f as any).diagonalMaior && <div>Diagonal: <strong>{(f as any).diagonalMaior} mm</strong></div>}
+                    {(f as any).baseCurva && <div>Curvatura: <strong>Base {(f as any).baseCurva}</strong></div>}
                   </div>
                 </div>
 
@@ -143,6 +203,161 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       {activeTab === 'lenses' && (
         <PriceTableView />
       )}
+
+      {/* MODAL: CADASTRAR ARMAÇÃO */}
+      {showAddFrameModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[200] p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl my-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <Glasses className="w-5 h-5 text-amber-500" /> Cadastrar Nova Armação
+              </h3>
+              <button onClick={() => setShowAddFrameModal(false)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Foto da Armação */}
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-2">Foto da Armação</label>
+              <div className="relative border-2 border-dashed border-slate-300 rounded-xl overflow-hidden hover:border-amber-400 transition-all">
+                {framePhoto ? (
+                  <div className="relative">
+                    <img src={framePhoto} alt="Preview" className="w-full h-44 object-cover" />
+                    <button
+                      onClick={() => setFramePhoto(null)}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center h-44 cursor-pointer gap-2 text-slate-400 hover:text-amber-500 transition-all">
+                    <Camera className="w-10 h-10" />
+                    <span className="text-xs font-semibold">Clique para adicionar foto</span>
+                    <span className="text-[10px]">JPG, PNG ou WEBP</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Informações Básicas */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Marca *</label>
+                <input
+                  value={frameForm.brand}
+                  onChange={e => setFrameForm(f => ({ ...f, brand: e.target.value }))}
+                  placeholder="Ex: Ray-Ban"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Modelo *</label>
+                <input
+                  value={frameForm.model}
+                  onChange={e => setFrameForm(f => ({ ...f, model: e.target.value }))}
+                  placeholder="Ex: Aviator Classic"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Cor</label>
+                <input
+                  value={frameForm.color}
+                  onChange={e => setFrameForm(f => ({ ...f, color: e.target.value }))}
+                  placeholder="Ex: Dourado/Verde"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Material</label>
+                <select
+                  value={frameForm.material}
+                  onChange={e => setFrameForm(f => ({ ...f, material: e.target.value }))}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                >
+                  {['Acetato', 'Metal', 'Titânio', 'Alumínio', 'Nylon', 'Misto'].map(m => (
+                    <option key={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Medidas */}
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-2">Medidas (mm)</label>
+              <div className="grid grid-cols-4 gap-2">
+                {[['Aro', 'eyeSize'], ['Ponte', 'bridge'], ['Haste', 'temple'], ['ED', 'ed']].map(([label, key]) => (
+                  <div key={key}>
+                    <label className="text-[10px] text-slate-500 block mb-1">{label}</label>
+                    <input
+                      type="number"
+                      value={(frameForm as any)[key]}
+                      onChange={e => setFrameForm(f => ({ ...f, [key]: e.target.value }))}
+                      placeholder="0"
+                      className="w-full px-2 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400 text-center"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Preço e Estoque */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Preço de Tabela (R$) *</label>
+                <input
+                  type="number"
+                  value={frameForm.price}
+                  onChange={e => setFrameForm(f => ({ ...f, price: e.target.value }))}
+                  placeholder="Ex: 580.00"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Estoque Inicial</label>
+                <input
+                  type="number"
+                  value={frameForm.stock}
+                  onChange={e => setFrameForm(f => ({ ...f, stock: e.target.value }))}
+                  placeholder="Ex: 5"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+            </div>
+
+            {/* Descrição */}
+            <div>
+              <label className="text-xs font-bold text-slate-600 block mb-1">Descrição / Observações</label>
+              <textarea
+                value={frameForm.description}
+                onChange={e => setFrameForm(f => ({ ...f, description: e.target.value }))}
+                rows={2}
+                placeholder="Ex: Armação leve ideal para rostos ovais, design vintage clássico..."
+                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setShowAddFrameModal(false)}
+                className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-bold rounded-xl text-sm hover:bg-slate-50 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveFrame}
+                className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white font-extrabold rounded-xl text-sm shadow-md hover:from-amber-400 hover:to-amber-500 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Upload className="w-4 h-4" /> Salvar Armação
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

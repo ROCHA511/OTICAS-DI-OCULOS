@@ -104,16 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Center Title Logo (Desktop XL only) */}
-      <div
-        onClick={() => onNavigateTab && onNavigateTab('dashboard')}
-        className="hidden xl:flex flex-col items-center relative z-10 shrink-0 px-2 cursor-pointer hover:opacity-90 active:scale-95 transition-all group"
-        title="Voltar para a Página Inicial (Dashboard)"
-      >
-        <OticasLogo size="lg" variant="light-text" showSubtext={true} />
-        <div className="h-0.5 w-20 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent rounded-full mt-1"></div>
-      </div>
-
+      
       {/* Right Controls & User Profile */}
       <div className="flex items-center space-x-1.5 sm:space-x-2 relative z-10 shrink-0">
         {/* PWA Install Button */}
