@@ -288,7 +288,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   } ${!(isExpanded || isMobileOpen) ? 'justify-center' : 'justify-between'}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#D4AF37]' : 'text-slate-300'}`} />
+                    <Icon className={`w-6 h-6 shrink-0 transition-transform ${isActive ? 'text-[#D4AF37] scale-105' : 'text-slate-300 hover:scale-105'}`} />
                     {(isExpanded || isMobileOpen) && (
                       <span className="text-xs truncate tracking-tight text-left">
                         {item.title}

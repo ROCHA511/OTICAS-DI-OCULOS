@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell, ChevronDown, Sparkles, MessageCircle, Building2, ShieldCheck, UserPlus, Share2, Menu } from 'lucide-react';
+import { Bell, ChevronDown, Sparkles, MessageCircle, Building2, ShieldCheck, UserPlus, Share2, Menu, Home } from 'lucide-react';
 import { AiSettings } from '../types';
 import { OticasLogo } from './brand/OticasLogo';
 import { InstallButton } from './InstallButton';
@@ -359,14 +359,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-[#C9A96E]" />
         </div>
 
-        {/* Botão Hambúrguer Mobile na extremidade da Navbar */}
-        <button
-          onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="sm:hidden p-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] rounded-xl font-bold transition-all border border-white/30 shadow-md active:scale-95 flex items-center justify-center shrink-0 cursor-pointer ml-1"
-          title="Abrir Menu do Sistema"
-        >
-          <Menu className="w-5 h-5 stroke-[2.5]" />
-        </button>
+        {/* Botões Mobile: Home e Hambúrguer reordenados */}
+        <div className="flex sm:hidden items-center gap-1.5 ml-1">
+          <button
+            onClick={() => onNavigateTab && onNavigateTab('dashboard')}
+            className="p-1.5 bg-[#161D2A] hover:bg-[#1E293B] text-[#D4AF37] hover:text-white rounded-xl font-bold transition-all border border-[#D4AF37]/40 shadow-md active:scale-95 flex items-center justify-center shrink-0 cursor-pointer"
+            title="Ir para a Página Inicial (Dashboard)"
+          >
+            <Home className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          
+          <button
+            onClick={() => setIsMobileMenuOpen && setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-1.5 bg-[#D4AF37] hover:bg-[#E8D2A8] text-[#071D49] rounded-xl font-bold transition-all border border-white/30 shadow-md active:scale-95 flex items-center justify-center shrink-0 cursor-pointer"
+            title="Abrir Menu do Sistema"
+          >
+            <Menu className="w-5 h-5 stroke-[2.5]" />
+          </button>
+        </div>
       </div>
     </header>
   );

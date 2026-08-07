@@ -83,14 +83,14 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-65px)]">
+    <div className="p-3 sm:p-6 space-y-5 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-65px)] bg-[#F0F7FF] text-slate-800">
       {/* Header */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-blue-100 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-            <Glasses className="w-5 h-5 text-[#C9A96E]" /> {activeTab === 'frames' ? 'LENTES E ARMAÇÕES - CATÁLOGO' : 'TABELAS DE PREÇOS DE LENTES'}
+          <h1 className="text-lg font-black text-[#071D49] flex items-center gap-2 tracking-tight">
+            <Glasses className="w-5 h-5 text-[#D4AF37]" /> {activeTab === 'frames' ? 'LENTES E ARMAÇÕES - CATÁLOGO' : 'TABELAS DE PREÇOS DE LENTES'}
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 mt-0.5 font-medium">
             {activeTab === 'frames' 
               ? 'Catálogo completo de produtos ópticos consultado pela IA em tempo real para cálculo de orçamentos.' 
               : 'Gerencie todas as tabelas de preços oficiais de marcas parceiras (Hoya, Zeiss, etc) e crie produtos customizados.'}
@@ -101,27 +101,27 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           {activeTab === 'frames' && (
             <button
               onClick={() => setShowAddFrameModal(true)}
-              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 hover:from-amber-400 hover:to-amber-500 transition-all active:scale-95"
+              className="px-4 py-2 bg-gradient-to-r from-[#0055A5] to-[#0284C7] hover:from-[#004488] hover:to-[#0273B0] text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" /> Cadastrar Armação
+              <Plus className="w-4 h-4 text-white" /> Cadastrar Armação
             </button>
           )}
           <button
             onClick={() => setActiveTab('frames')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
               activeTab === 'frames'
-                ? 'bg-amber-600 text-white shadow-md'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-[#071D49] text-white shadow-md'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
             }`}
           >
             Armações ({frames.length})
           </button>
           <button
             onClick={() => setActiveTab('lenses')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
               activeTab === 'lenses'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                ? 'bg-[#0055A5] text-white shadow-md'
+                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
             }`}
           >
             Lentes & Tratamentos ({lenses.length})
@@ -132,65 +132,57 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       {/* Search Bar (Apenas para Armações) */}
       {activeTab === 'frames' && (
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
           <input
             type="text"
             placeholder="Buscar no catálogo por marca, modelo ou tratamento..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-blue-100 rounded-2xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0055A5] shadow-xs"
           />
         </div>
       )}
 
       {/* Frames Catalog Cards */}
       {activeTab === 'frames' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredFrames.map((f) => (
             <div
               key={f.id}
-              className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col hover:shadow-md transition-all"
+              className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-all group"
             >
-              <div className="h-44 bg-slate-100 relative overflow-hidden">
-                <img src={f.image} alt={f.model} className="w-full h-full object-cover" />
-                <span className="absolute top-2 right-2 bg-slate-900/80 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <div className="h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center">
+                <img src={f.image} alt={f.model} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <span className="absolute top-2.5 right-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm">
                   Estoque: {f.stock} un
                 </span>
               </div>
               <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
                 <div>
-                  <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider">
+                  <div className="text-[11px] font-black text-[#D4AF37] uppercase tracking-wider">
                     {f.brand}
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900">{f.model}</h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {f.color} • {f.material} {(f as any).peso ? `• ${(f as any).peso}g` : ''}
+                  <h3 className="text-sm font-extrabold text-slate-900 leading-snug">{f.model}</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {f.color} • {f.material}
                   </p>
-                  {(f as any).description && (
-                    <p className="text-xs text-slate-400 mt-1 italic">{(f as any).description}</p>
-                  )}
                   
-                  {/* Dimensões Geométricas Avançadas */}
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 bg-slate-50 p-2 rounded-xl border border-slate-100 text-[10px] font-mono text-slate-600 mt-2">
-                    <div>Aro: <strong>{f.eyeSize} mm</strong></div>
-                    <div>Ponte: <strong>{f.bridge} mm</strong></div>
-                    <div>Haste: <strong>{f.temple} mm</strong></div>
-                    <div>ED (Diâmetro): <strong>{f.ed || 55} mm</strong></div>
-                    {(f as any).diagonalMaior && <div>Diagonal: <strong>{(f as any).diagonalMaior} mm</strong></div>}
-                    {(f as any).baseCurva && <div>Curvatura: <strong>Base {(f as any).baseCurva}</strong></div>}
+                  {/* Dimensões Geométricas */}
+                  <div className="text-[10px] text-slate-400 font-medium mt-1">
+                    Aro: <span>{f.eyeSize}mm</span> • Ponte: <span>{f.bridge}mm</span> • Haste: <span>{f.temple}mm</span>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t flex items-center justify-between gap-2">
-                  <div className="text-left">
-                    <span className="text-[9px] text-slate-400 uppercase font-bold block">Preço de Tabela:</span>
-                    <span className="text-sm font-extrabold text-slate-900">
+                <div className="pt-2 border-t border-slate-100 flex items-end justify-between gap-2">
+                  <div>
+                    <span className="text-[9px] text-slate-400 uppercase font-black tracking-wider block">PREÇO DE TABELA:</span>
+                    <span className="text-base font-black text-slate-900">
                       R$ {f.price.toFixed(2)}
                     </span>
                   </div>
                   
-                  <button className="px-3 py-1.5 bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 border border-teal-500/30 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 active:scale-95">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-600" /> PROVAR 3D
+                  <button className="px-3 py-1.5 bg-[#0055A5]/10 hover:bg-[#0055A5]/20 text-[#0055A5] border border-[#0055A5]/30 rounded-xl text-[10px] font-extrabold transition-all flex items-center gap-1 cursor-pointer active:scale-95">
+                    <Sparkles className="w-3.5 h-3.5 text-[#0055A5]" /> PROVAR 3D
                   </button>
                 </div>
               </div>

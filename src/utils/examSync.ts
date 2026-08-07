@@ -75,8 +75,8 @@ export const loadExamsFromSupabase = async (fallbackData: ExamRecord[]): Promise
   }
 };
 
-export const saveExamToSupabase = async (exam: ExamRecord): Promise<boolean> => {
-  if (!supabase) return false;
+export const saveExamToSupabase = async (exam: ExamRecord): Promise<ExamRecord> => {
+  if (!supabase) return exam;
   
   try {
     // Reverse Mapping (ExamRecord Legado UI -> Nova API)
@@ -134,9 +134,9 @@ export const saveExamToSupabase = async (exam: ExamRecord): Promise<boolean> => 
     
     await examSystemApi.updateAtendimentoStatus(exam.id, novoStatus);
 
-    return true;
+    return exam;
   } catch (error) {
     console.error('[ExamSync] Erro ao salvar exame no Novo Schema:', error);
-    return false;
+    throw error;
   }
 };

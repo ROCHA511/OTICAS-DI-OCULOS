@@ -69,7 +69,7 @@ Retorne APENAS um JSON válido.`;
       }
     });
 
-    const text = result.text();
+    const text = typeof (result as any).text === 'function' ? (result as any).text() : (result as any).text || '';
     let jsonResponse;
     try {
       jsonResponse = JSON.parse(text);
@@ -100,7 +100,7 @@ Retorne APENAS um JSON válido.`;
       }
     });
 
-    const text = result.text();
+    const text = typeof (result as any).text === 'function' ? (result as any).text() : (result as any).text || '';
     let jsonResponse;
     try {
       jsonResponse = JSON.parse(text);

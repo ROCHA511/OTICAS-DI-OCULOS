@@ -50,13 +50,13 @@ export const loadClientsFromSupabase = async (fallbackData: Client[]): Promise<C
         email: p.email || undefined,
         cpf: cliDetails.cpf || undefined,
         birthDate: cliDetails.data_nascimento || undefined,
-        status: p.status === 'ativo' ? 'ativo' : 'inativo',
+        status: p.status === 'ativo' ? 'active' : 'paid',
         isAiHandled: true,
         lastInteraction: p.criado_em,
         unreadCount: 0,
         tags: [],
         notes: cliDetails.endereco || ''
-      };
+      } as Client;
     });
 
     return translated;
@@ -79,7 +79,7 @@ export const saveClientToSupabase = async (client: Client): Promise<Client> => {
       email: client.email || `${uuid.substring(0, 8)}@otica.com`, // E-mail padrão único
       telefone: client.phone,
       role: 'cliente',
-      status: client.status === 'ativo' ? 'ativo' : 'inativo',
+      status: client.status === 'active' ? 'ativo' : 'inativo',
       atualizado_em: new Date().toISOString()
     });
     if (errPerfil) throw errPerfil;
@@ -97,18 +97,18 @@ export const saveClientToSupabase = async (client: Client): Promise<Client> => {
     if (client.prescription) {
       const { error: errRec } = await supabase.from('receitas').insert({
         cliente_id: uuid,
-        esferico_od: client.prescription.odSph || 0,
-        cilindrico_od: client.prescription.odCyl || 0,
-        eixo_od: client.prescription.odAxis || 0,
-        adicao_od: client.prescription.odAdd || 0,
-        esferico_oe: client.prescription.oeSph || 0,
-        cilindrico_oe: client.prescription.oeCyl || 0,
-        eixo_oe: client.prescription.oeAxis || 0,
-        adicao_oe: client.prescription.oeAdd || 0,
-        dnp_od: client.dnp?.od || 0,
-        dnp_oe: client.dnp?.oe || 0,
-        altura_od: client.dnp?.height || 0,
-        altura_oe: client.dnp?.height || 0
+        esferico_od: client.prescription.od?.esferico || 0,
+        cilindrico_od: client.prescription.od?.cilindrico || 0,
+        eixo_od: client.prescription.od?.eixo || 0,
+        adicao_od: client.prescription.adicao || 0,
+        esferico_oe: client.prescription.oe?.esferico || 0,
+        cilindrico_oe: client.prescription.oe?.cilindrico || 0,
+        eixo_oe: client.prescription.oe?.eixo || 0,
+        adicao_oe: client.prescription.adicao || 0,
+        dnp_od: client.dnp?.dnpOD || 0,
+        dnp_oe: client.dnp?.dnpOE || 0,
+        altura_od: client.dnp?.alturaCentroOD || 0,
+        altura_oe: client.dnp?.alturaCentroOE || 0
       });
       if (errRec) console.warn('[Supabase Sync] Falha ao cadastrar receita do cliente:', errRec);
     }
@@ -148,6 +148,11 @@ export const loadProductsFromSupabase = async (
           model: p.nome,
           code: p.descricao || p.id.substring(0, 8),
           color: 'Preto',
+          material: 'Acetato',
+          eyeSize: 52,
+          bridge: 18,
+          temple: 140,
+          image: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=600&auto=format&fit=crop&q=80',
           price: Number(p.preco_venda),
           stock: p.estoque_current || p.estoque_atual || 0
         });
@@ -156,11 +161,10 @@ export const loadProductsFromSupabase = async (
           id: p.id,
           name: p.nome,
           brand: p.descricao || 'Geral',
-          type: 'Visão Simples',
-          material: 'Resina',
-          treatments: ['Anti-Reflexo'],
+          type: 'visao_simples',
+          indexRefraction: 1.56,
+          description: p.descricao || 'Lente Óptica',
           price: Number(p.preco_venda),
-          stock: p.estoque_atual || 0
         });
       }
     });
@@ -249,7 +253,7 @@ export const loadOrdersFromSupabase = async (fallbackOrders: ServiceOrder[]): Pr
         createdAt: v.criado_em,
         ceoNotified: false,
         ceoApprovalNeeded: false
-      };
+      } as unknown as ServiceOrder;
     });
 
     return translated;

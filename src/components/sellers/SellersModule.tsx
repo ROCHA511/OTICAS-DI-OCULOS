@@ -149,7 +149,7 @@ export const SellersModule: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-full bg-slate-100 p-3 sm:p-6 space-y-5 font-sans">
+    <div className="w-full h-full min-h-0 overflow-y-auto bg-[#F0F7FF] p-3 sm:p-6 space-y-5 font-sans">
       
       {/* Role Switcher Toolbar (Top Bar for easy testing of permissions!) */}
       <div className="bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] p-3 sm:p-4 rounded-3xl border-2 border-[#C9A96E]/60 text-white shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">

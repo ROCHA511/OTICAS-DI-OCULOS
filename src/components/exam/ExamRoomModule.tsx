@@ -61,6 +61,10 @@ export const ExamRoomModule: React.FC = () => {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrResult, setOcrResult] = useState<any>(null);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Carregar prontuários ao montar
   const fetchExams = async () => {
     setLoading(true);
@@ -409,7 +413,7 @@ export const ExamRoomModule: React.FC = () => {
   const recipeHash = selectedExam ? `SHA256-DIGITAL-${selectedExam.id.replace(/\D/g, '')}-B8F7` : 'N/A';
 
   return (
-    <div className="flex flex-col min-h-screen sm:min-h-0 sm:h-[calc(100vh-16px)] my-0 sm:my-2 mx-0 sm:mr-2 bg-[#040f26]/95 border-0 sm:border-2 border-[#C9A96E]/80 rounded-none sm:rounded-[24px] shadow-[0_0_35px_rgba(201,169,110,0.2)] text-white overflow-y-auto sm:overflow-hidden select-none">
+    <div className="w-full h-full min-h-0 overflow-y-auto flex flex-col my-0 sm:my-2 mx-0 sm:mr-2 bg-[#040f26]/95 border-0 sm:border-2 border-[#C9A96E]/80 rounded-none sm:rounded-[24px] shadow-[0_0_35px_rgba(201,169,110,0.2)] text-white select-none">
       
       {/* 1. Header de Ações Rápidas (Superior) */}
       <header className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-[#C9A96E]/30 bg-[#071D49] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 shrink-0">

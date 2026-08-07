@@ -92,14 +92,14 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-65px)] bg-[#080C14] text-slate-300">
-      {/* View Header - Premium Obsidian & Gold */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#0F172A] to-[#161D2A] p-5 rounded-2xl border border-[#D4AF37]/30 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+    <div className="p-3 sm:p-6 space-y-5 max-w-7xl mx-auto overflow-y-auto h-[calc(100vh-65px)] bg-[#F0F7FF] text-slate-800">
+      {/* View Header - Premium Navy & Gold */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#071D49] to-[#0B255C] p-5 rounded-2xl border border-[#C9A96E]/40 shadow-md text-white">
         <div>
-          <h1 className="text-xl font-extrabold text-white flex items-center gap-2 tracking-tight">
+          <h1 className="text-xl font-black text-[#E8D2A8] flex items-center gap-2 tracking-tight">
             <FileText className="w-5 h-5 text-[#D4AF37]" /> GESTÃO DE ORDENS DE SERVIÇO
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-200 mt-1">
             Controle de serviços, pagamentos, edição e comissionamento integrado.
           </p>
         </div>
@@ -108,57 +108,57 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
           {onOpenSmartOSWizard && (
             <button
               onClick={onOpenSmartOSWizard}
-              className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-900 border border-amber-300/40 font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+              className="bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95 border border-amber-200/50"
             >
-              <Plus className="w-4 h-4 text-slate-900" /> Nova OS Inteligente (IA Mary)
+              <Plus className="w-4 h-4 text-slate-950 stroke-[3]" /> Nova OS Inteligente (IA Mary)
             </button>
           )}
 
           <button
             onClick={() => setShowEditOSModal(true)}
-            className="bg-[#161D2A] hover:bg-[#1E293B] text-[#D4AF37] border border-[#D4AF37]/40 font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+            className="bg-white/10 hover:bg-white/20 text-[#E8D2A8] border border-[#C9A96E]/50 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer active:scale-95"
           >
             <Edit className="w-4 h-4 text-[#D4AF37]" /> Editar Ordem de Serviço
           </button>
         </div>
       </div>
 
-      {/* Cash Flow Summary Metrics - Obsidian Style */}
+      {/* Cash Flow Summary Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#0F172A] p-4 rounded-2xl border border-emerald-500/20 shadow-lg flex items-center justify-between hover:border-emerald-500/40 transition-colors">
+        <div className="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between hover:border-emerald-400 transition-colors">
           <div>
-            <div className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-widest">Entradas (Hoje)</div>
-            <div className="text-2xl font-extrabold text-emerald-400 mt-1">
+            <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Entradas (Hoje)</div>
+            <div className="text-2xl font-black text-emerald-700 mt-1">
               R$ {totalInflow.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
-          <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-            <TrendingUp className="w-6 h-6 text-emerald-400" />
+          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+            <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
         </div>
 
-        <div className="bg-[#0F172A] p-4 rounded-2xl border border-rose-500/20 shadow-lg flex items-center justify-between hover:border-rose-500/40 transition-colors">
+        <div className="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm flex items-center justify-between hover:border-rose-400 transition-colors">
           <div>
-            <div className="text-[10px] font-bold text-rose-500/70 uppercase tracking-widest">Saídas / Custos</div>
-            <div className="text-2xl font-extrabold text-rose-400 mt-1">
+            <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Saídas / Custos</div>
+            <div className="text-2xl font-black text-rose-700 mt-1">
               R$ {totalOutflow.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
-          <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
-            <TrendingDown className="w-6 h-6 text-rose-400" />
+          <div className="p-3 bg-rose-50 rounded-xl border border-rose-200">
+            <TrendingDown className="w-6 h-6 text-rose-600" />
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-[#161D2A] to-[#0B0F17] p-4 rounded-2xl border border-[#D4AF37]/30 shadow-lg flex items-center justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-3xl group-hover:bg-[#D4AF37]/20 transition-all" />
+        <div className="bg-gradient-to-br from-[#071D49] to-[#0B255C] p-4 rounded-2xl border border-[#C9A96E]/50 shadow-md flex items-center justify-between relative overflow-hidden text-white group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#C9A96E]/20 rounded-full blur-2xl group-hover:bg-[#C9A96E]/30 transition-all" />
           <div className="relative z-10">
-            <div className="text-[10px] font-bold text-[#D4AF37]/70 uppercase tracking-widest">Saldo do Caixa</div>
-            <div className="text-2xl font-extrabold text-[#D4AF37] mt-1">
+            <div className="text-[10px] font-black text-[#E8D2A8] uppercase tracking-widest">Saldo do Caixa</div>
+            <div className="text-2xl font-black text-[#E8D2A8] mt-1">
               R$ {netBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
-          <div className="relative z-10 p-3 bg-[#D4AF37]/10 rounded-xl border border-[#D4AF37]/20">
-            <DollarSign className="w-6 h-6 text-[#D4AF37]" />
+          <div className="relative z-10 p-3 bg-[#C9A96E]/20 rounded-xl border border-[#C9A96E]/40">
+            <DollarSign className="w-6 h-6 text-[#E8D2A8]" />
           </div>
         </div>
       </div>
@@ -166,30 +166,30 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
       {/* Orders List & Preview Inspector Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Orders Table */}
-        <div className="lg:col-span-2 bg-[#0F172A] rounded-2xl border border-white/5 shadow-xl overflow-hidden flex flex-col h-[500px]">
-          <div className="p-4 border-b border-white/5 font-bold text-white text-sm flex items-center justify-between bg-[#161D2A]">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[500px]">
+          <div className="p-4 border-b border-slate-100 font-bold text-slate-800 text-sm flex items-center justify-between bg-slate-50">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
               Lista de Ordens de Serviço Emitidas
             </div>
-            <span className="text-xs text-slate-400 font-normal px-2 py-1 bg-white/5 rounded-full">{orders.length} ordens</span>
+            <span className="text-xs text-slate-500 font-bold px-2.5 py-1 bg-blue-50 text-[#0055A5] rounded-full border border-blue-100">{orders.length} ordens</span>
           </div>
 
-          <div className="overflow-y-auto flex-1 divide-y divide-white/5 text-xs">
+          <div className="overflow-y-auto flex-1 divide-y divide-slate-100 text-xs">
             {orders.map((os) => {
               const isSelected = selectedOS?.id === os.id;
               return (
                 <div
                   key={os.id}
                   onClick={() => setSelectedOS(os)}
-                  className={`p-4 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/5 ${
-                    isSelected ? 'bg-white/5 border-l-4 border-[#D4AF37]' : 'border-l-4 border-transparent'
+                  className={`p-4 cursor-pointer transition-all flex flex-col sm:flex-row sm:items-center justify-between hover:bg-blue-50/50 ${
+                    isSelected ? 'bg-blue-50/80 border-l-4 border-[#0055A5]' : 'border-l-4 border-transparent'
                   }`}
                 >
                   <div className="space-y-1.5 mb-2 sm:mb-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-white text-sm">{os.osNumber}</span>
-                      <span className="text-slate-400 font-medium">• {os.clientName}</span>
+                      <span className="font-black text-slate-900 text-sm">{os.osNumber}</span>
+                      <span className="text-slate-500 font-bold">• {os.clientName}</span>
                     </div>
                     <div className="text-slate-500 text-[11px] flex items-center gap-1.5">
                       <Glasses className="w-3.5 h-3.5 text-slate-400" />
@@ -198,14 +198,14 @@ export const ServiceOrdersView: React.FC<ServiceOrdersViewProps> = ({
                   </div>
 
                   <div className="text-left sm:text-right space-y-1.5">
-                    <div className="font-extrabold text-white text-sm">
+                    <div className="font-black text-slate-900 text-sm">
                       R$ {os.totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                     <span
                       className={`inline-flex items-center justify-center text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
                         os.status === 'pago' || os.status === 'no_laboratorio'
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
                       }`}
                     >
                       {os.status === 'pago'

@@ -15,11 +15,13 @@ if ('serviceWorker' in navigator) {
 
 import { ErrorBoundary } from './ErrorBoundary';
 
+const Boundary = ErrorBoundary as any;
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
+    <Boundary>
       <App />
-    </ErrorBoundary>
+    </Boundary>
   </StrictMode>,
 );
 

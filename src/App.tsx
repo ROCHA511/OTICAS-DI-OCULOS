@@ -27,6 +27,7 @@ import { QuickActionBar } from './components/QuickActionBar';
 import { SaaSPlanGateModal } from './components/saas/SaaSPlanGateModal';
 import { SaaSAdminView } from './components/saas/SaaSAdminView';
 import { SaaSOnboardingView } from './components/saas/SaaSOnboardingView';
+import { MultiticasDashboard } from './pages/MultiticasDashboard';
 import { PwaInstallPromptModal } from './components/pwa/PwaInstallPromptModal';
 import {
   loadClientsFromSupabase,
@@ -731,7 +732,7 @@ export default function App() {
                     } else if (next.length < prev.length) {
                       const deleted = prev.find(p => !next.some(n => n.id === p.id));
                       if (deleted && supabase) {
-                        supabase.from('transacoes_financeiras').delete().eq('id', deleted.id).catch(err => {
+                        Promise.resolve(supabase.from('transacoes_financeiras').delete().eq('id', deleted.id)).catch(err => {
                           console.error('Erro ao excluir do Supabase:', err);
                         });
                       }
@@ -751,12 +752,12 @@ export default function App() {
                     if (next.length > prev.length) {
                       const added = next[0];
                       if (supabase) {
-                        supabase.from('caixa').insert({
+                        Promise.resolve(supabase.from('caixa').insert({
                           id: ensureUUID(added.id),
                           status: added.status,
                           saldo_final: added.saldoFinal,
                           criado_em: added.createdAt
-                        }).catch(err => {
+                        })).catch(err => {
                           console.error('Erro ao fechar caixa no Supabase:', err);
                         });
                       }
@@ -938,7 +939,7 @@ export default function App() {
             <AiSettingsView settings={aiSettings} onSaveSettings={setAiSettings} />
           )}
 
-          {activeTab === 'saas-admin' && <SaaSAdminView />}
+          {activeTab === 'saas-admin' && <MultiticasDashboard />}
 
           {activeTab === 'exam-room' && <ExamRoomModule />}
         </main>
