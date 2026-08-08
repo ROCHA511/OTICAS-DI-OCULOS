@@ -30,6 +30,7 @@ import {
 import { OticasLogo } from './brand/OticasLogo';
 import { TrialFrameIcon } from './brand/TrialFrameIcon';
 import { useTenant } from '../context/TenantContext';
+import { InstallButton } from './InstallButton';
 
 export type ActiveTab =
   | 'dashboard'
@@ -241,6 +242,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="text-[9px] text-slate-200 font-bold leading-tight text-center max-w-[220px]">
               Rua 23 de Abril, 51, Centro • (73) 98112-8923
+            </div>
+            <div className="pt-2">
+              <InstallButton />
             </div>
           </div>
         )}
