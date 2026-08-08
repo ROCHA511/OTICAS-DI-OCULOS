@@ -189,10 +189,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
       {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
       <aside
-        className={`bg-[#071D49]/90 sm:bg-[#071D49]/85 backdrop-blur-2xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none shadow-[0_8px_32px_rgba(0,0,0,0.5)] ${
+        className={`bg-[#071D49]/80 sm:bg-[#071D49]/80 backdrop-blur-2xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none shadow-[0_8px_32px_rgba(0,0,0,0.6)] ${
           isMobileOpen
-            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E]/50 shadow-2xl flex'
-            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#C9A96E]/40 sm:shadow-[0_0_30px_rgba(7,29,73,0.6)] sm:h-[calc(100%-16px)]'
+            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E] shadow-[5px_0_30px_rgba(201,169,110,0.4)] flex'
+            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#C9A96E] sm:shadow-[0_0_25px_rgba(201,169,110,0.35)] sm:h-[calc(100%-16px)]'
         } ${
           isExpanded || isMobileOpen ? 'w-[280px] sm:w-[280px]' : 'sm:w-[72px]'
         }`}

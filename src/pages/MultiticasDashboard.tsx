@@ -156,7 +156,7 @@ export const MultiticasDashboard: React.FC = () => {
   const totalRecurrentSaaS = branches.reduce((acc, b) => acc + (b.price || 2490), 0);
 
   return (
-    <div className="p-4 sm:p-8 space-y-8 max-w-7xl mx-auto animate-fadeIn">
+    <div className="flex-1 h-full overflow-y-auto p-4 sm:p-8 space-y-8 max-w-7xl mx-auto animate-fadeIn">
       
       {/* Top Banner Header Multi-Óticas */}
       <div className="bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] p-6 sm:p-8 rounded-3xl text-white shadow-2xl border border-[#C9A96E]/30 relative overflow-hidden">

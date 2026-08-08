@@ -25,6 +25,10 @@ import {
   CreditCard,
   History,
   FileSpreadsheet,
+  ChevronUp,
+  ChevronDown,
+  FileCode,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Client, ChatMessage } from '../../types';
 import { speakMaryVoice, stopMaryVoice } from '../../utils/speechUtils';
@@ -55,10 +59,13 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [showMaryStatsCard, setShowMaryStatsCard] = useState(true);
+  const [isTimelineCompact, setIsTimelineCompact] = useState(true);
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -116,32 +123,39 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
     }
   };
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendText = () => {
     if (!inputText.trim()) return;
     onSendMessage(inputText);
     setInputText('');
   };
 
-  // Modern Workflow Steps (Apple / ClickUp Workflow)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendText();
+    }
+  };
+
+  // Modern Workflow Steps
   const workflowSteps = [
-    { label: 'Receita', status: 'Concluído', time: '10:15 AM', resp: 'Dr. Óptico', icon: FileText, done: true },
-    { label: 'Medições', status: 'Concluído', time: '10:28 AM', resp: 'IA Mary', icon: Eye, done: true },
-    { label: 'Lentes', status: 'Em Produção', time: '11:00 AM', resp: 'Braslab', icon: Glasses, active: true },
-    { label: 'Montagem', status: 'Pendente', time: '02:00 PM', resp: 'Oficina Lab', icon: Scissors },
-    { label: 'Controle Qualidade', status: 'Pendente', time: '03:30 PM', resp: 'Gerência', icon: ShieldCheck },
-    { label: 'Entrega', status: 'Pendente', time: '05:00 PM', resp: 'Atendimento', icon: CheckCircle2 },
+    { label: 'Receita', code: 'OK', status: 'Concluído', time: '10:15 AM', resp: 'Dr. Óptico', icon: FileText, done: true },
+    { label: 'Medições', code: 'OK', status: 'Concluído', time: '10:28 AM', resp: 'IA Mary', icon: Eye, done: true },
+    { label: 'Lentes', code: 'PROD', status: 'Em Produção', time: '11:00 AM', resp: 'Braslab', icon: Glasses, active: true },
+    { label: 'Montagem', code: 'PEND', status: 'Pendente', time: '02:00 PM', resp: 'Oficina Lab', icon: Scissors },
+    { label: 'Qualidade', code: 'PEND', status: 'Pendente', time: '03:30 PM', resp: 'Gerência', icon: ShieldCheck },
+    { label: 'Entrega', code: 'PEND', status: 'Pendente', time: '05:00 PM', resp: 'Atendimento', icon: CheckCircle2 },
   ];
 
   return (
-    <div className="w-full h-full max-w-full bg-[#F7F8FA] flex flex-col min-h-0 overflow-hidden rounded-[20px] box-border relative">
-      {/* 1. TOPO: Foto Cliente, Nome, Status, Telefone, Origem Lead, IA Badge */}
-      <div className="p-3.5 bg-white border-b border-[#C9A96E]/20 flex items-center justify-between shrink-0 rounded-t-[20px] shadow-xs">
+    <div className="w-full h-full max-w-full bg-[#F8FAFC] flex flex-col min-h-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm relative box-border">
+      
+      {/* 1. TOPO DO CHAT */}
+      <div className="p-3 sm:p-4 bg-white border-b border-[#C9A96E]/30 flex items-center justify-between shrink-0 shadow-xs z-10">
         <div className="flex items-center space-x-3 min-w-0">
           {onBackToOverview && (
             <button
               onClick={onBackToOverview}
-              className="px-2.5 py-1 bg-[#071D49] hover:bg-[#0B255C] text-[#E8D2A8] border border-[#C9A96E]/40 rounded-xl transition-all shadow-xs flex items-center gap-1.5 text-xs font-semibold shrink-0 cursor-pointer"
+              className="px-2.5 py-1 bg-[#071D49] hover:bg-[#0B255C] text-[#E8D2A8] border border-[#C9A96E]/40 rounded-xl transition-all shadow-xs flex items-center gap-1.5 text-xs font-bold shrink-0 cursor-pointer"
               title="Voltar para Visão Geral"
             >
               <ArrowLeft className="w-3.5 h-3.5 text-[#C9A96E]" />
@@ -158,46 +172,44 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
               alt={client.name}
               className="w-10 h-10 rounded-full object-cover border-2 border-[#C9A96E]"
             />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] absolute bottom-0 right-0 ring-2 ring-white"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute bottom-0 right-0 ring-2 ring-white"></span>
           </div>
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-[#111827] truncate">{client.name}</h2>
-              <span className="text-[10px] bg-[#071D49]/10 text-[#071D49] font-semibold px-2 py-0.2 rounded-full border border-[#071D49]/20 hidden sm:inline">
-                {client.tags?.[0] || 'Orçamento'}
+              <h2 className="text-sm font-black text-slate-900 truncate">{client.name}</h2>
+              <span className="text-[10px] bg-[#071D49]/10 text-[#071D49] font-bold px-2 py-0.5 rounded-full border border-[#071D49]/20 hidden sm:inline">
+                {client.tags?.[0] || 'Orçamento VIP'}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-[#6B7280] font-normal">
+            <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
               <span className="flex items-center gap-1">
                 <Phone className="w-3 h-3 text-[#C9A96E]" /> {client.phone}
               </span>
               <span>•</span>
-              <span className="text-[#C9A96E] font-medium">Origem: WhatsApp Meta</span>
+              <span className="text-[#0055A5] font-bold">Origem: WhatsApp API</span>
             </div>
           </div>
         </div>
 
         {/* Right IA Badge & Controls */}
         <div className="flex items-center space-x-2">
-          {/* Pequeño Badge Premium: ● IA Mary Online */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#071D49]/5 border border-[#C9A96E]/40 rounded-full text-xs font-semibold text-[#071D49]">
-            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse"></span>
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-full text-xs font-bold">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>● IA Mary Online</span>
           </div>
 
-          {/* Toggle IA Control Button */}
           <button
             onClick={() => onToggleAiControl(client.id)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1.5 transition-all border cursor-pointer ${
               client.isAiHandled
-                ? 'bg-[#10B981]/15 text-[#10B981] border-[#10B981]/40 hover:bg-[#10B981]/25'
-                : 'bg-[#071D49] text-white border-[#C9A96E] hover:bg-[#0B255C]'
+                ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-sm'
+                : 'bg-[#071D49] text-[#E8D2A8] border-[#C9A96E] hover:bg-[#0B255C]'
             }`}
           >
             {client.isAiHandled ? (
               <>
-                <Bot className="w-3.5 h-3.5 text-[#10B981]" /> IA Mary
+                <Bot className="w-3.5 h-3.5 text-slate-950" /> IA Mary
               </>
             ) : (
               <>
@@ -216,118 +228,89 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
         </div>
       </div>
 
-      {/* 2. ATALHOS PREMIUM CHIPS (Border Radius: 999px) */}
-      <div className="bg-white px-4 py-2 border-b border-[#C9A96E]/15 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0 scrollbar-none">
-        <span className="font-bold text-[#6B7280] text-[10px] uppercase tracking-wider shrink-0">
+      {/* 2. ATALHOS PREMIUM CHIPS */}
+      <div className="bg-white px-4 py-2 border-b border-slate-200 flex items-center gap-2 overflow-x-auto text-[11px] shrink-0 scrollbar-none">
+        <span className="font-black text-slate-400 text-[10px] uppercase tracking-wider shrink-0">
           Atalhos:
         </span>
         <button
           onClick={() => onSelectQuickAction('recipe_request')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
+          className="bg-slate-100 hover:bg-[#071D49] text-slate-700 hover:text-white px-3 py-1 rounded-full border border-slate-200 font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
         >
           📄 Receita
         </button>
         <button
           onClick={() => onSelectQuickAction('dnp_request')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
+          className="bg-slate-100 hover:bg-[#071D49] text-slate-700 hover:text-white px-3 py-1 rounded-full border border-slate-200 font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
         >
           📏 Medir DNP
         </button>
         <button
           onClick={() => onSelectQuickAction('catalog')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
+          className="bg-slate-100 hover:bg-[#071D49] text-slate-700 hover:text-white px-3 py-1 rounded-full border border-slate-200 font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
         >
-          👓 Lentes & Armações
+          👓 Armações &amp; Lentes
         </button>
         <button
           onClick={() => onSelectQuickAction('pix')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
+          className="bg-slate-100 hover:bg-[#071D49] text-slate-700 hover:text-white px-3 py-1 rounded-full border border-slate-200 font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
         >
-          💳 Financeiro & Pix
-        </button>
-        <button
-          onClick={() => onSelectQuickAction('catalog')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
-        >
-          📜 Histórico OS
-        </button>
-        <button
-          onClick={() => onSendMessage('Olá! Como posso te ajudar hoje no WhatsApp das Óticas Di Óculos?')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
-        >
-          💬 WhatsApp
-        </button>
-        <button
-          onClick={() => onSelectQuickAction('recipe_request')}
-          className="bg-[#F7F8FA] hover:bg-[#071D49] text-[#111827] hover:text-white px-3.5 py-1 rounded-full border border-[#C9A96E]/30 font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1"
-        >
-          🩺 Exames de Vista
+          💳 Financeiro &amp; Pix
         </button>
 
         <button
           onClick={onGenerateAiSuggestion}
           disabled={isGeneratingAi}
-          className="ml-auto bg-[#071D49] hover:bg-[#0B255C] text-[#C9A96E] px-3.5 py-1 rounded-full font-bold whitespace-nowrap shadow-xs flex items-center gap-1.5 disabled:opacity-50 transition-all border border-[#C9A96E]/50 cursor-pointer"
+          className="ml-auto bg-[#071D49] hover:bg-[#0B255C] text-[#E8D2A8] px-3.5 py-1 rounded-full font-bold whitespace-nowrap shadow-xs flex items-center gap-1.5 disabled:opacity-50 transition-all border border-[#C9A96E]/50 cursor-pointer"
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#C9A96E]" />
+          <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
           {isGeneratingAi ? 'Gerando...' : 'Copilot IA'}
         </button>
       </div>
 
-      {/* 3. CARD EXCLUSIVO IA MARY (Docked/Floating Widget) */}
+      {/* 3. CARD EXCLUSIVO IA MARY */}
       {showMaryStatsCard && (
-        <div className="mx-4 mt-2.5 p-3.5 bg-[#071D49] text-white rounded-[20px] border border-[#C9A96E]/40 shadow-md relative overflow-hidden shrink-0">
-          <div className="flex items-center justify-between border-b border-[#C9A96E]/20 pb-2 mb-2.5">
+        <div className="mx-4 mt-2 p-3 bg-[#071D49] text-white rounded-2xl border border-[#C9A96E]/40 shadow-md relative overflow-hidden shrink-0">
+          <div className="flex items-center justify-between border-b border-[#C9A96E]/20 pb-1.5 mb-2">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-[#0B255C] text-[#C9A96E] rounded-xl border border-[#C9A96E]/30">
-                <Sparkles className="w-4 h-4 text-[#C9A96E]" />
+              <div className="p-1 bg-[#0B255C] text-[#D4AF37] rounded-lg border border-[#C9A96E]/30">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
               </div>
-              <div>
-                <h3 className="text-xs font-bold text-white tracking-wider uppercase flex items-center gap-1.5">
-                  IA MARY <span className="text-[10px] text-[#C9A96E] font-normal">• Assistente Comercial</span>
-                </h3>
-                <div className="flex items-center gap-2 text-[10px] text-[#E8D2A8]">
-                  <span className="flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
-                    Online
-                  </span>
-                  <span>•</span>
-                  <span>98% Assertividade</span>
-                </div>
-              </div>
+              <h3 className="text-xs font-black text-[#E8D2A8] uppercase tracking-wider">
+                IA MARY <span className="text-[10px] text-slate-300 font-normal">• Assistente Comercial</span>
+              </h3>
             </div>
-
             <button
               onClick={() => setShowMaryStatsCard(false)}
-              className="text-xs text-[#C9A96E] hover:text-white"
+              className="text-xs text-[#C9A96E] hover:text-white cursor-pointer"
             >
               ✕
             </button>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-            <div className="p-2 bg-[#0B255C]/80 rounded-xl border border-[#C9A96E]/20">
-              <div className="text-[10px] text-[#E8D2A8]">Tempo Resposta</div>
-              <div className="font-bold text-white text-xs mt-0.5">&lt; 1.8 segundos</div>
+            <div className="p-1.5 bg-[#0B255C]/80 rounded-xl border border-white/10">
+              <div className="text-[10px] text-slate-300">Tempo Resposta</div>
+              <div className="font-black text-white text-xs mt-0.5">&lt; 1.8s</div>
             </div>
-            <div className="p-2 bg-[#0B255C]/80 rounded-xl border border-[#C9A96E]/20">
-              <div className="text-[10px] text-[#E8D2A8]">Leads Atendidos</div>
-              <div className="font-bold text-white text-xs mt-0.5">142 Clientes</div>
+            <div className="p-1.5 bg-[#0B255C]/80 rounded-xl border border-white/10">
+              <div className="text-[10px] text-slate-300">Leads Atendidos</div>
+              <div className="font-black text-white text-xs mt-0.5">142 Clientes</div>
             </div>
-            <div className="p-2 bg-[#0B255C]/80 rounded-xl border border-[#C9A96E]/20">
-              <div className="text-[10px] text-[#E8D2A8]">Vendas Geradas</div>
-              <div className="font-bold text-[#10B981] text-xs mt-0.5">38 Orçamentos</div>
+            <div className="p-1.5 bg-[#0B255C]/80 rounded-xl border border-white/10">
+              <div className="text-[10px] text-slate-300">Vendas Geradas</div>
+              <div className="font-black text-emerald-400 text-xs mt-0.5">38 Orçamentos</div>
             </div>
-            <div className="p-2 bg-[#0B255C]/80 rounded-xl border border-[#C9A96E]/20">
-              <div className="text-[10px] text-[#E8D2A8]">Receita Influenciada</div>
-              <div className="font-bold text-[#C9A96E] text-xs mt-0.5">R$ 47.120,00</div>
+            <div className="p-1.5 bg-[#0B255C]/80 rounded-xl border border-white/10">
+              <div className="text-[10px] text-slate-300">Receita Influenciada</div>
+              <div className="font-black text-[#D4AF37] text-xs mt-0.5">R$ 47.120,00</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 4. BALÕES DE CONVERSA */}
-      <div className="flex-1 min-h-[160px] overflow-y-auto p-4 space-y-3.5 bg-[#F7F8FA]">
+      {/* 4. BALÕES DE CONVERSA COM SCROLL FLUIDO */}
+      <div className="flex-1 min-h-[160px] overflow-y-auto p-4 space-y-3 bg-[#F8FAFC]">
         {messages.length === 0 ? (
           <div className="p-8 text-center text-slate-400 text-xs italic font-medium">
             Inicie a conversa abaixo com o cliente.
@@ -338,10 +321,6 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
             const isAi = msg.sender === 'ai';
             const isSystem = msg.sender === 'system' || msg.text.includes('SISTEMA') || msg.text.includes('NOTIFICAÇÃO');
 
-            // Balão Cliente: #FFFFFF
-            // Balão IA Mary: #071D49
-            // Balão Funcionário: #F3F4F6
-            // Balão Sistema: #FFF7ED
             return (
               <div
                 key={msg.id}
@@ -349,7 +328,6 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
                   isCustomer ? 'flex-row' : 'flex-row-reverse'
                 }`}
               >
-                {/* Avatar */}
                 <img
                   src={
                     isCustomer
@@ -361,32 +339,31 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
                   className="w-8 h-8 rounded-full object-cover shrink-0 border border-[#C9A96E]/40 shadow-xs"
                 />
 
-                {/* Message Content Bubble */}
                 <div
-                  className={`max-w-md p-3.5 rounded-[20px] text-xs leading-relaxed shadow-xs transition-all ${
+                  className={`max-w-md p-3.5 rounded-2xl text-xs leading-relaxed shadow-xs transition-all ${
                     isSystem
-                      ? 'bg-[#FFF7ED] text-[#111827] rounded-tl-xs border border-[#C9A96E]/60 shadow-sm'
+                      ? 'bg-amber-50 text-amber-950 rounded-tl-xs border border-amber-200 shadow-sm'
                       : isCustomer
-                      ? 'bg-white text-[#111827] rounded-tl-xs border border-slate-200/80'
+                      ? 'bg-white text-slate-900 rounded-tl-xs border border-slate-200'
                       : isAi
                       ? 'bg-[#071D49] text-white rounded-tr-xs border border-[#C9A96E]/40 shadow-md'
-                      : 'bg-[#F3F4F6] text-[#111827] rounded-tr-xs border border-slate-200'
+                      : 'bg-slate-100 text-slate-900 rounded-tr-xs border border-slate-200'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3 mb-1">
                     <span
-                      className={`font-bold text-[11px] flex items-center gap-1 ${
-                        isAi ? 'text-[#E8D2A8]' : 'text-[#111827]'
+                      className={`font-black text-[11px] flex items-center gap-1 ${
+                        isAi ? 'text-[#E8D2A8]' : 'text-slate-900'
                       }`}
                     >
                       {isCustomer
                         ? client.name
                         : isAi
-                        ? 'IA Mary (Assistente Commercial)'
+                        ? 'IA Mary (Assistente Comercial)'
                         : isSystem
                         ? 'Notificação do Sistema'
                         : 'Atendente Loja'}
-                      {isAi && <Sparkles className="w-3 h-3 text-[#C9A96E] inline" />}
+                      {isAi && <Sparkles className="w-3 h-3 text-[#D4AF37] inline" />}
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -394,9 +371,9 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => handleSpeakMary(msg.id, msg.text)}
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 transition-all border cursor-pointer ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition-all border cursor-pointer ${
                             activeSpeakingMsgId === msg.id
-                              ? 'bg-[#C9A96E] text-[#071D49] border-[#C9A96E] animate-pulse'
+                              ? 'bg-[#D4AF37] text-slate-950 border-[#D4AF37] animate-pulse'
                               : 'bg-[#0B255C] hover:bg-[#153270] text-[#E8D2A8] border-[#C9A96E]/40'
                           }`}
                           title="Ouvir resposta na voz da Mary"
@@ -405,17 +382,13 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
                           <span>{activeSpeakingMsgId === msg.id ? 'Falando...' : 'Ouvir Mary'}</span>
                         </button>
                       )}
-                      <span
-                        className={`text-[10px] ${
-                          isAi ? 'text-slate-300' : 'text-slate-400'
-                        }`}
-                      >
+                      <span className={`text-[10px] ${isAi ? 'text-slate-300' : 'text-slate-400'}`}>
                         {msg.timestamp}
                       </span>
                     </div>
                   </div>
 
-                  <p className="whitespace-pre-wrap font-normal leading-relaxed">{msg.text}</p>
+                  <p className="whitespace-pre-wrap font-medium leading-relaxed">{msg.text}</p>
                 </div>
               </div>
             );
@@ -424,8 +397,8 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input Box & Voice/Video Controls */}
-      <div className="p-3 bg-white border-t border-[#C9A96E]/20 space-y-2 shrink-0">
+      {/* 5. ÁREA DE DIGITAÇÃO EXPANDIDA E OTIMIZADA (Textarea Multi-linha) */}
+      <div className="p-3 bg-white border-t border-slate-200 space-y-2 shrink-0">
         {isRecording && (
           <div className="bg-rose-50 border border-rose-300 rounded-2xl p-2.5 flex items-center justify-between text-xs text-rose-900 animate-pulse">
             <span className="flex items-center gap-2 font-bold">
@@ -442,98 +415,153 @@ export const ChatWindowPanel: React.FC<ChatWindowPanelProps> = ({
           </div>
         )}
 
-        <form
-          onSubmit={handleSend}
-          className="bg-[#F7F8FA] border border-[#C9A96E]/30 rounded-full px-3.5 py-2 flex items-center justify-between focus-within:ring-1 focus-within:ring-[#C9A96E]"
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept="audio/*,video/*,image/*,.pdf"
-            className="hidden"
-          />
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-1.5 text-slate-400 hover:text-[#071D49] hover:bg-slate-200/60 rounded-full transition-all cursor-pointer"
-            title="Anexar áudio, vídeo ou receita"
-          >
-            <Paperclip className="w-4 h-4" />
-          </button>
-
-          <input
-            type="text"
+        <div className="bg-slate-50 border-2 border-[#C9A96E]/40 focus-within:border-[#0055A5] rounded-2xl p-2 transition-all space-y-2">
+          {/* Textarea Multi-linha confortável */}
+          <textarea
+            ref={textareaRef}
+            rows={2}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Digite sua mensagem, grave um áudio para a Mary..."
-            className="flex-1 bg-transparent text-xs text-[#111827] focus:outline-none px-2.5 placeholder-slate-400 font-normal"
+            onKeyDown={handleKeyDown}
+            placeholder="Digite sua mensagem aqui... (Enter para enviar, Shift + Enter para nova linha)"
+            className="w-full bg-transparent text-xs text-slate-900 focus:outline-none p-1 placeholder-slate-400 font-medium resize-none"
           />
 
-          <div className="flex items-center space-x-1.5">
-            {!isRecording && (
+          {/* Barra Integrada de Atalhos e Controles de Envio */}
+          <div className="flex items-center justify-between border-t border-slate-200/80 pt-2 text-xs">
+            <div className="flex items-center gap-1.5">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="audio/*,video/*,image/*,.pdf"
+                className="hidden"
+              />
+
               <button
                 type="button"
-                onClick={startRecording}
-                className="p-2 text-rose-600 hover:bg-rose-50 rounded-full transition-all cursor-pointer"
-                title="Gravar áudio"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-300 flex items-center gap-1 cursor-pointer transition-all text-[11px]"
+                title="Anexar arquivo, imagem ou PDF de receita"
               >
-                <Mic className="w-4 h-4" />
+                <Paperclip className="w-3.5 h-3.5 text-[#0055A5]" />
+                <span className="hidden sm:inline">Anexo</span>
               </button>
-            )}
+
+              <button
+                type="button"
+                onClick={() => onSendMessage('[📋 Solicitação de Status da Ordem de Serviço enviada]')}
+                className="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-300 flex items-center gap-1 cursor-pointer transition-all text-[11px]"
+                title="Inserir atalho de Status da OS"
+              >
+                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">Status OS</span>
+              </button>
+
+              {!isRecording && (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl border border-rose-200 flex items-center gap-1 cursor-pointer transition-all text-[11px]"
+                  title="Gravar áudio com a voz"
+                >
+                  <Mic className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="hidden sm:inline">Áudio IA</span>
+                </button>
+              )}
+            </div>
 
             <button
-              type="submit"
-              className="p-2 bg-[#071D49] text-[#C9A96E] hover:bg-[#0B255C] rounded-full transition-all shadow-xs flex items-center justify-center font-bold cursor-pointer"
+              type="button"
+              onClick={handleSendText}
+              className="px-4 py-1.5 bg-[#071D49] hover:bg-[#0B255C] text-[#E8D2A8] font-black rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer border border-[#C9A96E]/50 active:scale-95 text-xs"
             >
-              <Send className="w-3.5 h-3.5" />
+              <span>Enviar</span>
+              <Send className="w-3.5 h-3.5 text-[#D4AF37]" />
             </button>
           </div>
-        </form>
+        </div>
       </div>
 
-      {/* 5. TIMELINE DE PROCESSO - Apple Workflow / Monday / ClickUp Style */}
-      <div className="p-3 bg-white border-t border-[#C9A96E]/20 shrink-0 rounded-b-[20px]">
-        <div className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider mb-2 flex items-center justify-between">
-          <span>LINHA DO TEMPO DO PROCESSO DA OS</span>
-          <span className="text-[#C9A96E]">Status Geral: Lentes em Produção</span>
+      {/* 6. LINHA DO TEMPO DA OS REDUZIDA EM 50% COM ALTERNÂNCIA COMPACTO/EXPANDIR */}
+      <div className="p-3 bg-white border-t border-[#C9A96E]/30 shrink-0 rounded-b-2xl">
+        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider mb-2">
+          <span className="text-slate-700 flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5 text-[#0055A5]" /> Linha do Tempo da OS (Progresso)
+          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[#0055A5] font-extrabold hidden sm:inline">Status: Lentes em Produção</span>
+            <button
+              onClick={() => setIsTimelineCompact(!isTimelineCompact)}
+              className="px-2.5 py-0.5 bg-slate-100 hover:bg-slate-200 text-[#071D49] font-black rounded-full border border-slate-300 flex items-center gap-1 cursor-pointer text-[10px] uppercase transition-all"
+            >
+              {isTimelineCompact ? <ChevronDown className="w-3 h-3" /> : <ChevronUp className="w-3 h-3" />}
+              <span>{isTimelineCompact ? 'Expandir (+50%)' : 'Compacto (-50%)'}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
-          {workflowSteps.map((step, idx) => {
-            const StepIcon = step.icon;
-            return (
+        {isTimelineCompact ? (
+          /* MODO COMPACTO (-50%): LINHA ÚNICA COM PÍLULAS ULTRA-COMPACTAS */
+          <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-xs">
+            {workflowSteps.map((step, idx) => (
               <div
                 key={idx}
-                className={`p-2 rounded-[14px] border flex flex-col justify-between transition-all ${
+                className={`px-3 py-1 rounded-full border flex items-center gap-1.5 shrink-0 transition-all font-bold text-[11px] ${
                   step.done
-                    ? 'bg-[#10B981]/10 border-[#10B981]/30 text-[#111827]'
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
                     : step.active
-                    ? 'bg-[#071D49] border-[#C9A96E] text-white shadow-sm'
-                    : 'bg-[#F7F8FA] border-slate-200 text-[#6B7280]'
+                    ? 'bg-[#071D49] border-[#D4AF37] text-[#E8D2A8] shadow-xs'
+                    : 'bg-slate-50 border-slate-200 text-slate-500'
                 }`}
               >
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[9px] font-bold uppercase truncate">{step.label}</span>
-                  {step.done ? (
-                    <Check className="w-3 h-3 text-[#10B981]" />
-                  ) : (
-                    <StepIcon className={`w-3 h-3 ${step.active ? 'text-[#C9A96E]' : 'text-slate-400'}`} />
-                  )}
-                </div>
+                <span>{step.label}:</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                  step.done ? 'bg-emerald-600 text-white' : step.active ? 'bg-[#D4AF37] text-slate-950' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {step.code}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* MODO EXPANDIDO: GRID COMPLETO DE ETAPAS DO LABORATÓRIO */
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs pt-1 animate-fadeIn">
+            {workflowSteps.map((step, idx) => {
+              const StepIcon = step.icon;
+              return (
+                <div
+                  key={idx}
+                  className={`p-2 rounded-2xl border flex flex-col justify-between transition-all ${
+                    step.done
+                      ? 'bg-emerald-50/80 border-emerald-300 text-slate-900'
+                      : step.active
+                      ? 'bg-[#071D49] border-[#D4AF37] text-white shadow-md'
+                      : 'bg-slate-50 border-slate-200 text-slate-500'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="text-[9px] font-bold uppercase truncate">{step.label}</span>
+                    {step.done ? (
+                      <Check className="w-3 h-3 text-emerald-600" />
+                    ) : (
+                      <StepIcon className={`w-3 h-3 ${step.active ? 'text-[#D4AF37]' : 'text-slate-400'}`} />
+                    )}
+                  </div>
 
-                <div className="text-[9px] font-medium leading-tight">
-                  <div className={step.active ? 'text-[#E8D2A8]' : 'text-[#6B7280]'}>{step.status}</div>
-                  <div className={`text-[8.5px] mt-0.5 ${step.active ? 'text-slate-300' : 'text-slate-400'}`}>
-                    {step.time} • {step.resp}
+                  <div className="text-[9px] font-medium leading-tight">
+                    <div className={step.active ? 'text-[#E8D2A8] font-bold' : 'text-slate-600'}>{step.status}</div>
+                    <div className={`text-[8.5px] mt-0.5 ${step.active ? 'text-slate-300' : 'text-slate-400'}`}>
+                      {step.time} • {step.resp}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
+
     </div>
   );
 };
