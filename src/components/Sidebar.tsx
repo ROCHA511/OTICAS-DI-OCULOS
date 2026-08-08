@@ -184,11 +184,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
+      {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
       <aside
-        className={`bg-[#090D16]/98 sm:bg-[#090D16]/95 backdrop-blur-xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none ${
+        className={`bg-[#071D49]/90 sm:bg-[#071D49]/85 backdrop-blur-2xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none shadow-[0_8px_32px_rgba(0,0,0,0.5)] ${
           isMobileOpen
-            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#D4AF37]/40 shadow-2xl flex'
-            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#D4AF37]/25 sm:shadow-[0_0_30px_rgba(0,0,0,0.8)] sm:h-[calc(100%-16px)]'
+            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E]/50 shadow-2xl flex'
+            : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#C9A96E]/40 sm:shadow-[0_0_30px_rgba(7,29,73,0.6)] sm:h-[calc(100%-16px)]'
         } ${
           isExpanded || isMobileOpen ? 'w-[280px] sm:w-[280px]' : 'sm:w-[72px]'
         }`}
@@ -196,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Botão de Expandir / Recolher na borda - Sem piscadas */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="absolute -right-3.5 top-6 z-50 bg-[#D4AF37] hover:bg-[#E8D2A8] text-slate-950 p-1.5 rounded-full shadow-lg border-2 border-[#090D16] hover:scale-110 active:scale-95 transition-all cursor-pointer hidden sm:flex"
+        className="absolute -right-3.5 top-6 z-50 bg-[#C9A96E] hover:bg-[#E8D2A8] text-slate-950 p-1.5 rounded-full shadow-lg border-2 border-[#071D49] hover:scale-110 active:scale-95 transition-all cursor-pointer hidden sm:flex"
         title={isExpanded ? 'Recolher Barra Lateral' : 'Expandir Barra Lateral'}
       >
         {isExpanded ? (
@@ -207,11 +208,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </button>
 
       {/* Brand Header - Clickable to Return Home */}
-      <div className="px-2 flex flex-col items-center border-b border-[#D4AF37]/15 pb-3 mb-1">
+      <div className="px-2 flex flex-col items-center border-b border-[#C9A96E]/20 pb-3 mb-1">
         {isExpanded || isMobileOpen ? (
           <button
             onClick={() => handleSelectTab('chat')}
-            className="w-full bg-[#161D2A] hover:bg-[#1E293B] border border-[#D4AF37]/30 text-white py-2 px-3 rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95"
+            className="w-full bg-[#0B255C]/80 hover:bg-[#0F2D59] border border-[#C9A96E]/40 text-white py-2 px-3 rounded-2xl flex items-center justify-center shadow-md transition-all cursor-pointer active:scale-95"
             title="Voltar para o Chat de Atendimento"
           >
             <OticasLogo size="sm" variant="light-text" />
@@ -219,7 +220,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <button
             onClick={() => handleSelectTab('chat')}
-            className="w-11 h-10 rounded-2xl bg-[#161D2A] hover:bg-[#1E293B] border-2 border-[#D4AF37]/50 flex items-center justify-center p-1 cursor-pointer hover:scale-105 transition-all shadow-md active:scale-95"
+            className="w-11 h-10 rounded-2xl bg-[#0B255C]/80 hover:bg-[#0F2D59] border-2 border-[#C9A96E]/50 flex items-center justify-center p-1 cursor-pointer hover:scale-105 transition-all shadow-md active:scale-95"
             title="Voltar para o Chat de Atendimento"
           >
             <OticasLogo size="sm" variant="icon-only" />
@@ -229,14 +230,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Informações da loja - Visível apenas no Mobile quando aberto */}
         {(isExpanded || isMobileOpen) && (
           <div className="mt-2 text-center flex flex-col items-center gap-1 select-text sm:hidden">
-            <span className="text-[9px] bg-[#D4AF37]/10 text-[#D4AF37] font-bold px-2 py-0.5 rounded-full border border-[#D4AF37]/30 flex items-center gap-1 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
+            <span className="text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               PRIME ENTERPRISE
             </span>
-            <div className="text-[11px] font-bold text-[#E8D2A8] mt-0.5">
+            <div className="text-[11px] font-black text-[#E8D2A8] mt-0.5">
               Matriz Centro (Ituberá - BA)
             </div>
-            <div className="text-[9px] text-slate-300/80 font-normal leading-tight text-center max-w-[220px]">
+            <div className="text-[9px] text-slate-200 font-bold leading-tight text-center max-w-[220px]">
               Rua 23 de Abril, 51, Centro • (73) 98112-8923
             </div>
           </div>
@@ -250,10 +251,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => {
               handleSelectTab('os');
             }}
-            className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5C158] hover:to-amber-500 text-slate-950 font-black text-xs py-2.5 px-3 rounded-2xl border-2 border-amber-300/30 flex items-center justify-between shadow-lg shadow-[#D4AF37]/20 transition-all cursor-pointer active:scale-95 group"
+            className="w-full bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs py-2.5 px-3 rounded-2xl border-2 border-amber-300/40 flex items-center justify-between shadow-lg transition-all cursor-pointer active:scale-95 group"
           >
             <div className="flex items-center gap-2.5">
-              <ClipboardCheck className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform" />
+              <ClipboardCheck className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform stroke-[2.5]" />
               <span className="tracking-wider uppercase text-sm font-black">Ordens de Serviço</span>
             </div>
           </button>
@@ -262,10 +263,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => {
               handleSelectTab('os');
             }}
-            className="w-11 h-11 mx-auto bg-gradient-to-r from-[#D4AF37] to-amber-600 hover:from-[#E5C158] hover:to-amber-500 text-slate-950 rounded-2xl border-2 border-amber-300/30 flex items-center justify-center shadow-lg shadow-[#D4AF37]/20 transition-all cursor-pointer active:scale-95"
+            className="w-11 h-11 mx-auto bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 rounded-2xl border-2 border-amber-300/40 flex items-center justify-center shadow-lg transition-all cursor-pointer active:scale-95"
             title="Ordens de Serviço"
           >
-            <ClipboardCheck className="w-6 h-6 text-slate-950" />
+            <ClipboardCheck className="w-6 h-6 text-slate-950 stroke-[2.5]" />
           </button>
         )}
       </div>
@@ -275,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {navGroups.map((group, gIdx) => (
           <div key={gIdx} className="space-y-1">
             {(isExpanded || isMobileOpen) && (
-              <div className="px-2 pt-1 pb-0.5 text-[9px] font-black text-[#D4AF37]/50 tracking-widest uppercase">
+              <div className="px-2 pt-1 pb-0.5 text-[10px] font-black text-[#E8D2A8] tracking-widest uppercase">
                 {group.groupTitle}
               </div>
             )}
@@ -290,14 +291,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   title={item.title}
                   className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl transition-all duration-200 cursor-pointer relative ${
                     isActive
-                      ? 'bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/40 font-bold shadow-md'
-                      : 'text-slate-200 hover:text-[#D4AF37] hover:bg-[#D4AF37]/8 border border-transparent font-medium'
+                      ? 'bg-[#C9A96E] text-[#071D49] font-black shadow-lg border border-amber-200'
+                      : 'text-white hover:text-[#E8D2A8] hover:bg-white/10 border border-transparent font-extrabold'
                   } ${!(isExpanded || isMobileOpen) ? 'justify-center' : 'justify-between'}`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon className={`w-6 h-6 shrink-0 transition-transform ${isActive ? 'text-[#D4AF37] scale-105' : 'text-slate-300 hover:scale-105'}`} />
+                    <Icon className={`w-6 h-6 shrink-0 transition-transform ${isActive ? 'text-[#071D49] scale-105 stroke-[2.5]' : 'text-white hover:scale-105 stroke-[2.5]'}`} />
                     {(isExpanded || isMobileOpen) && (
-                      <span className="text-xs truncate tracking-tight text-left">
+                      <span className="text-xs truncate tracking-tight text-left font-black">
                         {item.title}
                       </span>
                     )}

@@ -162,56 +162,85 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#F8FAFC] p-4 sm:p-6 space-y-5 text-slate-800">
+    <div className="flex-1 overflow-y-auto bg-[#F8FAFC] p-4 sm:p-6 space-y-6 text-slate-800">
 
-      {/* ═══════════════════════════════════════════
-          HERO HEADER — Executive Identity Bar
-      ═══════════════════════════════════════════ */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#071D49] via-[#0B255C] to-[#071D49] border border-[#C9A96E]/30 rounded-3xl p-4 sm:p-5 shadow-xl text-white">
-        {/* Ambient glows */}
-        <div className="absolute -top-12 -right-12 w-64 h-64 bg-[#C9A96E]/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-64 h-64 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      {/* ═══════════════════════════════════════════════════════════════
+          CAPCUT-STYLE HUGE HERO CARD — Destaque Visual Principal (Topo)
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="w-full relative overflow-hidden bg-[#071D49] rounded-3xl border-2 border-[#D4AF37] shadow-[0_10px_40px_rgba(7,29,73,0.5)] text-white p-5 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 group">
+        {/* Glow Effects */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {/* Brand Identity Icon */}
-            <div className="relative shrink-0">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-amber-500 flex items-center justify-center shadow-lg shadow-[#D4AF37]/20">
-                <Glasses className="w-7 h-7 text-slate-950 stroke-[2.5]" />
+        {/* Left Column: Huge 3D Visual Frame (CapCut Hero Banner) */}
+        <div className="w-full lg:w-3/5 relative flex flex-col items-center justify-center bg-[#090D16] border-2 border-[#D4AF37]/50 rounded-2xl p-4 sm:p-6 shadow-2xl overflow-hidden min-h-[280px] sm:min-h-[340px]">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-transparent to-transparent z-10" />
+          
+          {/* Glasses 3D Display Visual */}
+          <div className="relative z-20 flex flex-col items-center text-center space-y-3">
+            <div className="relative">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-[#D4AF37] via-amber-400 to-[#E8D2A8] p-1 shadow-2xl shadow-[#D4AF37]/40 animate-pulse">
+                <div className="w-full h-full bg-[#071D49] rounded-[22px] flex items-center justify-center">
+                  <Glasses className="w-14 h-14 sm:w-20 sm:h-20 text-[#D4AF37] stroke-[2.5]" />
+                </div>
               </div>
-              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-[#071D49] rounded-full" />
+              <span className="absolute -bottom-2 -right-2 bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full border-2 border-[#090D16]">
+                3D SHOWCASE
+              </span>
             </div>
 
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-widest bg-[#C9A96E] text-[#071D49] uppercase">
-                  <ShieldCheck className="w-3 h-3" /> Prime Enterprise
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 uppercase">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Sistema Ativo
-                </span>
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-black uppercase tracking-widest">
+                <Sparkles className="w-4 h-4" /> Ótica Inteligente 2.0 VIP
               </div>
-              <h1 className="text-lg sm:text-xl font-black text-[#E8D2A8] mt-1 tracking-tight">
-                Dashboard Executivo <span className="text-[#D4AF37]">&</span> CRM
-              </h1>
-              <p className="text-xs text-slate-200 font-medium mt-0.5">
-                Métricas estratégicas · Faturamento · Conversão · Rankings Corporativos
+              <h2 className="text-2xl sm:text-4xl font-black text-[#E8D2A8] tracking-tight drop-shadow-md">
+                TECNOLOGIA & SOFISTICAÇÃO
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-200 font-bold max-w-md">
+                Gestão completa de alta performance, provador 3D e prescrições inteligentes em um só lugar.
               </p>
             </div>
           </div>
+        </div>
 
-          {/* Action Controls */}
-          <div className="flex items-center gap-2 flex-wrap shrink-0">
+        {/* Right Column: Hero Metrics & Fast Actions Grid */}
+        <div className="w-full lg:w-2/5 space-y-4 relative z-20">
+          <div className="bg-[#0B255C]/80 border border-[#C9A96E]/40 rounded-2xl p-4 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="text-[11px] font-black text-[#E8D2A8] uppercase tracking-wider">Bem-vindo, John Rocha!</span>
+              <span className="text-[10px] bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full font-black">CEO ONLINE</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="bg-white/10 p-3 rounded-xl border border-white/10">
+                <span className="text-[10px] text-slate-300 font-bold block uppercase">Faturamento Mês</span>
+                <span className="text-base font-black text-[#E8D2A8]">R$ 75.430,00</span>
+              </div>
+              <div className="bg-white/10 p-3 rounded-xl border border-white/10">
+                <span className="text-[10px] text-slate-300 font-bold block uppercase">Clientes Ativos</span>
+                <span className="text-base font-black text-emerald-400">1.250</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Main Action Buttons Below Hero */}
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={onOpenProfessionalsModal}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs shadow-md transition-all active:scale-95 cursor-pointer border border-amber-300/30"
+              className="p-3 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95 text-center cursor-pointer"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>+ Cadastrar Profissional</span>
+              + Profissional
             </button>
-            <button className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-all border border-white/20 cursor-pointer active:scale-95">
-              <RefreshCw className="w-3.5 h-3.5 text-[#D4AF37]" /> Atualizar
+            <button
+              onClick={() => alert('Abrir janela de Novo Cliente')}
+              className="p-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all active:scale-95 text-center cursor-pointer border border-white/20"
+            >
+              + Novo Cliente
+            </button>
+            <button
+              onClick={() => alert('Abrir nova venda')}
+              className="p-3 bg-[#0055A5] hover:bg-[#004080] text-white font-bold text-xs rounded-xl transition-all active:scale-95 text-center cursor-pointer"
+            >
+              + Nova Venda
             </button>
           </div>
         </div>

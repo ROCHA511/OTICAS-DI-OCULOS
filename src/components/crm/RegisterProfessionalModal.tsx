@@ -470,31 +470,42 @@ export const RegisterProfessionalModal: React.FC<RegisterProfessionalModalProps>
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 self-end sm:self-center">
+                        {/* Actions: Edit & Toggle Status */}
+                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                           {prof.commissionRate !== undefined && (
                             <span className="text-[11px] bg-amber-50 text-amber-900 border border-amber-200 font-bold px-2.5 py-1 rounded-lg">
                               Comissão: {prof.commissionRate}%
                             </span>
                           )}
 
-                          <a
-                            href={`https://wa.me/55${prof.phone.replace(/\D/g, '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-xs"
-                            title="Abrir WhatsApp"
+                          <button
+                            onClick={() => {
+                              setName(prof.name);
+                              setRole(prof.role);
+                              setRegistrationNumber(prof.registrationNumber || '');
+                              setPhone(prof.phone || '');
+                              setEmail(prof.email || '');
+                              setFilial(prof.filial);
+                              setSpecialty(prof.specialty || '');
+                              setCommissionRate(prof.commissionRate ? String(prof.commissionRate) : '5.0');
+                              setAvatar(prof.avatar || '');
+                              setActiveTab('form');
+                            }}
+                            className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-all cursor-pointer"
                           >
-                            <MessageCircle className="w-4 h-4" />
-                          </a>
+                            ⚙️ Editar
+                          </button>
 
                           {onToggleStatus && (
                             <button
                               onClick={() => onToggleStatus(prof.id)}
-                              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer"
-                              title="Alternar Ativo/Inativo"
+                              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                                prof.status === 'ativo'
+                                  ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                              }`}
                             >
-                              {prof.status === 'ativo' ? 'Inativar' : 'Ativar'}
+                              {prof.status === 'ativo' ? 'Desativar' : 'Ativar'}
                             </button>
                           )}
                         </div>
