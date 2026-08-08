@@ -17,9 +17,17 @@ import {
   Eye,
   Edit,
   ShieldCheck,
-  Zap
+  Zap,
+  Palette,
+  Image as ImageIcon,
+  Sliders,
+  Layers,
+  Sparkles,
+  CreditCard,
+  Lock
 } from 'lucide-react';
 import { SaaSOnboardingView } from '../components/saas/SaaSOnboardingView';
+import { useTenant } from '../context/TenantContext';
 
 interface BranchData {
   id: string;
@@ -36,17 +44,22 @@ interface BranchData {
   cnpj?: string;
   plan?: string;
   price?: number;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 export const MultiticasDashboard: React.FC = () => {
+  const { availablePlans, setTenant, currentTenant } = useTenant();
   const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [copiedPublicLink, setCopiedPublicLink] = useState(false);
   const [editingBranch, setEditingBranch] = useState<BranchData | null>(null);
+  const [activeSubTab, setActiveSubTab] = useState<'tenants' | 'plans' | 'subscriptions' | 'audit'>('tenants');
 
   const [branches, setBranches] = useState<BranchData[]>([
     {
-      id: 'b1',
+      id: '00000000-0000-0000-0000-000000000001',
       name: 'Matriz Centro - Óticas Di Óculos',
       location: 'Ituberá - BA',
       address: 'Rua 23 de Abril, 51, Centro',
@@ -58,8 +71,11 @@ export const MultiticasDashboard: React.FC = () => {
       status: 'Ativa',
       growth: 14.8,
       cnpj: '12.345.678/0001-90',
-      plan: 'Plano Enterprise VIP (R$ 249/mês)',
-      price: 249
+      plan: 'Plano Pro Max VIP (R$ 2.490/mês)',
+      price: 2490,
+      logoUrl: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=150',
+      primaryColor: '#071D49',
+      secondaryColor: '#D4AF37'
     },
     {
       id: 'b2',
@@ -74,8 +90,11 @@ export const MultiticasDashboard: React.FC = () => {
       status: 'Ativa',
       growth: 9.2,
       cnpj: '98.765.432/0001-10',
-      plan: 'Plano Enterprise VIP (R$ 249/mês)',
-      price: 249
+      plan: 'Plano Pro Max VIP (R$ 2.490/mês)',
+      price: 2490,
+      logoUrl: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=150',
+      primaryColor: '#0055A5',
+      secondaryColor: '#0284C7'
     },
     {
       id: 'b3',
@@ -90,8 +109,11 @@ export const MultiticasDashboard: React.FC = () => {
       status: 'Ativa',
       growth: 6.4,
       cnpj: '44.555.666/0001-22',
-      plan: 'Plano Starter (R$ 199/mês)',
-      price: 199
+      plan: 'Plano Básico (R$ 199/mês)',
+      price: 199,
+      logoUrl: 'https://images.unsplash.com/photo-1508296695146-257a814070b4?w=150',
+      primaryColor: '#064E3B',
+      secondaryColor: '#10B981'
     },
   ]);
 
@@ -104,218 +126,288 @@ export const MultiticasDashboard: React.FC = () => {
   };
 
   const handleAddNewStore = (newStore: any) => {
-    const created: BranchData = {
-      id: newStore.id,
+    const newBranch: BranchData = {
+      id: newStore.id || `b_${Date.now()}`,
       name: newStore.name,
-      location: newStore.city || 'Brasil',
-      address: newStore.cnpj ? `CNPJ: ${newStore.cnpj}` : 'Endereço Comercial',
-      phone: newStore.phone || '(00) 00000-0000',
-      manager: newStore.ownerName || 'Gerente Responsável',
+      location: `${newStore.city || 'Brasil'}`,
+      address: newStore.address || 'Endereço comercial',
+      phone: newStore.phone || '(73) 99999-0000',
+      manager: newStore.ownerName || 'Administrador',
       monthlyRevenue: 0,
       ordersToday: 0,
       activeSellers: 1,
       status: 'Ativa',
-      growth: 0,
+      growth: 100,
       cnpj: newStore.cnpj,
       plan: newStore.plan,
-      price: newStore.price
+      price: newStore.price,
+      logoUrl: newStore.logoUrl,
+      primaryColor: newStore.primaryColor,
+      secondaryColor: newStore.secondaryColor
     };
-    setBranches((prev) => [created, ...prev]);
+
+    setBranches((prev) => [newBranch, ...prev]);
   };
 
-  const totalMonthlyRevenue = branches.reduce((sum, b) => sum + b.monthlyRevenue, 0);
-  const totalOrdersToday = branches.reduce((sum, b) => sum + b.ordersToday, 0);
-  const totalActiveSellers = branches.reduce((sum, b) => sum + b.activeSellers, 0);
+  // Totais Consolidados Multi-Óticas
+  const totalRevenue = branches.reduce((acc, b) => acc + b.monthlyRevenue, 0);
+  const totalOrders = branches.reduce((acc, b) => acc + b.ordersToday, 0);
+  const totalSellers = branches.reduce((acc, b) => acc + b.activeSellers, 0);
+  const totalRecurrentSaaS = branches.reduce((acc, b) => acc + (b.price || 2490), 0);
 
   return (
-    <div className="w-full h-full min-h-0 overflow-y-auto bg-[#F0F7FF] p-3 sm:p-6 space-y-6 text-slate-800 font-sans">
+    <div className="p-4 sm:p-8 space-y-8 max-w-7xl mx-auto animate-fadeIn">
       
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] p-5 sm:p-6 rounded-3xl border-2 border-[#C9A96E]/50 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-96 h-full bg-[#C9A96E]/15 rounded-full blur-3xl pointer-events-none" />
+      {/* Top Banner Header Multi-Óticas */}
+      <div className="bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] p-6 sm:p-8 rounded-3xl text-white shadow-2xl border border-[#C9A96E]/30 relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest bg-[#C9A96E] text-[#071D49] px-2.5 py-0.5 rounded-full border border-white/20">
-              PAINEL MULTI-ÓTICAS MASTER (CEO)
-            </span>
-            <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> {branches.length} Óticas Sincronizadas
-            </span>
-          </div>
-          <h1 className="text-xl sm:text-2xl font-black text-[#E8D2A8] tracking-tight">
-            Gestão de Redes de Óticas & SaaS Multitenant
-          </h1>
-          <p className="text-xs text-slate-200 font-medium">
-            Cadastre novas lojas nos planos de <span className="text-amber-300 font-bold">R$ 199/mês</span> e <span className="text-amber-300 font-bold">R$ 249/mês</span>. Cada cliente terá seu ambiente 100% exclusivo.
-          </p>
-        </div>
-
-        <div className="relative z-10 flex flex-wrap items-center gap-2 shrink-0">
-          <button
-            onClick={handleCopyPublicLink}
-            className="px-3.5 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all border border-white/20 flex items-center gap-1.5 cursor-pointer active:scale-95"
-            title="Copiar Link de Cadastro para enviar no WhatsApp"
-          >
-            {copiedPublicLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Link className="w-4 h-4 text-[#D4AF37]" />}
-            <span>{copiedPublicLink ? 'Link Copiado!' : 'Copiar Link de Auto-Cadastro'}</span>
-          </button>
-
-          <button
-            onClick={() => setShowOnboardingModal(true)}
-            className="px-4 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" /> Cadastrar Nova Ótica
-          </button>
-        </div>
-      </div>
-
-      {/* Public Link Callout Box for CEO */}
-      <div className="bg-white border-2 border-[#0055A5]/30 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#0055A5] flex items-center justify-center shrink-0">
-            <Globe2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-black text-[#0055A5] uppercase tracking-wider">
-              Link de Auto-Cadastro Público para Clientes (WhatsApp / Vendas)
-            </h4>
-            <p className="text-xs text-slate-600 font-medium">
-              Envie este link para os clientes se cadastrarem e escolherem o plano de R$ 199 ou R$ 249/mês.
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="bg-[#D4AF37] text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                👑 Módulo Gestão SaaS &amp; Redes Multi-Óticas
+              </span>
+              <span className="text-xs text-amber-300 font-bold">• Arquitetura Isolada por Tenant</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#E8D2A8] tracking-tight">
+              Painel Corporativo Multi-Óticas
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-200 font-medium max-w-2xl">
+              Gerencie todas as lojas parceiras, planos de assinatura Mercado Pago, faturamento recorrente (MRR) e personalização White-Label.
             </p>
           </div>
-        </div>
 
-        <div className="flex items-center gap-2 bg-slate-100 p-2 rounded-xl border border-slate-200 shrink-0">
-          <span className="text-xs font-mono font-bold text-slate-800 px-2 truncate max-w-xs">{publicLink}</span>
-          <button
-            onClick={handleCopyPublicLink}
-            className="px-3 py-1.5 bg-[#0055A5] hover:bg-[#004080] text-white font-bold text-xs rounded-lg flex items-center gap-1 cursor-pointer transition-all shrink-0"
-          >
-            {copiedPublicLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>Copiar</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              onClick={handleCopyPublicLink}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-2xl transition-all border border-white/20 flex items-center gap-2 cursor-pointer active:scale-95"
+              title="Copiar link para novas óticas se cadastrarem sozinhas"
+            >
+              {copiedPublicLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Link className="w-4 h-4 text-[#D4AF37]" />}
+              <span>{copiedPublicLink ? 'Link Copiado!' : 'Copiar Link Auto-Cadastro'}</span>
+            </button>
+
+            <button
+              onClick={() => setShowOnboardingModal(true)}
+              className="px-5 py-2.5 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs rounded-2xl shadow-xl transition-all flex items-center gap-2 cursor-pointer border border-amber-300/40 active:scale-95"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Cadastrar Nova Ótica</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* High-Level Metric Cards */}
+      {/* KPI Cards Consolidados */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-3xl border border-blue-100 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Faturamento Consolidado</span>
-            <DollarSign className="w-5 h-5 text-[#0055A5]" />
+        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+            <span>Faturamento SaaS Recorrente (MRR)</span>
+            <DollarSign className="w-5 h-5 text-emerald-600" />
           </div>
-          <div className="text-2xl font-black text-[#071D49]">
-            R$ {totalMonthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          <div className="text-2xl font-black text-slate-900">
+            R$ {totalRecurrentSaaS.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
-          <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
-            <ArrowUpRight className="w-3.5 h-3.5" /> +14.8% vs mês anterior
-          </p>
+          <div className="text-[11px] font-semibold text-emerald-700 flex items-center gap-1">
+            <ArrowUpRight className="w-3.5 h-3.5" /> Assinaturas Ativas Mercado Pago
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-blue-100 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Vendas Hoje (Rede)</span>
-            <TrendingUp className="w-5 h-5 text-emerald-600" />
+        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+            <span>Óticas Cadastradas</span>
+            <Building2 className="w-5 h-5 text-[#0055A5]" />
           </div>
-          <div className="text-2xl font-black text-slate-900">{totalOrdersToday} Serviços</div>
-          <p className="text-xs text-slate-500 font-medium">Ticket Médio: R$ 1.840,00</p>
+          <div className="text-2xl font-black text-slate-900">{branches.length} Óticas</div>
+          <div className="text-[11px] font-semibold text-slate-500">
+            100% Isolamento Lógico RLS
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-blue-100 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Equipe de Vendas Ativa</span>
-            <Users className="w-5 h-5 text-[#D4AF37]" />
+        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+            <span>Vendas Totais Hoje</span>
+            <BarChart3 className="w-5 h-5 text-amber-500" />
           </div>
-          <div className="text-2xl font-black text-slate-900">{totalActiveSellers} Vendedores</div>
-          <p className="text-xs text-slate-500 font-medium">Em {branches.length} óticas cadastradas</p>
+          <div className="text-2xl font-black text-slate-900">{totalOrders} OS no Dia</div>
+          <div className="text-[11px] font-semibold text-slate-500">
+            Consolidado da Rede
+          </div>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-blue-100 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Assinaturas SaaS</span>
-            <Globe2 className="w-5 h-5 text-indigo-600" />
+        <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500 text-xs font-bold">
+            <span>Vendedores na Rede</span>
+            <Users className="w-5 h-5 text-purple-600" />
           </div>
-          <div className="text-base font-black text-emerald-700 flex items-center gap-1.5 mt-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            {branches.length} Óticas Ativas
+          <div className="text-2xl font-black text-slate-900">{totalSellers} Profissionais</div>
+          <div className="text-[11px] font-semibold text-slate-500">
+            Equipe Ativa em Loja
           </div>
-          <p className="text-xs text-slate-500 font-medium">Planos R$ 199 / R$ 249 ativas</p>
         </div>
       </div>
 
-      {/* Stores List */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-          <div>
-            <h2 className="text-base font-black text-[#071D49] tracking-tight">
-              Óticas Cadastradas no Sistema (Rede & Assinantes)
-            </h2>
-            <p className="text-xs text-slate-500">
-              Gerencie cada ótica isolada. O CEO pode editar configurações, comissões, logomarcas e alterar planos.
-            </p>
-          </div>
-        </div>
+      {/* Sub-Aba de Navegação SaaS */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setActiveSubTab('tenants')}
+          className={`px-4 py-2 font-black text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+            activeSubTab === 'tenants'
+              ? 'bg-[#071D49] text-[#E8D2A8] shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>Óticas Parceiras ({branches.length})</span>
+        </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button
+          onClick={() => setActiveSubTab('plans')}
+          className={`px-4 py-2 font-black text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+            activeSubTab === 'plans'
+              ? 'bg-[#071D49] text-[#E8D2A8] shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Sliders className="w-4 h-4" />
+          <span>Planos &amp; Preços SaaS</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab('subscriptions')}
+          className={`px-4 py-2 font-black text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer ${
+            activeSubTab === 'subscriptions'
+              ? 'bg-[#071D49] text-[#E8D2A8] shadow-md'
+              : 'bg-white text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>Assinaturas Mercado Pago</span>
+        </button>
+      </div>
+
+      {/* ABA 1: ÓTICAS PARCEIRAS */}
+      {activeSubTab === 'tenants' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {branches.map((b) => (
             <div
               key={b.id}
-              className="bg-[#F8FAFC] border border-slate-200/80 hover:border-[#0055A5]/40 rounded-2xl p-4 transition-all space-y-3 relative group"
+              className={`bg-white rounded-3xl border p-6 space-y-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
+                currentTenant.id === b.id ? 'ring-2 ring-[#0055A5] border-[#0055A5]' : 'border-slate-200'
+              }`}
             >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-[#071D49] text-[#D4AF37] flex items-center justify-center font-black">
-                    <Store className="w-5 h-5" />
+              <div className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={b.logoUrl || 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=150'}
+                      alt={b.name}
+                      className="w-10 h-10 rounded-2xl object-cover border border-slate-200 shadow-xs"
+                    />
+                    <div>
+                      <h3 className="font-black text-slate-900 text-sm">{b.name}</h3>
+                      <div className="text-xs text-slate-500 font-semibold">{b.location}</div>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-black text-slate-900 leading-snug">{b.name}</h3>
-                    <p className="text-[11px] text-slate-500 font-semibold">{b.location}</p>
-                  </div>
-                </div>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-full uppercase">
-                  {b.status}
-                </span>
-              </div>
 
-              <div className="space-y-1 text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200/60 font-medium">
-                <div><span className="font-bold text-slate-800">Gerente:</span> {b.manager}</div>
-                <div><span className="font-bold text-slate-800">Telefone:</span> {b.phone}</div>
-                <div><span className="font-bold text-slate-800">Plano:</span> {b.plan || 'Enterprise VIP (R$ 249/mês)'}</div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-xs">
-                <div>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Faturamento</span>
-                  <span className="font-black text-[#071D49]">
-                    R$ {b.monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">
+                    {b.status}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setEditingBranch(b)}
-                    className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-lg flex items-center gap-1 cursor-pointer transition-all"
-                    title="Editar Módulos & CNPJ da Ótica"
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                    <span>Configurações</span>
-                  </button>
-
-                  <button
-                    onClick={() => alert(`Alternando ambiente para: ${b.name}`)}
-                    className="px-2.5 py-1.5 bg-[#0055A5] hover:bg-[#004080] text-white font-bold text-xs rounded-lg flex items-center gap-1 cursor-pointer transition-all"
-                    title="Acessar a visão desta ótica"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Entrar</span>
-                  </button>
+                <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Responsável:</span>
+                    <strong className="text-slate-900 font-bold">{b.manager}</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Plano Contratado:</span>
+                    <strong className="text-[#0055A5] font-extrabold">{b.plan}</strong>
+                  </div>
                 </div>
+
+                {/* Paleta White-Label */}
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-500 font-bold flex items-center gap-1">
+                    <Palette className="w-3.5 h-3.5 text-[#0055A5]" /> Tema da Marca:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: b.primaryColor || '#071D49' }} />
+                    <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: b.secondaryColor || '#D4AF37' }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <button
+                  onClick={() => setEditingBranch(b)}
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer transition-all"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  <span>Configurar</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setTenant({
+                      id: b.id,
+                      name: b.name,
+                      email: 'gerente@otica.com.br',
+                      logoUrl: b.logoUrl,
+                      primaryColor: b.primaryColor,
+                      secondaryColor: b.secondaryColor,
+                      status: 'active',
+                      planId: b.price === 199 ? '11111111-1111-1111-1111-111111111111' : '22222222-2222-2222-2222-222222222222',
+                    });
+                    alert(`✅ Alternado com sucesso para a ótica: ${b.name}`);
+                  }}
+                  className="px-3 py-1.5 bg-[#0055A5] hover:bg-[#004080] text-white font-bold text-xs rounded-xl flex items-center gap-1 cursor-pointer transition-all shadow-xs"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Acessar Visão</span>
+                </button>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
+
+      {/* ABA 2: PLANOS SAAS */}
+      {activeSubTab === 'plans' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {availablePlans.map((p) => (
+            <div key={p.id} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <span className="text-xs font-black text-[#0055A5] uppercase tracking-wider">{p.code}</span>
+                <span className="text-xs font-bold text-slate-500">Banco de Dados Oficial</span>
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-slate-900">{p.name}</h3>
+                <p className="text-xs text-slate-500 font-medium">{p.description}</p>
+              </div>
+              <div className="text-3xl font-black text-[#071D49]">R$ {p.monthlyPrice.toFixed(2)}/mês</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ABA 3: ASSINATURAS MERCADO PAGO */}
+      {activeSubTab === 'subscriptions' && (
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <h3 className="text-base font-black text-slate-900">Integração Mercado Pago Recorrente</h3>
+          <p className="text-xs text-slate-500 font-medium">
+            Assinaturas processadas de forma encriptada via tokenização oficial Mercado Pago.
+          </p>
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 font-medium flex items-center gap-3">
+            <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+            <div>
+              <strong className="block font-bold">Checkout &amp; Tokenização Ativos</strong>
+              Todas as faturas são liquidadas mensalmente no Mercado Pago com retentativa e Webhooks idempotentes.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SaaS Self-Registration Modal */}
       {showOnboardingModal && (
@@ -328,7 +420,7 @@ export const MultiticasDashboard: React.FC = () => {
       {/* CEO Store Settings Modal */}
       {editingBranch && (
         <div className="fixed inset-0 z-[200] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-200 space-y-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-[#071D49]">Configurações da Ótica (Visão CEO)</h3>
               <button
@@ -361,21 +453,31 @@ export const MultiticasDashboard: React.FC = () => {
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Plano Contratado</label>
                 <select
-                  defaultValue={editingBranch.price === 199 ? '199' : '249'}
+                  defaultValue={editingBranch.price === 199 ? '199' : '2490'}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-900"
                 >
-                  <option value="199">Plano Starter - R$ 199/mês</option>
-                  <option value="249">Plano Enterprise VIP - R$ 249/mês</option>
+                  <option value="199">Plano Básico - R$ 199/mês</option>
+                  <option value="2490">Plano Pro Max VIP - R$ 2.490/mês</option>
                 </select>
               </div>
 
-              <div className="bg-[#F0F7FF] p-3 rounded-xl border border-[#0055A5]/20 space-y-2">
-                <span className="font-bold text-[#0055A5] block">Módulos Habilitados para esta Ótica:</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-700 font-medium">
-                  <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked /> IA Mary Atendimento</label>
-                  <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked /> Provador 3D</label>
-                  <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked /> Câmera DNP</label>
-                  <label className="flex items-center gap-1.5"><input type="checkbox" defaultChecked /> Laboratório Sync</label>
+              {/* Tema White-Label */}
+              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Cor Primária</label>
+                  <input
+                    type="color"
+                    defaultValue={editingBranch.primaryColor || '#071D49'}
+                    className="w-full h-8 rounded cursor-pointer border-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Cor Secundária</label>
+                  <input
+                    type="color"
+                    defaultValue={editingBranch.secondaryColor || '#D4AF37'}
+                    className="w-full h-8 rounded cursor-pointer border-none"
+                  />
                 </div>
               </div>
             </div>

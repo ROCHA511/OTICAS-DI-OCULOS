@@ -418,4 +418,85 @@ export interface ExamRecord {
   }[];
 }
 
+// ============================================================================
+// ECOSISTEMA SAAS MULTI-TENANT
+// ============================================================================
+
+export type TenantStatus = 'pending_payment' | 'active' | 'suspended' | 'cancelled' | 'blocked';
+export type TenantRole = 'owner' | 'admin' | 'manager' | 'seller' | 'cashier' | 'employee';
+
+export interface SaaSPlan {
+  id: string;
+  code: 'basic' | 'pro-max' | string;
+  name: string;
+  description: string;
+  monthlyPrice: number;
+  active: boolean;
+  displayOrder: number;
+}
+
+export interface SaaSFeature {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  module: string;
+  active: boolean;
+}
+
+export interface SaaSPlanFeature {
+  id: string;
+  planId: string;
+  featureId: string;
+  enabled: boolean;
+  limits?: Record<string, any>;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  legalName?: string;
+  tradeName?: string;
+  cnpj?: string;
+  email: string;
+  phone?: string;
+  whatsapp?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  accentColor?: string;
+  status: TenantStatus;
+  planId: string;
+  ownerUserId?: string;
+  createdAt?: string;
+}
+
+export interface SaaSSubscription {
+  id: string;
+  tenantId: string;
+  planId: string;
+  provider: 'mercado_pago' | string;
+  providerCustomerId?: string;
+  providerSubscriptionId?: string;
+  status: 'pending' | 'authorized' | 'active' | 'paused' | 'cancelled';
+  amount: number;
+  billingCycle: 'monthly';
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+}
+
+export interface ProvisioningEvent {
+  id: string;
+  tenantId: string;
+  eventType: 'tenant_created' | 'subscription_confirmed' | 'owner_created' | 'settings_created' | 'features_activated' | 'provisioning_started' | 'provisioning_completed' | 'provisioning_failed';
+  status: 'pending' | 'completed' | 'failed';
+  payload?: Record<string, any>;
+  errorMessage?: string;
+  createdAt: string;
+}
+
 

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { OticasLogo } from './brand/OticasLogo';
 import { TrialFrameIcon } from './brand/TrialFrameIcon';
+import { useTenant } from '../context/TenantContext';
 
 export type ActiveTab =
   | 'dashboard'
@@ -71,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setIsMobileOpen,
   userRole,
 }) => {
+  const { currentTenant } = useTenant();
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Fecha o menu automaticamente após selecionar uma opção
@@ -234,8 +236,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               PRIME ENTERPRISE
             </span>
-            <div className="text-[11px] font-black text-[#E8D2A8] mt-0.5">
-              Matriz Centro (Ituberá - BA)
+            <div className="text-[11px] font-black text-[#E8D2A8] mt-0.5 truncate max-w-[240px]">
+              {currentTenant.name || 'Matriz Centro (Ituberá - BA)'}
             </div>
             <div className="text-[9px] text-slate-200 font-bold leading-tight text-center max-w-[220px]">
               Rua 23 de Abril, 51, Centro • (73) 98112-8923

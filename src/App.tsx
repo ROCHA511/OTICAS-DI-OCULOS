@@ -30,6 +30,9 @@ import { SaaSOnboardingView } from './components/saas/SaaSOnboardingView';
 import { MultiticasDashboard } from './pages/MultiticasDashboard';
 import { TimecardModule } from './components/timecard/TimecardModule';
 import { PwaInstallPromptModal } from './components/pwa/PwaInstallPromptModal';
+import { TenantProvider } from './context/TenantContext';
+import { PublicSaaSLandingPage } from './pages/PublicSaaSLandingPage';
+import { SuperAdminDashboard } from './pages/SuperAdminDashboard';
 import {
   loadClientsFromSupabase,
   saveClientToSupabase,
@@ -74,7 +77,7 @@ import {
   Professional,
 } from './types';
 
-export default function App() {
+function AppContent() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<{
     name: string;
@@ -1226,5 +1229,13 @@ export default function App() {
       {/* PWA Install Promo / Auto-Prompt Modal */}
       <PwaInstallPromptModal />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <TenantProvider>
+      <AppContent />
+    </TenantProvider>
   );
 }
