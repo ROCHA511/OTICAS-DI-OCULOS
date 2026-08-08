@@ -21,6 +21,7 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
   const [address, setAddress] = useState('Rua 23 de Abril, 51, Centro');
   const [city, setCity] = useState('Ituberá - BA');
   const [cep, setCep] = useState('45435-000');
+  const [avatarPhoto, setAvatarPhoto] = useState('');
   
   // Optical details
   const [odEsf, setOdEsf] = useState('-2.00');
@@ -79,7 +80,7 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
       birthDate: birthDate || '1992-05-14',
       status: 'active',
       tags: [statusTag, 'Cadastro Presencial'],
-      avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`,
+      avatar: avatarPhoto || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`,
       prescription,
       dnp,
       lastInteraction: 'Agora',
@@ -181,6 +182,68 @@ export const NewClientModal: React.FC<NewClientModalProps> = ({
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-semibold text-slate-900 focus:bg-white focus:ring-2 focus:ring-[#0284C7] focus:outline-none"
                 />
+              </div>
+
+              {/* Capturar / Anexar Foto do Cliente */}
+              <div className="sm:col-span-2 bg-[#F0F7FF] p-3 rounded-2xl border border-[#0055A5]/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-black text-[#0055A5] text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                    📷 Foto do Cliente (Reconhecimento Facial & Ficha)
+                  </label>
+                  <span className="text-[10px] bg-[#0055A5] text-white px-2 py-0.5 rounded-full font-bold">
+                    VINCULO DNP AUTOMÁTICO
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {avatarPhoto ? (
+                    <img
+                      src={avatarPhoto}
+                      alt="Foto do cliente"
+                      className="w-14 h-14 rounded-2xl object-cover border-2 border-[#0055A5] shadow-md shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-2xl bg-white border-2 border-dashed border-[#0055A5]/40 flex items-center justify-center text-slate-400 font-bold text-xs shrink-0">
+                      Sem foto
+                    </div>
+                  )}
+
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <label className="px-3 py-1.5 bg-[#0055A5] hover:bg-[#004080] text-white font-bold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1 shadow-xs">
+                        <span>📷 Capturar / Carregar Foto</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="user"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                if (ev.target?.result) setAvatarPhoto(ev.target.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                      {avatarPhoto && (
+                        <button
+                          type="button"
+                          onClick={() => setAvatarPhoto('')}
+                          className="text-xs text-rose-600 hover:text-rose-800 font-bold underline cursor-pointer"
+                        >
+                          Remover
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      Ao tirar as medidas de DNP no módulo IA, esta foto será vinculada automaticamente ao cliente.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

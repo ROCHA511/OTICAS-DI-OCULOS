@@ -87,6 +87,18 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('chat');
+
+  React.useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const pathname = window.location.pathname;
+    if (
+      pathname.includes('/onboarding') ||
+      searchParams.get('tab') === 'onboarding' ||
+      searchParams.get('onboarding') === 'true'
+    ) {
+      setActiveTab('onboarding');
+    }
+  }, []);
   const [clients, setClients] = useState<Client[]>(initialClients);
   const [selectedClientId, setSelectedClientId] = useState<string>('c1');
   const [messagesMap, setMessagesMap] = useState<Record<string, ChatMessage[]>>(initialChatMessages);
@@ -663,7 +675,7 @@ export default function App() {
           userRole={currentUser?.role}
         />
 
-        <main className="flex-1 min-w-0 h-full overflow-hidden flex flex-col box-border pb-14 sm:pb-0">
+        <main className="flex-1 min-w-0 h-full overflow-hidden flex flex-col box-border pb-20 sm:pb-0">
           {activeTab !== 'dashboard' && (
             <div className="bg-gradient-to-r from-[#071D49] via-[#0B255C] to-[#071D49] px-3 sm:px-4 py-2 border-b-2 border-[#C9A96E] flex items-center justify-between shrink-0 text-white shadow-md z-30">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -934,7 +946,21 @@ export default function App() {
 
           {activeTab === 'pricetable' && <PriceTableView />}
 
-          {activeTab === 'camera' && <CameraAiScannerView />}
+          {activeTab === 'camera' && (
+            <CameraAiScannerView
+              clients={clients}
+              onUpdateClient={async (updatedClient) => {
+                setClients((prev) =>
+                  prev.map((c) => (c.id === updatedClient.id ? updatedClient : c))
+                );
+                try {
+                  await saveClientToSupabase(updatedClient);
+                } catch (err) {
+                  console.warn('Erro ao atualizar foto/DNP do cliente no Supabase:', err);
+                }
+              }}
+            />
+          )}
 
           {activeTab === 'ai-settings' && (
             <AiSettingsView settings={aiSettings} onSaveSettings={setAiSettings} />

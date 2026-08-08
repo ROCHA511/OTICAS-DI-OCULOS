@@ -95,7 +95,7 @@ export const MultiticasDashboard: React.FC = () => {
     },
   ]);
 
-  const publicLink = typeof window !== 'undefined' ? `${window.location.origin}/cadastrar-otica` : 'https://dioculos.com.br/cadastrar-otica';
+  const publicLink = typeof window !== 'undefined' ? `${window.location.origin}?tab=onboarding` : 'https://oticas-di-oculos.vercel.app?tab=onboarding';
 
   const handleCopyPublicLink = () => {
     navigator.clipboard.writeText(publicLink);
