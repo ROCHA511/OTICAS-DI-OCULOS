@@ -178,20 +178,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Overlay Escuro com Desfoque ao Abrir no Celular */}
+      {/* Overlay Escuro Leve com Desfoque do Aplicativo ao Abrir no Celular */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-[#090D16]/90 backdrop-blur-md z-[180] sm:hidden animate-in fade-in"
+          className="fixed inset-0 bg-[#030712]/40 backdrop-blur-md z-[180] sm:hidden animate-in fade-in cursor-pointer"
           onClick={() => setIsMobileOpen && setIsMobileOpen(false)}
         />
       )}
 
-      {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
-      {/* Container Adaptável: Relativo no Desktop, Fixo em Drawer no Mobile */}
+      {/* Container Adaptável: Vidro Ultra Transparente no Mobile com Desfoque Backdrop-Blur */}
       <aside
-        className={`bg-[#071D49]/80 sm:bg-[#071D49]/80 backdrop-blur-2xl text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none shadow-[0_8px_32px_rgba(0,0,0,0.6)] ${
+        className={`bg-[#071D49]/45 sm:bg-[#071D49]/80 backdrop-blur-3xl backdrop-saturate-150 text-white flex flex-col justify-between py-3 shrink-0 z-[190] sm:z-30 transition-all duration-300 ease-in-out select-none shadow-[0_8px_32px_rgba(0,0,0,0.6)] ${
           isMobileOpen
-            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E] shadow-[5px_0_30px_rgba(201,169,110,0.4)] flex'
+            ? 'fixed inset-y-0 left-0 w-[280px] h-full my-0 ml-0 rounded-r-3xl border-r-2 border-[#C9A96E] shadow-[10px_0_40px_rgba(201,169,110,0.35)] flex bg-[#071D49]/40 backdrop-blur-3xl'
             : 'hidden sm:flex sm:relative sm:my-2 sm:ml-2 sm:rounded-[24px] sm:border-2 sm:border-[#C9A96E] sm:shadow-[0_0_25px_rgba(201,169,110,0.35)] sm:h-[calc(100%-16px)]'
         } ${
           isExpanded || isMobileOpen ? 'w-[280px] sm:w-[280px]' : 'sm:w-[72px]'
