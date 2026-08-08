@@ -403,6 +403,16 @@ export interface ExamRecord {
   recomendacao_lentes?: string;
   observacoes_clinicas?: string;
 
+  // Exames Complementares e Medidas de Armação (Laboratório)
+  pio_od?: number;
+  pio_oe?: number;
+  lampada_fenda?: string;
+  fundo_olho?: string;
+  aro_hor?: number;
+  ponte?: number;
+  haste?: number;
+  altura_armacao?: number;
+
   // Anamnese IA (JSON)
   anamnese_json?: AnamnesisIaInput;
   enviado_para_otica: boolean;

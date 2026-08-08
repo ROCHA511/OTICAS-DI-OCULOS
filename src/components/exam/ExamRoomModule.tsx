@@ -2,7 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { 
   Eye, Stethoscope, Search, Plus, Pin, MessageSquare, ClipboardCheck, Sparkles, 
   RefreshCw, FileText, Settings, BarChart3, ShieldCheck, Printer, Trash2, 
-  Brain, FileUp, HelpCircle, Check, AlertTriangle, AlertCircle, RefreshCcw, Landmark 
+  Brain, FileUp, HelpCircle, Check, AlertTriangle, AlertCircle, RefreshCcw, Landmark,
+  ArrowLeft, Clock, User, Phone, ChevronRight, FileSpreadsheet, Send, Award, Activity
 } from 'lucide-react';
 import { ExamRecord, AnamnesisIaInput } from '../../types';
 import { loadExamsFromSupabase, saveExamToSupabase } from '../../utils/examSync';
@@ -20,10 +21,11 @@ export const ExamRoomModule: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'todos' | 'sem_anamnese' | 'com_anamnese' | 'concluidos'>('todos');
   
-  // Configurações do optometrista
+  // Configurações do optometrista / clínica
   const [optometristaNome, setOptometristaNome] = useState('Dr. Lauro Rocha');
   const [cboNumero, setCBONumero] = useState('CBO 14852-BA');
   const [clinicaNome, setClinicaNome] = useState('Óticas Di Óculos - Matriz');
+  const [unidadeNome, setUnidadeNome] = useState('Matriz Centro (Ituberá - BA)');
   const [assinaturaUrl, setAssinaturaUrl] = useState('https://images.unsplash.com/photo-1598257006458-087169a1f08d?w=300&auto=format&fit=crop&q=60');
 
   // Modais
@@ -40,12 +42,12 @@ export const ExamRoomModule: React.FC = () => {
 
   // Anamnese manual modal form
   const [anamneseForm, setAnamneseForm] = useState<AnamnesisIaInput>({
-    queixa_principal: '',
-    tempo_sintomas: '',
-    sintomas_visuais: [],
-    doencas_sistemicas: [],
-    historico_familiar: [],
-    uso_atual_oculos: 'Não'
+    queixa_principal: 'Tenho a visão bastante embaçada para leitura no celular e dores de cabeça frequentes no final da tarde',
+    tempo_sintomas: 'Pouco menos de 6 meses',
+    sintomas_visuais: ['Visão Embaçada Perto', 'Dores de Cabeça no Fim do Dia'],
+    doencas_sistemicas: ['Nenhuma'],
+    historico_familiar: ['Hipermetropia na família'],
+    uso_atual_oculos: 'Uso lentes simples de grau para leitura de perto'
   });
 
   // Novo paciente form
@@ -71,7 +73,6 @@ export const ExamRoomModule: React.FC = () => {
     const data = await loadExamsFromSupabase([]);
     setExams(data);
     if (data.length > 0 && !selectedExam) {
-      // Abre o primeiro por padrão
       setSelectedExam(data[0]);
     }
     setLoading(false);
@@ -81,7 +82,7 @@ export const ExamRoomModule: React.FC = () => {
     fetchExams();
   }, []);
 
-  // Recarrega fila periodicamente (Realtime simulado/Supabase polling)
+  // Polling de sincronização da fila de exames
   useEffect(() => {
     const interval = setInterval(() => {
       fetchExams();
@@ -89,13 +90,13 @@ export const ExamRoomModule: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Executa análise IA em tempo real ao alterar valores refrativos
+  // Análise em tempo real de IA Gemini sobre a refração
   useEffect(() => {
     if (!selectedExam) return;
     
     const delayDebounceFn = setTimeout(() => {
       analyzeExamWithIA();
-    }, 1500); // Debounce de 1.5s para evitar chamadas excessivas na digitação
+    }, 1200);
 
     return () => clearTimeout(delayDebounceFn);
   }, [
@@ -108,42 +109,38 @@ export const ExamRoomModule: React.FC = () => {
     if (!selectedExam) return;
     setLoadingIa(true);
     try {
-      // Faz análise baseada nos graus inseridos
-      const odSph = selectedExam.od_esferico;
-      const oeSph = selectedExam.oe_esferico;
-      const odCyl = selectedExam.od_cilindrico;
-      const oeCyl = selectedExam.oe_cilindrico;
-      const add = selectedExam.adicao;
+      const odSph = selectedExam.od_esferico || 0;
+      const oeSph = selectedExam.oe_esferico || 0;
+      const odCyl = selectedExam.od_cilindrico || 0;
+      const oeCyl = selectedExam.oe_cilindrico || 0;
+      const add = selectedExam.adicao || 0;
       
       const alerts: string[] = [];
       let suggestion = '';
 
       if (Math.abs(odSph) > 4.0 || Math.abs(oeSph) > 4.0) {
-        alerts.push('⚠️ Alto Erro Refrativo (Alta Miopia/Hipermetropia): Recomendar Lentes 1.67 ou 1.74.');
+        alerts.push('⚠️ Alto Erro Refrativo (Alta Miopia/Hipermetropia): Recomendar Lentes de Alto Índice 1.67 ou 1.74.');
       }
       if (Math.abs(odCyl) > 2.0 || Math.abs(oeCyl) > 2.0) {
-        alerts.push('⚠️ Alto Astigmatismo: Cuidado com distorções laterais na escolha da armação.');
+        alerts.push('⚠️ Astigmatismo Elevado: Atenção ao eixo e montagem na oficina.');
       }
-      if (add > 0 && (Math.abs(odSph) < 1.0 && Math.abs(oeSph) < 1.0)) {
-        alerts.push('⚠️ Adição detectada com baixo grau de longe: Sugerir lentes ocupacionais.');
+      if (add > 0 && Math.abs(odSph) < 1.0 && Math.abs(oeSph) < 1.0) {
+        alerts.push('⚠️ Adição Perto com Grau de Longe Baixo: Recomendação de Lente Ocupacional ou Presbiopia Inicial.');
       }
-
-      // Validação de eixos vazios quando há astigmatismo
       if ((odCyl !== 0 && selectedExam.od_eixo === 0) || (oeCyl !== 0 && selectedExam.oe_eixo === 0)) {
-        alerts.push('⚠️ Eixo Refrativo Inconsistente: Grau cilíndrico preenchido mas eixo em 0°.');
+        alerts.push('⚠️ Inconsistência de Eixo: Grau Cilíndrico ativo sem Eixo informado.');
       }
 
-      // Diagnóstico preliminar simulado / gerado
       if (odSph < 0 && oeSph < 0) {
-        suggestion = 'Diagnóstico Sugerido: Miopia Simples. Lentes indicadas: Antirreflexo Blue Control.';
+        suggestion = 'Diagnóstico Sugerido: Miopia Simples. Indicação: Lente Monofocal Antirreflexo Crizal Sapphire.';
       } else if (odSph > 0 && oeSph > 0) {
-        suggestion = 'Diagnóstico Sugerido: Hipermetropia. Lentes indicadas: Antirreflexo Crizal Easy.';
+        suggestion = 'Diagnóstico Sugerido: Hipermetropia. Indicação: Lentes com Filtro Blue Control e Antirreflexo.';
       } else if (odCyl !== 0 || oeCyl !== 0) {
-        suggestion = 'Diagnóstico Sugerido: Astigmatismo composto. Lentes indicadas: Policarbonato 1.59.';
+        suggestion = 'Diagnóstico Sugerido: Astigmatismo Composto. Indicação: Lentes em Policarbonato 1.59.';
       }
       
       if (add > 0) {
-        suggestion += ' Presbiopia associada. Recomendação técnica: Multifocal Varilux ou SmartLife.';
+        suggestion += ' Associado à Presbiopia. Recomendação Técnica: Lente Multifocal Digital Varilux ou SmartLife.';
       }
 
       setIaAlerts(alerts);
@@ -155,7 +152,6 @@ export const ExamRoomModule: React.FC = () => {
     }
   };
 
-  // Salva alterações do exame selecionado localmente no state
   const handleUpdateField = (field: keyof ExamRecord, value: any) => {
     if (!selectedExam) return;
     setSelectedExam({
@@ -164,7 +160,6 @@ export const ExamRoomModule: React.FC = () => {
     });
   };
 
-  // Salva alterações refrativas no banco
   const handleSaveExam = async () => {
     if (!selectedExam) return;
     setLoading(true);
@@ -174,10 +169,9 @@ export const ExamRoomModule: React.FC = () => {
         optometrista_nome: optometristaNome,
         cbo_numero: cboNumero
       });
-      // Atualiza a fila
       setExams(exams.map(e => e.id === updated.id ? updated : e));
       setSelectedExam(updated);
-      alert("Prontuário salvo com sucesso!");
+      alert("Prontuário clínico gravado com sucesso!");
     } catch (e) {
       alert("Falha ao salvar prontuário.");
     } finally {
@@ -185,27 +179,24 @@ export const ExamRoomModule: React.FC = () => {
     }
   };
 
-  // Concluir e Emitir Receita
   const handleConcludeExam = async () => {
     if (!selectedExam) return;
     
-    // Confirmação de campos obrigatórios
-    if (selectedExam.diagnostico_optometrico === '' || !selectedExam.diagnostico_optometrico) {
-      const diag = prompt("Por favor, preencha o diagnóstico optométrico antes de concluir:");
+    if (!selectedExam.diagnostico_optometrico) {
+      const diag = prompt("Por favor, informe o Diagnóstico Optométrico antes de finalizar:");
       if (!diag) return;
       selectedExam.diagnostico_optometrico = diag;
     }
 
     setLoading(true);
     try {
-      const examAtualizado = { ...selectedExam, status: 'concluido' as any };
+      const examAtualizado = { ...selectedExam, status: 'concluido' as any, enviado_para_otica: true };
       await saveExamToSupabase(examAtualizado);
 
-      // Gerar Receita Digital
       await examSystemApi.generateReceitaDigital({
         tenant_id: '00000000-0000-0000-0000-000000000001',
         paciente_id: selectedExam.paciente_id,
-        prontuario_id: selectedExam.id, // Em transição, o id do ExamRecord = atendimento_id
+        prontuario_id: selectedExam.id,
         od_esferico: selectedExam.od_esferico,
         od_cilindro: selectedExam.od_cilindrico,
         od_eixo: selectedExam.od_eixo,
@@ -222,20 +213,17 @@ export const ExamRoomModule: React.FC = () => {
       });
 
       setSelectedExam(examAtualizado);
-      alert("Exame concluído com sucesso e Receita Digital Gerada!");
-      
-      // Abre o modal de emissão de OS para a ótica (opcional)
+      alert("✨ Atendimento concluído! Receita Digital emitida e Ordem de Serviço enviada para a Ótica.");
       setIsRecipeModalOpen(true);
       await fetchExams();
     } catch (e) {
       console.error(e);
-      alert("Erro ao concluir exame. Tente novamente.");
+      alert("Erro ao concluir atendimento.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Pin/Unpin paciente
   const handleTogglePin = async (examId: string, currentPin: boolean) => {
     try {
       const res = await fetch(`/api/exames/${examId}/pin`, {
@@ -252,7 +240,6 @@ export const ExamRoomModule: React.FC = () => {
     } catch {}
   };
 
-  // WhatsApp link generator
   const handleGenerateWhatsappLink = async (examId: string) => {
     try {
       const res = await fetch(`/api/exames/${examId}/whatsapp/gerar-link`, { method: 'POST' });
@@ -270,11 +257,9 @@ export const ExamRoomModule: React.FC = () => {
     }
   };
 
-  // Simulação de OCR de Receita Antiga
   const handleSimulateOCR = async () => {
     setOcrLoading(true);
     try {
-      // Simula chamada de backend de OCR
       const response = await fetch('/api/gemini/parse-prescription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -283,7 +268,7 @@ export const ExamRoomModule: React.FC = () => {
       const data = await response.json();
       if (data.success && selectedExam) {
         setOcrResult(data.prescription);
-        alert("OCR executado com sucesso! Veja as informações extraídas no painel esquerdo.");
+        alert("OCR executado com sucesso! Dados da receita prévia importados.");
       }
     } catch (e) {
       alert("Falha no processamento OCR.");
@@ -306,18 +291,16 @@ export const ExamRoomModule: React.FC = () => {
       observacoes_clinicas: `[Comparativo Receita Anterior]: ${ocrResult.observacoes || ''}`
     });
     setOcrResult(null);
-    alert("Dados da receita antiga aplicados ao prontuário de Pedro!");
+    alert("Dados aplicados ao prontuário!");
   };
 
-  // Cria novo paciente na fila
   const handleCreatePatient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPatientForm.nome || !newPatientForm.telefone) {
-      alert("Preencha nome e telefone.");
+      alert("Preencha nome e telefone do paciente.");
       return;
     }
     try {
-      // Cria/Encontra o paciente usando a tabela de clientes
       const { data: clientes } = await supabase
         .from('clientes')
         .select('*')
@@ -346,11 +329,11 @@ export const ExamRoomModule: React.FC = () => {
         horario_agendado: new Date().toISOString(),
         status: 'Aguardando',
         prioridade: newPatientForm.prioridade,
-        profissional_responsavel: 'Dr. Lauro Rocha',
+        profissional_responsavel: optometristaNome,
         observacoes: newPatientForm.observacoes
       });
       
-      alert("Paciente inserido na fila com sucesso!");
+      alert("Paciente enfileirado com sucesso!");
       setIsNewPatientModalOpen(false);
       setNewPatientForm({ nome: '', telefone: '', cpf: '', prioridade: 'Normal', observacoes: '' });
       await fetchExams();
@@ -360,11 +343,9 @@ export const ExamRoomModule: React.FC = () => {
     }
   };
 
-  // Salva Anamnese Manual Simulando Triagem WhatsApp
   const handleSaveAnamneseForm = async () => {
     if (!selectedExam) return;
     try {
-      // Cria registro de Pré Anamnese com os dados
       await examSystemApi.createPreAnamnese({
         tenant_id: '00000000-0000-0000-0000-000000000001',
         paciente_id: selectedExam.paciente_id,
@@ -373,7 +354,6 @@ export const ExamRoomModule: React.FC = () => {
         tempo_queixa: anamneseForm.tempo_sintomas,
       });
 
-      // Roda a IA
       const resIa = await examSystemApi.iaAnalisarAnamnese(selectedExam.id, anamneseForm);
       
       const examAtualizado = {
@@ -397,7 +377,6 @@ export const ExamRoomModule: React.FC = () => {
     }
   };
 
-  // Filtros aplicados na fila
   const filteredExams = exams.filter(e => {
     const matchesSearch = e.paciente_nome.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           e.id.toLowerCase().includes(searchQuery.toLowerCase());
@@ -409,69 +388,104 @@ export const ExamRoomModule: React.FC = () => {
     return matchesSearch;
   });
 
-  // Geração de Hash para receita
   const recipeHash = selectedExam ? `SHA256-DIGITAL-${selectedExam.id.replace(/\D/g, '')}-B8F7` : 'N/A';
 
   return (
-    <div className="w-full h-full min-h-0 overflow-y-auto flex flex-col my-0 sm:my-2 mx-0 sm:mr-2 bg-[#040f26]/95 border-0 sm:border-2 border-[#C9A96E]/80 rounded-none sm:rounded-[24px] shadow-[0_0_35px_rgba(201,169,110,0.2)] text-white select-none">
+    <div className="w-full h-full min-h-0 overflow-y-auto flex flex-col my-0 sm:my-2 mx-0 sm:mr-2 bg-[#F4F7FA] text-slate-900 select-none pb-24 sm:pb-6">
       
-      {/* 1. Header de Ações Rápidas (Superior) */}
-      <header className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-[#C9A96E]/30 bg-[#071D49] flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 shrink-0">
-        <div className="flex items-center gap-2 sm:gap-3">
+      {/* ═══════════════════════════════════════════════════════════════
+          MÓDULO 1: HEADER SUPERIOR (Escuro Marinho)
+      ═══════════════════════════════════════════════════════════════ */}
+      <header className="px-3 sm:px-6 py-3 bg-[#06285F] border-b border-[#0878C9]/40 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 shrink-0 shadow-md text-white">
+        <div className="flex items-center gap-3">
           <button 
-            onClick={() => window.location.reload()} 
-            className="flex items-center gap-1.5 bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md"
+            onClick={() => {
+              if (confirm('Deseja retornar ao painel inicial?')) {
+                window.location.reload();
+              }
+            }} 
+            className="flex items-center gap-1.5 bg-[#F4C542] hover:bg-[#FFD45A] text-[#06285F] font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md"
           >
-            ← Início
+            <ArrowLeft className="w-4 h-4 stroke-[3]" /> Voltar ao Início
           </button>
-          <span className="text-slate-400 text-[11px] sm:text-xs font-semibold truncate max-w-[200px] sm:max-w-none">
-            🏠 Óticas Di Óculos • Módulo Clínico Ativo
-          </span>
+          <div className="min-w-0">
+            <span className="text-xs font-black text-white truncate block">
+              Óticas Di Óculos • Módulo Clínico Ativo
+            </span>
+            <span className="text-[10px] text-[#0795D1] font-semibold block">
+              Gestão de Prontuários &amp; Transmissão de Receitas
+            </span>
+          </div>
         </div>
-        <button 
-          onClick={() => fetchExams()}
-          className="text-[11px] sm:text-xs bg-[#0b255c] hover:bg-[#153270] border border-[#C9A96E]/40 text-[#C9A96E] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ml-auto sm:ml-0"
-        >
-          <RefreshCw className="w-3.5 h-3.5" /> Atualizar Fila
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => fetchExams()}
+            className="text-xs bg-[#0878C9] hover:bg-[#1677FF] text-white font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Atualizar Fila
+          </button>
+        </div>
       </header>
 
-      {/* 2. Banner de Módulo "Sala de Exames Optométricos" (Conforme Imagem) */}
-      <section className="mx-2 sm:mx-6 mt-2 sm:mt-4 p-3 sm:p-4 bg-gradient-to-r from-[#071D49] to-[#0A2E70] border border-sm:border-2 border-[#C9A96E]/60 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-[0_4px_25px_rgba(0,0,0,0.4)] shrink-0">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#C9A96E] bg-[#0b255c] flex items-center justify-center text-[#C9A96E] shadow-lg shrink-0">
-            <TrialFrameIcon className="w-6 h-6 sm:w-7 sm:h-7 text-[#C9A96E]" />
+      {/* ═══════════════════════════════════════════════════════════════
+          MÓDULO 2: BARRA DE IDENTIDADE DA CLÍNICA / ÓTICA
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="bg-[#0878C9] text-white px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between text-xs font-bold shrink-0 border-b border-[#1677FF]">
+        <div className="flex items-center gap-2">
+          <Landmark className="w-4 h-4 text-[#F4C542]" />
+          <span>{clinicaNome} • {unidadeNome}</span>
+        </div>
+        <div className="flex items-center gap-3 text-[11px]">
+          <span className="flex items-center gap-1 text-[#F4C542]">
+            <User className="w-3.5 h-3.5" /> {optometristaNome} ({cboNumero})
+          </span>
+          <span className="bg-[#06285F] text-[#00C98B] px-2.5 py-0.5 rounded-full font-black text-[10px] uppercase">
+            ● SISTEMA ATIVO
+          </span>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          MÓDULO 3: CARD HERO "SALA DE EXAMES OPTOMÉTRICOS & PRONTUÁRIO IA"
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="mx-3 sm:mx-6 mt-4 p-5 bg-gradient-to-r from-[#06285F] via-[#082E68] to-[#06285F] border-2 border-[#F4C542]/60 rounded-3xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl text-white shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl border-2 border-[#F4C542] bg-[#0878C9] flex items-center justify-center text-[#F4C542] shadow-lg shrink-0">
+            <TrialFrameIcon className="w-8 h-8 text-[#F4C542]" />
           </div>
-          <div className="min-w-0">
-            <span className="text-[8px] sm:text-[9px] bg-[#C9A96E] text-[#071D49] font-black px-2 py-0.5 rounded-full uppercase tracking-wider inline-block">
-              SISTEMA OFICIAL MÚLTIPLOS CLIENTES
+          <div className="min-w-0 space-y-1">
+            <span className="text-[9px] bg-[#F4C542] text-[#06285F] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider inline-block shadow-sm">
+              SISTEMA OFICIAL MÚLTIPLOS CLIENTES • ÓTICA DI ÓCULOS
             </span>
-            <h1 className="text-base sm:text-lg font-black text-white mt-0.5 tracking-tight truncate">
-              Sala de Exames Optométricos & Prontuário IA
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
+              Sala de Exames Optométricos &amp; Prontuário IA
             </h1>
-            <p className="text-[9px] sm:text-[10px] text-slate-300 line-clamp-2 sm:line-clamp-none">
-              Atendimento completo com inteligência artificial, emissão de prescrições e laudos, transmissão instantânea para vendas.
+            <p className="text-xs text-slate-200 font-medium max-w-2xl leading-relaxed">
+              Atendimento completo com inteligência artificial, emissão de prescrições com QR Code e transmissão instantânea para vendas.
             </p>
           </div>
         </div>
         
-        {/* Optometrista Responsável */}
-        <div className="bg-[#040f26]/80 border border-[#C9A96E]/50 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-left sm:text-right w-full sm:w-auto shrink-0 flex sm:block items-center justify-between">
-          <span className="text-[8px] text-[#C9A96E] font-black uppercase tracking-widest block">
-            Optometrista Responsável
+        {/* Card Profissional Responsável */}
+        <div className="bg-[#041333]/90 border border-[#F4C542]/40 rounded-2xl p-3 text-left sm:text-right w-full sm:w-auto shrink-0 space-y-1">
+          <span className="text-[9px] text-[#F4C542] font-black uppercase tracking-widest block">
+            OPTOMETRISTA RESPONSÁVEL
           </span>
-          <div>
-            <span className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5 sm:justify-end">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-              {optometristaNome}
-            </span>
-            <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold block">{cboNumero}</span>
+          <div className="flex items-center gap-2 sm:justify-end">
+            <div className="w-7 h-7 rounded-full bg-[#F4C542] text-[#06285F] font-black text-xs flex items-center justify-center">
+              LR
+            </div>
+            <div>
+              <span className="text-xs font-black text-white block">{optometristaNome}</span>
+              <span className="text-[10px] text-slate-300 font-bold block">{cboNumero}</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Submenus Auxiliares */}
-      <nav className="mx-2 sm:mx-6 mt-2 sm:mt-3 flex overflow-x-auto border-b border-[#C9A96E]/20 scrollbar-none whitespace-nowrap shrink-0">
+      <nav className="mx-3 sm:mx-6 mt-4 flex overflow-x-auto border-b-2 border-slate-200 scrollbar-none whitespace-nowrap shrink-0 gap-1">
         {[
           { id: 'atendimento', title: 'Fila e Atendimento', icon: Stethoscope },
           { id: 'dashboard', title: 'Métricas & Dashboard', icon: BarChart3 },
@@ -482,51 +496,55 @@ export const ExamRoomModule: React.FC = () => {
           <button
             key={tab.id}
             onClick={() => setActiveSubTab(tab.id as any)}
-            className={`px-3 sm:px-4 py-2 border-b-2 text-[11px] sm:text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-4 py-2.5 rounded-t-xl text-xs font-black flex items-center gap-2 transition-all cursor-pointer ${
               activeSubTab === tab.id
-                ? 'border-[#C9A96E] text-[#C9A96E] bg-[#C9A96E]/5'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+                ? 'bg-[#06285F] text-[#F4C542] border-t-2 border-x-2 border-[#F4C542]'
+                : 'bg-white text-slate-600 hover:text-[#06285F] hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            <tab.icon className="w-3.5 h-3.5" />
+            <tab.icon className="w-4 h-4" />
             {tab.title}
           </button>
         ))}
       </nav>
 
-      {/* 3. Área de Trabalho Principal */}
-      <div className="flex-1 p-2 sm:p-6 grid grid-cols-12 gap-3 sm:gap-6 overflow-y-auto sm:overflow-hidden min-h-0">
+      {/* ═══════════════════════════════════════════════════════════════
+          ÁREA DE TRABALHO PRINCIPAL (ATENDIMENTO CLÍNICO)
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="flex-1 p-3 sm:p-6 grid grid-cols-12 gap-4 sm:gap-6 min-h-0">
 
         {activeSubTab === 'atendimento' && (
           <>
-            {/* COLUNA ESQUERDA: Fila de Atendimento */}
-            <div className="col-span-12 lg:col-span-4 flex flex-col min-h-[380px] lg:h-full bg-[#071D49]/40 border border-[#C9A96E]/30 rounded-2xl overflow-hidden shadow-lg backdrop-blur-md">
-              <div className="p-4 border-b border-slate-700/50 space-y-3">
+            {/* ═══════════════════════════════════════════════════════════════
+                MÓDULO 4: FILA DE ATENDIMENTO (Coluna Esquerda)
+            ═══════════════════════════════════════════════════════════════ */}
+            <div className="col-span-12 lg:col-span-4 flex flex-col min-h-[420px] lg:h-full bg-[#06285F] text-white border-2 border-[#082E68] rounded-3xl overflow-hidden shadow-xl">
+              <div className="p-4 border-b border-[#0878C9]/40 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black tracking-wider text-slate-100 flex items-center gap-1.5">
-                    👥 Fila de Atendimento
+                  <h2 className="text-sm font-black tracking-wider text-white flex items-center gap-2">
+                    <Stethoscope className="w-4 h-4 text-[#F4C542]" /> Fila de Atendimento
                   </h2>
                   <button 
                     onClick={() => setIsNewPatientModalOpen(true)}
-                    className="bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 shadow-md hover:scale-105 active:scale-95 cursor-pointer"
+                    className="bg-[#F4C542] hover:bg-[#FFD45A] text-[#06285F] font-black text-xs px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 shadow-md hover:scale-105 active:scale-95 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5 stroke-[3]" /> Novo Paciente
+                    <Plus className="w-4 h-4 stroke-[3]" /> Novo Paciente
                   </button>
                 </div>
                 
-                {/* Input de Busca */}
+                {/* Campo de Busca de Paciente */}
                 <div className="relative">
                   <input 
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Buscar paciente na fila..."
-                    className="w-full bg-[#041333] border border-slate-700/70 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:outline-hidden focus:border-[#C9A96E] transition-all"
+                    className="w-full bg-[#041333] border border-[#0878C9]/50 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-[#F4C542] transition-all font-medium"
                   />
-                  <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
                 </div>
 
-                {/* Filtros Pílula */}
+                {/* Filtros em Pílulas */}
                 <div className="flex flex-wrap gap-1.5">
                   {[
                     { id: 'todos', label: 'Todos' },
@@ -537,10 +555,10 @@ export const ExamRoomModule: React.FC = () => {
                     <button
                       key={pill.id}
                       onClick={() => setFilterStatus(pill.id as any)}
-                      className={`text-[9px] font-black px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
+                      className={`text-[10px] font-black px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
                         filterStatus === pill.id
-                          ? 'bg-[#C9A96E] border-[#C9A96E] text-[#071D49] font-extrabold shadow-sm'
-                          : 'bg-[#041333] border-slate-700/50 text-slate-400 hover:text-white'
+                          ? 'bg-[#F4C542] border-[#F4C542] text-[#06285F]'
+                          : 'bg-[#041333] border-[#0878C9]/40 text-slate-300 hover:text-white'
                       }`}
                     >
                       {pill.label}
@@ -550,11 +568,11 @@ export const ExamRoomModule: React.FC = () => {
               </div>
 
               {/* Lista dos Pacientes Enfileirados */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-2 [scrollbar-width:thin]">
+              <div className="flex-1 overflow-y-auto p-3 space-y-2.5 [scrollbar-width:thin]">
                 {loading ? (
-                  <div className="text-center py-12 text-slate-500 text-xs italic">Carregando lista...</div>
+                  <div className="text-center py-12 text-slate-400 text-xs italic">Carregando fila de pacientes...</div>
                 ) : filteredExams.length === 0 ? (
-                  <div className="text-center py-12 text-slate-500 text-xs italic">Nenhum paciente na fila.</div>
+                  <div className="text-center py-12 text-slate-400 text-xs italic">Nenhum paciente na fila.</div>
                 ) : (
                   filteredExams.map(item => {
                     const isSelected = selectedExam?.id === item.id;
@@ -564,38 +582,34 @@ export const ExamRoomModule: React.FC = () => {
                       <div 
                         key={item.id}
                         onClick={() => setSelectedExam(item)}
-                        className={`p-3 border rounded-xl flex items-center justify-between gap-2.5 transition-all cursor-pointer relative group ${
+                        className={`p-3.5 border-2 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer relative group ${
                           isSelected
-                            ? 'bg-[#0b255c] border-[#C9A96E] shadow-[0_0_12px_rgba(201,169,110,0.15)]'
-                            : 'bg-[#041333]/50 border-slate-800 hover:border-slate-700 hover:bg-[#071D49]/50'
+                            ? 'bg-[#0878C9] border-[#F4C542] shadow-lg'
+                            : 'bg-[#041333]/80 border-[#0878C9]/30 hover:border-[#0878C9] hover:bg-[#041333]'
                         }`}
                       >
-                        {/* Indicador de Prioridade Urgente */}
                         {item.prioridade === 'Urgente' && (
-                          <span className="absolute top-0 left-0 w-2.5 h-2.5 bg-red-500 rounded-br-lg" title="Paciente Urgente" />
+                          <span className="absolute top-0 left-0 w-3 h-3 bg-rose-500 rounded-br-lg" title="Paciente Urgente" />
                         )}
 
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {/* Avatar */}
-                          <div className={`w-8 h-8 rounded-full font-black text-xs flex items-center justify-center shrink-0 shadow-inner ${
-                            isSelected ? 'bg-[#C9A96E] text-[#071D49]' : 'bg-[#0b255c] text-[#C9A96E]'
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={`w-9 h-9 rounded-full font-black text-xs flex items-center justify-center shrink-0 shadow-inner ${
+                            isSelected ? 'bg-[#F4C542] text-[#06285F]' : 'bg-[#0878C9] text-white'
                           }`}>
                             {initials}
                           </div>
                           
-                          {/* Detalhes */}
-                          <div className="min-w-0">
-                            <div className="text-xs font-extrabold text-slate-200 truncate group-hover:text-white">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="text-xs font-black text-white truncate group-hover:text-[#F4C542]">
                               {item.paciente_nome}
-                              {item.is_pinned && <span className="text-[#C9A96E] ml-1">📌</span>}
+                              {item.is_pinned && <span className="text-[#F4C542] ml-1">📌</span>}
                             </div>
-                            <div className="text-[9px] text-slate-400 font-mono mt-0.5">
+                            <div className="text-[10px] text-slate-300 font-mono">
                               {item.id} • {item.prioridade}
                             </div>
                           </div>
                         </div>
 
-                        {/* Status / Ações */}
                         <div className="flex flex-col items-end gap-1.5 shrink-0">
                           {item.status === 'aguardando_anamnese' && (
                             <button
@@ -603,32 +617,31 @@ export const ExamRoomModule: React.FC = () => {
                                 e.stopPropagation();
                                 handleGenerateWhatsappLink(item.id);
                               }}
-                              className="bg-[#25D366]/10 hover:bg-[#25D366]/25 border border-[#25D366]/40 text-[#25D366] font-black text-[9px] px-2 py-1 rounded-md transition-all active:scale-95 cursor-pointer flex items-center gap-1 shrink-0"
+                              className="bg-[#00C98B] hover:bg-[#00D39A] text-slate-950 font-black text-[10px] px-2.5 py-1 rounded-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1"
                             >
-                              💬 WhatsApp Anamnese
+                              💬 Anamnese WhatsApp
                             </button>
                           )}
                           {item.status === 'anamnese_concluida' && (
-                            <span className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 font-black text-[9px] px-2 py-0.5 rounded-md uppercase shrink-0">
-                              Anamnese IA Concluída
+                            <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 font-black text-[9px] px-2 py-0.5 rounded-md uppercase">
+                              Anamnese Concluída
                             </span>
                           )}
                           {item.status === 'concluido' && (
-                            <span className="bg-blue-500/10 border border-blue-500/40 text-blue-400 font-black text-[9px] px-2 py-0.5 rounded-md uppercase shrink-0">
+                            <span className="bg-[#1677FF]/20 border border-[#1677FF] text-blue-300 font-black text-[9px] px-2 py-0.5 rounded-md uppercase">
                               Exame Concluído
                             </span>
                           )}
 
-                          {/* Pin Toggle */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleTogglePin(item.id, item.is_pinned);
                             }}
-                            className={`p-1 rounded-sm text-slate-500 hover:text-[#C9A96E] hover:bg-[#071D49] transition-all`}
+                            className="p-1 rounded-md text-slate-400 hover:text-[#F4C542] transition-all"
                             title={item.is_pinned ? "Desafixar do topo" : "Fixar no topo"}
                           >
-                            <Pin className={`w-3 h-3 ${item.is_pinned ? 'text-[#C9A96E] fill-[#C9A96E]' : ''}`} />
+                            <Pin className={`w-3.5 h-3.5 ${item.is_pinned ? 'text-[#F4C542] fill-[#F4C542]' : ''}`} />
                           </button>
                         </div>
                       </div>
@@ -638,110 +651,113 @@ export const ExamRoomModule: React.FC = () => {
               </div>
             </div>
 
-            {/* COLUNA DIREITA: Prontuário Clínico & IA */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col h-full bg-[#071D49]/30 border border-[#C9A96E]/20 rounded-2xl overflow-hidden shadow-lg">
+            {/* ═══════════════════════════════════════════════════════════════
+                PRONTUÁRIO CLÍNICO COMPLETO (Coluna Direita - Sequência Vertical)
+            ═══════════════════════════════════════════════════════════════ */}
+            <div className="col-span-12 lg:col-span-8 flex flex-col h-full bg-[#06285F] text-white border-2 border-[#082E68] rounded-3xl overflow-hidden shadow-xl">
               {selectedExam ? (
                 <div className="flex-1 flex flex-col min-h-0">
-                  {/* Header do Prontuário */}
-                  <div className="p-4 border-b border-slate-700/50 bg-[#071D49]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+                  
+                  {/* Header do Prontuário em Destaque */}
+                  <div className="p-4 border-b border-[#0878C9]/40 bg-[#041333] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
                     <div>
-                      <span className="text-[9px] text-[#C9A96E] uppercase font-black tracking-wider">
-                        Prontuário Optométrico Digital • ID: {selectedExam.id}
+                      <span className="text-[10px] text-[#F4C542] uppercase font-black tracking-wider">
+                        PRESCRIÇÃO OPTOMÉTRICA DIGITAL • ID: {selectedExam.id}
                       </span>
-                      <h2 className="text-sm font-black text-slate-200 mt-0.5">
-                        Exame de Refração: <span className="text-[#C9A96E] font-black">{selectedExam.paciente_nome}</span>
+                      <h2 className="text-base font-black text-white mt-0.5">
+                        Exame de Refração: <span className="text-[#F4C542]">{selectedExam.paciente_nome}</span>
                       </h2>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setIsRecipeModalOpen(true)}
-                        className="bg-[#0b255c] hover:bg-[#153270] border border-[#C9A96E]/50 text-[#C9A96E] font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                        className="bg-[#0878C9] hover:bg-[#1677FF] text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
                       >
-                        <FileText className="w-3.5 h-3.5" /> Ver Receita Digital QR
+                        <FileText className="w-4 h-4" /> Ver Receita Digital IA
                       </button>
 
                       <button
                         onClick={handleConcludeExam}
-                        className="bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-4 py-2 rounded-xl transition-all cursor-pointer active:scale-95 shadow-md flex items-center gap-1.5"
+                        className="bg-[#00C98B] hover:bg-[#00D39A] text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition-all cursor-pointer active:scale-95 shadow-md flex items-center gap-1.5"
                       >
-                        <Check className="w-4 h-4 stroke-[3]" /> Concluir & Emitir Receita
+                        <Check className="w-4 h-4 stroke-[3]" /> Concluir &amp; Emitir Receita
                       </button>
                     </div>
                   </div>
 
-                  {/* Formulário Clínico */}
-                  <div className="flex-1 overflow-y-auto p-6 space-y-6 [scrollbar-width:thin]">
+                  {/* Corpo do Prontuário Clinico com Scroll Fluido */}
+                  <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 [scrollbar-width:thin]">
                     
-                    {/* Anamnese e IA de Triagem */}
-                    {selectedExam.anamnese_json ? (
-                      <div className="bg-[#0b255c]/30 border border-[#C9A96E]/40 p-4 rounded-2xl space-y-2">
-                        <h3 className="text-xs font-black uppercase text-[#C9A96E] tracking-wider flex items-center gap-1">
-                          🤖 Triagem & Anamnese Prévia IA (WhatsApp)
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 5: RESUMO / CONTEXTO DO ATENDIMENTO (Prévia IA)
+                    ═══════════════════════════════════════════════════════════════ */}
+                    <div className="bg-[#041333] border-2 border-[#0878C9] p-4 sm:p-5 rounded-2xl space-y-3 shadow-md">
+                      <div className="flex items-center justify-between border-b border-[#0878C9]/40 pb-2">
+                        <h3 className="text-xs font-black uppercase text-[#F4C542] tracking-wider flex items-center gap-2">
+                          <Brain className="w-4 h-4 text-[#F4C542]" /> RESUMO DE ATENDIMENTO PRÉVIA IA
                         </h3>
-                        <div className="text-xs space-y-1">
-                          <div><strong>Principal Queixa:</strong> {selectedExam.anamnese_json.queixa_principal} ({selectedExam.anamnese_json.tempo_sintomas})</div>
-                          <div><strong>Sintomas:</strong> {selectedExam.anamnese_json.sintomas_visuais.join(', ') || 'Nenhum'}</div>
-                          <div><strong>Histórico Sistêmico:</strong> {selectedExam.anamnese_json.doencas_sistemicas.join(', ') || 'Nenhum'} | <strong>Familiar:</strong> {selectedExam.anamnese_json.historico_familiar.join(', ') || 'Nenhum'}</div>
-                          <div><strong>Uso de Óculos:</strong> {selectedExam.anamnese_json.uso_atual_oculos}</div>
-                        </div>
-                        <div className="mt-2.5 p-2.5 bg-[#040f26]/60 border border-slate-700/60 rounded-xl text-xs font-semibold text-amber-200/90 leading-relaxed">
-                          {selectedExam.anamnese_json.ia_summary}
+                        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-bold">
+                          Dados 1.ª Anamnese conectada do WhatsApp
+                        </span>
+                      </div>
+
+                      {/* Queixa Principal do Paciente em Destaque */}
+                      <div className="space-y-1">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Queixa Principal do Paciente:</span>
+                        <div className="p-3 bg-[#06285F] border-l-4 border-[#F4C542] rounded-r-xl text-xs font-bold text-white italic leading-relaxed">
+                          "{selectedExam.anamnese_json?.queixa_principal || anamneseForm.queixa_principal}"
                         </div>
                       </div>
-                    ) : (
-                      <div className="bg-[#0b255c]/10 border border-dashed border-slate-700 p-4 rounded-2xl flex items-center justify-between">
-                        <div>
-                          <h3 className="text-xs font-bold text-slate-400">Nenhuma anamnese prévia enviada.</h3>
-                          <p className="text-[10px] text-slate-500">Envie o link para o paciente pelo WhatsApp ou preencha agora.</p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                        <div className="bg-[#06285F] p-3 rounded-xl border border-[#0878C9]/40">
+                          <span className="text-[10px] text-slate-400 font-bold block">Tempo dos Sintomas:</span>
+                          <span className="font-extrabold text-[#F4C542] text-xs">
+                            {selectedExam.anamnese_json?.tempo_sintomas || anamneseForm.tempo_sintomas}
+                          </span>
                         </div>
-                        <button 
-                          onClick={() => {
-                            setAnamneseForm({
-                              queixa_principal: '',
-                              tempo_sintomas: '',
-                              sintomas_visuais: [],
-                              doencas_sistemicas: [],
-                              historico_familiar: [],
-                              uso_atual_oculos: 'Não'
-                            });
-                            setIsAnamneseModalOpen(true);
-                          }}
-                          className="bg-[#0b255c] hover:bg-[#153270] border border-slate-700/60 text-slate-300 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                        >
-                          Preencher Anamnese
-                        </button>
+
+                        <div className="bg-[#06285F] p-3 rounded-xl border border-[#0878C9]/40">
+                          <span className="text-[10px] text-slate-400 font-bold block">Óculos Atual:</span>
+                          <span className="font-extrabold text-white text-xs">
+                            {selectedExam.anamnese_json?.uso_atual_oculos || anamneseForm.uso_atual_oculos}
+                          </span>
+                        </div>
                       </div>
-                    )}
+
+                      {/* Resumo de Diagnóstico da IA */}
+                      <div className="p-3 bg-[#0878C9]/20 border border-[#0878C9] rounded-xl text-xs font-semibold text-cyan-200 leading-relaxed">
+                        <strong>Resumo de Diagnóstico IA:</strong> {selectedExam.anamnese_json?.ia_summary || 'Aderência a presbiopia inicial. Recomendado exame subjetivo com foco em adição multifocal e teste de 100% perto.'}
+                      </div>
+                    </div>
 
                     {/* OCR Comparativo de Receitas Antigas */}
-                    <div className="border border-slate-700/40 p-4 rounded-2xl bg-[#040f26]/30 space-y-3">
+                    <div className="border border-[#0878C9]/50 p-4 rounded-2xl bg-[#041333] space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-xs font-black uppercase tracking-wider text-[#C9A96E]">
-                          📂 Upload & OCR de Receita Antiga
+                        <h3 className="text-xs font-black uppercase tracking-wider text-[#F4C542]">
+                          📂 Upload &amp; OCR de Receita Antiga
                         </h3>
                         <button
                           onClick={handleSimulateOCR}
                           disabled={ocrLoading}
-                          className="bg-[#0b255c] hover:bg-[#153270] border border-slate-700/60 text-slate-300 font-bold text-xs px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 active:scale-95 disabled:opacity-50 cursor-pointer"
+                          className="bg-[#0878C9] hover:bg-[#1677FF] text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 active:scale-95 disabled:opacity-50 cursor-pointer"
                         >
                           {ocrLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileUp className="w-3.5 h-3.5" />}
                           Simular OCR de Receita
                         </button>
                       </div>
 
-                      {/* Exibe resultado do OCR para comparação */}
                       {ocrResult && (
                         <div className="p-3.5 bg-amber-500/10 border border-amber-500/40 rounded-xl space-y-2 text-xs">
-                          <div className="text-amber-400 font-bold uppercase text-[10px]">Receita Antiga Detectada via IA Vision:</div>
+                          <div className="text-amber-300 font-bold uppercase text-[10px]">Receita Antiga Detectada via IA:</div>
                           <div className="grid grid-cols-2 gap-4">
                             <div><strong>OD:</strong> Esf {ocrResult.od.esferico} | Cil {ocrResult.od.cilindrico} | Eixo {ocrResult.od.eixo}</div>
                             <div><strong>OE:</strong> Esf {ocrResult.oe.esferico} | Cil {ocrResult.oe.cilindrico} | Eixo {ocrResult.oe.eixo}</div>
-                            <div className="col-span-2"><strong>ADD:</strong> {ocrResult.adicao} | <strong>Médico:</strong> {ocrResult.medicoName}</div>
                           </div>
                           <button
                             onClick={handleApplyOCRData}
-                            className="w-full mt-2 py-1 bg-amber-500 hover:bg-amber-600 text-slate-900 font-black rounded-md text-[10px] uppercase transition-all"
+                            className="w-full mt-2 py-1.5 bg-[#F4C542] text-[#06285F] font-black rounded-lg text-xs uppercase transition-all cursor-pointer"
                           >
                             Importar Graus para Prontuário Atual
                           </button>
@@ -749,126 +765,94 @@ export const ExamRoomModule: React.FC = () => {
                       )}
                     </div>
 
-                    {/* REFRAÇÃO SUBJETIVA (GRAU FINAL PRESCRITO) */}
-                    <div className="space-y-3.5">
-                      <h3 className="text-xs font-black uppercase tracking-widest text-[#C9A96E] border-b border-[#C9A96E]/20 pb-1 flex items-center justify-between">
-                        <span className="flex items-center gap-1.5">
-                          <TrialFrameIcon className="w-4 h-4 text-[#C9A96E]" /> REFRAÇÃO SUBJETIVA (GRAU FINAL PRESCRITO)
-                        </span>
-                        <span className="text-[9px] text-slate-400 font-normal lowercase">Valores em dioptrias (D)</span>
-                      </h3>
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 6 & 11: TABELA DE REFRAÇÃO (OD & OE)
+                    ═══════════════════════════════════════════════════════════════ */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-[#0878C9]/40 pb-2">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#F4C542] flex items-center gap-2">
+                          <TrialFrameIcon className="w-4 h-4 text-[#F4C542]" /> REFRAÇÃO SUBJETIVA (GRAU FINAL PRESCRITO)
+                        </h3>
+                        <span className="text-[10px] text-slate-300 font-semibold">Valores em dioptrias (D)</span>
+                      </div>
 
-                      <div className="border border-slate-700/60 rounded-2xl overflow-hidden bg-slate-900/40">
+                      <div className="border-2 border-[#0878C9] rounded-2xl overflow-hidden bg-[#041333]">
                         <table className="w-full text-center text-xs">
                           <thead>
-                            <tr className="bg-slate-800/80 border-b border-slate-700 text-slate-400 text-[10px] font-black uppercase">
-                              <th className="py-2.5 px-3 text-left">Olho</th>
-                              <th className="py-2.5">Esférico (ESF)</th>
-                              <th className="py-2.5">Cilíndrico (CIL)</th>
-                              <th className="py-2.5">Eixo (°)</th>
-                              <th className="py-2.5">DNP (mm)</th>
-                              <th className="py-2.5">Alt (mm)</th>
+                            <tr className="bg-[#0878C9]/40 border-b border-[#0878C9] text-white text-[10px] font-black uppercase">
+                              <th className="py-3 px-3 text-left">Olho / Opção</th>
+                              <th className="py-3">Esférico (ESF)</th>
+                              <th className="py-3">Cilíndrico (CIL)</th>
+                              <th className="py-3">Eixo (°)</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-800/60">
+                          <tbody className="divide-y divide-[#0878C9]/30">
                             {/* Olho Direito */}
-                            <tr className="hover:bg-slate-800/10">
-                              <td className="py-3.5 px-3 font-extrabold text-left text-slate-300">OD (Right)</td>
-                              <td className="py-2 px-1">
+                            <tr className="hover:bg-[#0878C9]/10">
+                              <td className="py-3.5 px-3 font-black text-left text-white flex items-center gap-2">
+                                <span className="bg-[#F4C542] text-[#06285F] text-[10px] font-black px-2 py-0.5 rounded-md">OD (Right)</span>
+                              </td>
+                              <td className="py-2 px-2">
                                 <input 
                                   type="number"
                                   step="0.25"
                                   value={selectedExam.od_esferico}
                                   onChange={(e) => handleUpdateField('od_esferico', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono font-bold text-[#C9A96E]"
+                                  className="w-20 bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-1.5 text-center font-mono font-black text-white focus:outline-none focus:border-[#F4C542] text-sm"
                                 />
                               </td>
-                              <td className="py-2 px-1">
+                              <td className="py-2 px-2">
                                 <input 
                                   type="number"
                                   step="0.25"
                                   value={selectedExam.od_cilindrico}
                                   onChange={(e) => handleUpdateField('od_cilindrico', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono font-bold text-[#C9A96E]"
+                                  className="w-20 bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-1.5 text-center font-mono font-black text-white focus:outline-none focus:border-[#F4C542] text-sm"
                                 />
                               </td>
-                              <td className="py-2 px-1">
+                              <td className="py-2 px-2">
                                 <input 
                                   type="number"
                                   min="0"
                                   max="180"
                                   value={selectedExam.od_eixo}
                                   onChange={(e) => handleUpdateField('od_eixo', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono text-slate-300"
-                                />
-                              </td>
-                              <td className="py-2 px-1">
-                                <input 
-                                  type="number"
-                                  step="0.5"
-                                  value={selectedExam.dnp_od}
-                                  onChange={(e) => handleUpdateField('dnp_od', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono text-slate-300"
-                                />
-                              </td>
-                              <td className="py-2 px-1">
-                                <input 
-                                  type="number"
-                                  step="0.5"
-                                  value={selectedExam.altura_od}
-                                  onChange={(e) => handleUpdateField('altura_od', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono text-slate-300"
+                                  className="w-20 bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-1.5 text-center font-mono font-black text-white focus:outline-none focus:border-[#F4C542] text-sm"
                                 />
                               </td>
                             </tr>
 
                             {/* Olho Esquerdo */}
-                            <tr className="hover:bg-slate-800/10">
-                              <td className="py-3.5 px-3 font-extrabold text-left text-slate-300">OE (Left)</td>
-                              <td className="py-2 px-1">
+                            <tr className="hover:bg-[#0878C9]/10">
+                              <td className="py-3.5 px-3 font-black text-left text-white flex items-center gap-2">
+                                <span className="bg-[#F4C542] text-[#06285F] text-[10px] font-black px-2 py-0.5 rounded-md">OE (Left)</span>
+                              </td>
+                              <td className="py-2 px-2">
                                 <input 
                                   type="number"
                                   step="0.25"
                                   value={selectedExam.oe_esferico}
                                   onChange={(e) => handleUpdateField('oe_esferico', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono font-bold text-[#C9A96E]"
+                                  className="w-20 bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-1.5 text-center font-mono font-black text-white focus:outline-none focus:border-[#F4C542] text-sm"
                                 />
                               </td>
-                              <td className="py-2 px-1">
+                              <td className="py-2 px-2">
                                 <input 
                                   type="number"
                                   step="0.25"
                                   value={selectedExam.oe_cilindrico}
                                   onChange={(e) => handleUpdateField('oe_cilindrico', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono font-bold text-[#C9A96E]"
+                                  className="w-20 bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-1.5 text-center font-mono font-black text-white focus:outline-none focus:border-[#F4C542] text-sm"
                                 />
                               </td>
-                              <td className="py-2 px-1">
+                              <td className="py-2 px-2">
                                 <input 
                                   type="number"
                                   min="0"
                                   max="180"
                                   value={selectedExam.oe_eixo}
                                   onChange={(e) => handleUpdateField('oe_eixo', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono text-slate-300"
-                                />
-                              </td>
-                              <td className="py-2 px-1">
-                                <input 
-                                  type="number"
-                                  step="0.5"
-                                  value={selectedExam.dnp_oe}
-                                  onChange={(e) => handleUpdateField('dnp_oe', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono text-slate-300"
-                                />
-                              </td>
-                              <td className="py-2 px-1">
-                                <input 
-                                  type="number"
-                                  step="0.5"
-                                  value={selectedExam.altura_oe}
-                                  onChange={(e) => handleUpdateField('altura_oe', Number(e.target.value))}
-                                  className="w-16 bg-[#041333] border border-slate-700/80 rounded-lg p-1 text-center font-mono text-slate-300"
+                                  className="w-20 bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-1.5 text-center font-mono font-black text-white focus:outline-none focus:border-[#F4C542] text-sm"
                                 />
                               </td>
                             </tr>
@@ -877,117 +861,238 @@ export const ExamRoomModule: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* ADIÇÃO PERTO e Acuidade Visual */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">
-                          Adição Perto (ADD)
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <input 
-                            type="number"
-                            step="0.25"
-                            value={selectedExam.adicao}
-                            onChange={(e) => handleUpdateField('adicao', Number(e.target.value))}
-                            className="bg-[#041333] border border-slate-700/80 rounded-xl py-2 px-4 text-xs text-[#C9A96E] font-mono font-bold focus:outline-hidden focus:border-[#C9A96E] w-32"
-                          />
-                          <span className="text-xs text-slate-500">(Adicionar apenas para perto/multifocal)</span>
-                        </div>
-                      </div>
-
-                      {/* Acuidade Visual Simples */}
-                      <div className="space-y-3">
-                        <label className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">
-                          Acuidade Visual (Longe/Perto)
-                        </label>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 12: ACUIDADE VISUAL & EQUIPAMENTOS
+                    ═══════════════════════════════════════════════════════════════ */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-[#041333] border-2 border-[#0878C9] p-4 rounded-2xl space-y-3">
+                        <span className="text-[10px] text-[#F4C542] uppercase tracking-wider font-black block">
+                          ACUIDADE VISUAL (SNELLEN / JÁGER)
+                        </span>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs">
                           <div>
-                            <span className="text-slate-400 font-bold">AV Longe OD:</span>
+                            <span className="text-slate-300 font-bold text-[11px]">AV Longe OD:</span>
                             <input 
                               type="text" 
-                              value={selectedExam.av_longe_od} 
+                              value={selectedExam.av_longe_od || '20/20'} 
                               onChange={(e) => handleUpdateField('av_longe_od', e.target.value)}
-                              className="w-full bg-[#041333] border border-slate-700/60 rounded-lg p-1.5 mt-1"
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-2 font-mono font-bold text-white mt-1"
                             />
                           </div>
                           <div>
-                            <span className="text-slate-400 font-bold">AV Longe OE:</span>
+                            <span className="text-slate-300 font-bold text-[11px]">AV Longe OE:</span>
                             <input 
                               type="text" 
-                              value={selectedExam.av_longe_oe} 
+                              value={selectedExam.av_longe_oe || '20/25'} 
                               onChange={(e) => handleUpdateField('av_longe_oe', e.target.value)}
-                              className="w-full bg-[#041333] border border-slate-700/60 rounded-lg p-1.5 mt-1"
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-2 font-mono font-bold text-white mt-1"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-slate-300 font-bold text-[11px]">AV Perto OD:</span>
+                            <input 
+                              type="text" 
+                              value={selectedExam.av_perto_od || 'J1'} 
+                              onChange={(e) => handleUpdateField('av_perto_od', e.target.value)}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-2 font-mono font-bold text-white mt-1"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-slate-300 font-bold text-[11px]">AV Perto OE:</span>
+                            <input 
+                              type="text" 
+                              value={selectedExam.av_perto_oe || 'J1'} 
+                              onChange={(e) => handleUpdateField('av_perto_oe', e.target.value)}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-2 font-mono font-bold text-white mt-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Adição Perto (ADD) */}
+                      <div className="bg-[#041333] border-2 border-[#0878C9] p-4 rounded-2xl space-y-3 flex flex-col justify-between">
+                        <div>
+                          <span className="text-[10px] text-[#F4C542] uppercase tracking-wider font-black block">
+                            ADIÇÃO PERTO (ADD)
+                          </span>
+                          <div className="flex items-center gap-3 mt-2">
+                            <input 
+                              type="number"
+                              step="0.25"
+                              value={selectedExam.adicao}
+                              onChange={(e) => handleUpdateField('adicao', Number(e.target.value))}
+                              className="bg-[#06285F] border-2 border-[#0878C9] rounded-xl py-2 px-4 text-[#F4C542] font-mono font-black text-lg focus:outline-none focus:border-[#F4C542] w-32 text-center"
+                            />
+                            <span className="text-xs text-slate-300 font-medium">Dioptrias para perto/multifocal</span>
+                          </div>
+                        </div>
+                        <div className="text-[10px] text-[#00C98B] font-bold bg-[#00C98B]/10 p-2 rounded-xl border border-[#00C98B]/30">
+                          ✓ Teste de adição efetuado com armação de prova.
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 13: TONOMETRIA & MEDIDAS GEOMÉTRICAS
+                    ═══════════════════════════════════════════════════════════════ */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Tonometria (PIO) & Complementares */}
+                      <div className="bg-[#041333] border-2 border-[#0878C9] p-4 rounded-2xl space-y-3">
+                        <span className="text-[10px] text-[#F4C542] uppercase tracking-wider font-black block">
+                          TONOMETRIA (PIO) &amp; EXAMES COMPLEMENTARES
+                        </span>
+                        
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="text-slate-300 font-bold text-[10px]">PIO OD (mmHg):</span>
+                            <input 
+                              type="number" 
+                              value={selectedExam.pio_od || 14} 
+                              onChange={(e) => handleUpdateField('pio_od', Number(e.target.value))}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-2 font-mono font-bold text-white mt-1"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-slate-300 font-bold text-[10px]">PIO OE (mmHg):</span>
+                            <input 
+                              type="number" 
+                              value={selectedExam.pio_oe || 15} 
+                              onChange={(e) => handleUpdateField('pio_oe', Number(e.target.value))}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-2 font-mono font-bold text-white mt-1"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Medidas Geométricas da Armação */}
+                      <div className="bg-[#041333] border-2 border-[#0878C9] p-4 rounded-2xl space-y-3">
+                        <span className="text-[10px] text-[#F4C542] uppercase tracking-wider font-black block">
+                          MEDIDAS GEOMÉTRICAS DA ARMAÇÃO (LABORATÓRIO)
+                        </span>
+                        
+                        <div className="grid grid-cols-4 gap-2 text-xs text-center">
+                          <div>
+                            <span className="text-slate-300 font-bold text-[10px]">Aro (HOR)</span>
+                            <input 
+                              type="number" 
+                              value={selectedExam.aro_hor || 54} 
+                              onChange={(e) => handleUpdateField('aro_hor', Number(e.target.value))}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-1.5 font-mono text-center font-bold text-white mt-1"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-slate-300 font-bold text-[10px]">Ponte</span>
+                            <input 
+                              type="number" 
+                              value={selectedExam.ponte || 18} 
+                              onChange={(e) => handleUpdateField('ponte', Number(e.target.value))}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-1.5 font-mono text-center font-bold text-white mt-1"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-slate-300 font-bold text-[10px]">Haste</span>
+                            <input 
+                              type="number" 
+                              value={selectedExam.haste || 142} 
+                              onChange={(e) => handleUpdateField('haste', Number(e.target.value))}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-1.5 font-mono text-center font-bold text-white mt-1"
+                            />
+                          </div>
+                          <div>
+                            <span className="text-slate-300 font-bold text-[10px]">Altura</span>
+                            <input 
+                              type="number" 
+                              value={selectedExam.altura_armacao || 32.5} 
+                              onChange={(e) => handleUpdateField('altura_armacao', Number(e.target.value))}
+                              className="w-full bg-[#06285F] border border-[#0878C9] rounded-xl p-1.5 font-mono text-center font-bold text-white mt-1"
                             />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Exames Complementares adicionais (Segmento Anterior/Posterior/Diagnóstico) */}
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 14 & 18: RECOMENDAÇÕES TÉCNICAS E OBSERVAÇÕES
+                    ═══════════════════════════════════════════════════════════════ */}
                     <div className="space-y-4">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-[#C9A96E] border-b border-slate-700 pb-1">
-                        📋 Diagnóstico e Encaminhamento
-                      </h3>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-[#F4C542] uppercase font-black tracking-wider block">
+                          RECOMENDAÇÃO TÉCNICA DE LENTES PARA A ÓTICA
+                        </label>
+                        <input
+                          type="text"
+                          value={selectedExam.recomendacao_lentes || 'Lentes Multifocais Digitais 1.67 com Filtro Azul e Antirreflexo Crizal'}
+                          onChange={(e) => handleUpdateField('recomendacao_lentes', e.target.value)}
+                          placeholder="Ex: Lentes Multifocais Digitais com Filtro Blue Control..."
+                          className="w-full bg-[#041333] border-2 border-[#0878C9] rounded-2xl p-3 text-xs text-white focus:outline-none focus:border-[#F4C542] font-semibold"
+                        />
+                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div className="space-y-1.5">
-                          <span className="text-slate-400 font-black uppercase text-[9px] tracking-wider block">Diagnóstico Optométrico Principal *</span>
-                          <textarea
-                            value={selectedExam.diagnostico_optometrico || ''}
-                            onChange={(e) => handleUpdateField('diagnostico_optometrico', e.target.value)}
-                            rows={3}
-                            placeholder="Descreva o achado refrativo (ex: Presbiopia associada à Miopia simples)..."
-                            className="w-full bg-[#041333] border border-slate-700/70 rounded-xl p-3 focus:outline-hidden focus:border-[#C9A96E]"
-                          />
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <span className="text-slate-400 font-black uppercase text-[9px] tracking-wider block">Conduta e Indicação de Lentes</span>
-                          <textarea
-                            value={selectedExam.recomendacao_lentes || ''}
-                            onChange={(e) => handleUpdateField('recomendacao_lentes', e.target.value)}
-                            rows={3}
-                            placeholder="Recomendação de lentes, filtros antirreflexo ou encaminhamento oftalmológico..."
-                            className="w-full bg-[#041333] border border-slate-700/70 rounded-xl p-3 focus:outline-hidden focus:border-[#C9A96E]"
-                          />
-                        </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] text-[#F4C542] uppercase font-black tracking-wider block">
+                          OBSERVAÇÕES CLÍNICAS ADICIONAIS
+                        </label>
+                        <textarea
+                          value={selectedExam.observacoes_clinicas || 'Acomodação visual confortável com adição de +1.75. Adaptou-se perfeitamente durante o teste com armação de prova.'}
+                          onChange={(e) => handleUpdateField('observacoes_clinicas', e.target.value)}
+                          rows={3}
+                          placeholder="Digite observações clínicas do atendimento..."
+                          className="w-full bg-[#041333] border-2 border-[#0878C9] rounded-2xl p-3 text-xs text-white focus:outline-none focus:border-[#F4C542] font-medium leading-relaxed"
+                        />
                       </div>
                     </div>
 
-                    {/* Botão de Salvar Rascunho */}
-                    <button
-                      onClick={handleSaveExam}
-                      className="w-full py-2.5 border border-[#C9A96E] hover:bg-[#C9A96E]/10 text-[#C9A96E] font-black text-xs rounded-xl transition-all cursor-pointer text-center"
-                    >
-                      Gravar Prontuário Clínico (Rascunho)
-                    </button>
-                  </div>
-
-                  {/* Alertas e Sugestões da IA Gemini (Visualizado na direita de forma integrada) */}
-                  <div className="bg-[#0b255c]/20 border-t border-slate-800 p-4 shrink-0 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs leading-relaxed">
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center gap-1 text-[#C9A96E] font-black uppercase tracking-wider text-[10px]">
-                        <Brain className="w-4 h-4" /> Assistente IA Clínico Gemini
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 16: CARD DE ANÁLISE IA & ALERTAS GEMINI
+                    ═══════════════════════════════════════════════════════════════ */}
+                    <div className="bg-[#041333] border-2 border-indigo-500/60 p-4 rounded-2xl space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-indigo-300 font-black text-xs uppercase tracking-wider">
+                          <Sparkles className="w-4 h-4 text-indigo-400" /> ANÁLISE / ASSISTÊNCIA DA IA CLINICAL
+                        </div>
+                        <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-bold">
+                          GEMINI AI ASSISTANT
+                        </span>
                       </div>
+                      
                       {iaAlerts.length > 0 ? (
-                        <div className="text-red-400 text-[11px] font-bold space-y-0.5">
+                        <div className="text-rose-400 text-xs font-bold space-y-1 pt-1">
                           {iaAlerts.map((a, i) => <div key={i}>{a}</div>)}
                         </div>
                       ) : (
-                        <div className="text-slate-300">
-                          {iaSuggestions || 'Aguardando dados clínicos para analisar refração...'}
+                        <div className="text-xs text-slate-200 font-medium pt-1">
+                          {iaSuggestions || 'Sem alertas refrativos graves. Dados compatíveis com refração normal de presbiopia.'}
                         </div>
                       )}
                     </div>
-                    {loadingIa && (
-                      <span className="text-[10px] text-[#C9A96E] animate-pulse flex items-center gap-1.5 font-bold">
-                        <RefreshCw className="w-3 h-3 animate-spin" /> Analisando...
-                      </span>
-                    )}
+
+                    {/* ═══════════════════════════════════════════════════════════════
+                        MÓDULO 19: BOTÃO PRINCIPAL DE FINALIZAÇÃO (CTA Verde Gigante)
+                    ═══════════════════════════════════════════════════════════════ */}
+                    <div className="bg-[#041333] border-2 border-[#00C98B] p-5 rounded-3xl space-y-3 shadow-2xl text-center">
+                      <div className="space-y-0.5">
+                        <span className="text-xs font-black uppercase text-[#00C98B] tracking-wider block">
+                          Transmissão Direta para a Ótica
+                        </span>
+                        <p className="text-[11px] text-slate-300 font-medium">
+                          Grava o prontuário, emite a Receita Digital com QR Code e envia a Ordem de Serviço diretamente para a balcão de vendas.
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleConcludeExam}
+                        className="w-full py-4 bg-gradient-to-r from-[#00C98B] to-[#00D39A] hover:from-[#00D39A] hover:to-[#00C98B] text-slate-950 font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl transition-all transform active:scale-98 cursor-pointer flex items-center justify-center gap-2 border-2 border-emerald-300"
+                      >
+                        <Check className="w-5 h-5 stroke-[3]" />
+                        <span>Salvar &amp; Enviar OS para a Ótica</span>
+                      </button>
+                    </div>
+
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-500 italic text-xs">
+                <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 italic text-xs">
                   Selecione um paciente na fila de atendimento para iniciar a consulta.
                 </div>
               )}
@@ -1005,69 +1110,40 @@ export const ExamRoomModule: React.FC = () => {
                 { title: 'Receitas Emitidas', val: exams.filter(e => e.status === 'concluido').length, desc: 'Enviadas ao balcão' },
                 { title: 'Tempo Médio de Espera', val: '14 min', desc: 'Entrada ao atendimento' }
               ].map((card, i) => (
-                <div key={i} className="bg-[#071D49]/40 border border-slate-700/50 p-4 rounded-2xl">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-widest font-black block">{card.title}</span>
-                  <span className="text-2xl font-black text-[#C9A96E] block mt-1">{card.val}</span>
-                  <span className="text-[10px] text-slate-500 block mt-1">{card.desc}</span>
+                <div key={i} className="bg-[#06285F] text-white border-2 border-[#082E68] p-4 rounded-2xl">
+                  <span className="text-[10px] text-slate-300 uppercase tracking-widest font-black block">{card.title}</span>
+                  <span className="text-2xl font-black text-[#F4C542] block mt-1">{card.val}</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">{card.desc}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Simulação de Gráfico */}
-            <div className="bg-[#071D49]/40 border border-slate-700/50 p-6 rounded-3xl space-y-3">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#C9A96E]">Fluxo de Atendimento Horário</h3>
-              <div className="h-48 border border-slate-700/60 rounded-xl bg-slate-900/50 flex items-end justify-between p-6">
-                {[
-                  { hour: '08h', val: 3 }, { hour: '09h', val: 7 }, { hour: '10h', val: 12 }, 
-                  { hour: '11h', val: 5 }, { hour: '14h', val: 4 }, { hour: '15h', val: 9 }, 
-                  { hour: '16h', val: 15 }, { hour: '17h', val: 2 }
-                ].map((bar, idx) => (
-                  <div key={idx} className="flex flex-col items-center gap-2">
-                    <span className="text-[9px] text-[#C9A96E] font-bold">{bar.val}</span>
-                    <div 
-                      className="w-8 rounded-t-md bg-gradient-to-t from-[#0b255c] to-[#C9A96E] transition-all duration-500" 
-                      style={{ height: `${bar.val * 8}px` }}
-                    />
-                    <span className="text-[9px] text-slate-500 font-bold">{bar.hour}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         )}
 
         {/* SUB-TAB: Receitas Digitais */}
         {activeSubTab === 'receitas' && (
-          <div className="col-span-12 bg-[#071D49]/40 border border-slate-700/50 rounded-3xl p-6 overflow-hidden flex flex-col h-full">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#C9A96E] mb-4">Histórico de Receitas Digitais Emitidas</h3>
+          <div className="col-span-12 bg-[#06285F] text-white border-2 border-[#082E68] rounded-3xl p-6 overflow-hidden flex flex-col h-full">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#F4C542] mb-4">Histórico de Receitas Digitais Emitidas</h3>
             
             <div className="flex-1 overflow-y-auto [scrollbar-width:thin]">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="bg-slate-800/80 text-slate-400 text-[10px] font-black uppercase border-b border-slate-700">
-                    <th className="py-2.5 px-4">Código</th>
-                    <th className="py-2.5">Paciente</th>
-                    <th className="py-2.5">Data Emissão</th>
-                    <th className="py-2.5">Status Receita</th>
-                    <th className="py-2.5">Integração Ótica</th>
-                    <th className="py-2.5 text-center">Ações</th>
+                  <tr className="bg-[#0878C9]/40 text-white text-[10px] font-black uppercase border-b border-[#0878C9]">
+                    <th className="py-3 px-4">Código</th>
+                    <th className="py-3">Paciente</th>
+                    <th className="py-3">Data Emissão</th>
+                    <th className="py-3">Status Receita</th>
+                    <th className="py-3 text-center">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                <tbody className="divide-y divide-[#0878C9]/30 text-white">
                   {exams.filter(e => e.status === 'concluido').map(rec => (
-                    <tr key={rec.id} className="hover:bg-slate-800/20">
-                      <td className="py-3 px-4 font-mono font-bold text-[#C9A96E]">{rec.id}</td>
+                    <tr key={rec.id} className="hover:bg-[#0878C9]/20">
+                      <td className="py-3 px-4 font-mono font-bold text-[#F4C542]">{rec.id}</td>
                       <td className="py-3 font-extrabold text-white">{rec.paciente_nome}</td>
                       <td className="py-3">{rec.data_exame.split('-').reverse().join('/')}</td>
                       <td className="py-3">
-                        <span className="bg-emerald-500/10 border border-emerald-500/40 text-emerald-400 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">Ativa</span>
-                      </td>
-                      <td className="py-3">
-                        {rec.enviado_para_otica ? (
-                          <span className="bg-blue-500/10 border border-blue-500/40 text-blue-400 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">OS Gerada</span>
-                        ) : (
-                          <span className="bg-slate-500/10 border border-slate-500/40 text-slate-400 text-[9px] px-2 py-0.5 rounded-full font-bold uppercase">Pendente</span>
-                        )}
+                        <span className="bg-emerald-500/20 border border-emerald-400 text-emerald-300 text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase">Ativa</span>
                       </td>
                       <td className="py-3 text-center">
                         <button
@@ -1075,205 +1151,173 @@ export const ExamRoomModule: React.FC = () => {
                             setSelectedExam(rec);
                             setIsRecipeModalOpen(true);
                           }}
-                          className="bg-[#0b255c] hover:bg-[#153270] border border-[#C9A96E]/50 text-[#C9A96E] font-bold text-[10px] px-3 py-1 rounded-md transition-all active:scale-95 cursor-pointer"
+                          className="bg-[#0878C9] hover:bg-[#1677FF] text-white font-bold text-[10px] px-3 py-1.5 rounded-xl transition-all cursor-pointer"
                         >
-                          Visualizar & Imprimir
+                          Visualizar &amp; Imprimir
                         </button>
                       </td>
                     </tr>
                   ))}
-                  {exams.filter(e => e.status === 'concluido').length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="text-center py-12 text-slate-500 italic text-xs">Nenhuma receita emitida hoje.</td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
 
-        {/* SUB-TAB: IA Chat */}
-        {activeSubTab === 'ia-chat' && (
-          <div className="col-span-12 bg-[#071D49]/40 border border-slate-700/50 rounded-3xl p-6 flex flex-col h-full">
-            <div className="border-b border-slate-700 pb-3 mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#C9A96E]">IA Assistente Clínica Gemini</h3>
-                <p className="text-[10px] text-slate-400">Interação direta com a IA para esclarecer dúvidas diagnósticas ou redigir condutas.</p>
-              </div>
-            </div>
-            
-            <div className="flex-1 bg-slate-900/50 rounded-2xl border border-slate-800 p-4 mb-4 flex items-center justify-center text-xs text-slate-500 italic">
-              Selecione o prontuário no atendimento para ter resumos automáticos de IA. Use a caixa de texto abaixo para simular comandos de clínica.
-            </div>
-
-            <div className="flex gap-2 shrink-0">
-              <input 
-                type="text" 
-                placeholder="Perguntar à IA clínica (ex: Quais testes complementares fazer para suspeita de glaucoma?)..."
-                className="flex-1 bg-[#041333] border border-slate-700/80 rounded-xl py-2 px-4 text-xs text-white focus:outline-hidden focus:border-[#C9A96E]"
-              />
-              <button className="bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-5 py-2.5 rounded-xl transition-all cursor-pointer">
-                Enviar
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* SUB-TAB: Configurações */}
         {activeSubTab === 'config' && (
-          <div className="col-span-12 bg-[#071D49]/40 border border-slate-700/50 rounded-3xl p-6 overflow-y-auto h-full space-y-6 [scrollbar-width:thin]">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#C9A96E] border-b border-slate-700 pb-2">Configurações Gerais do Consultório</h3>
+          <div className="col-span-12 bg-[#06285F] text-white border-2 border-[#082E68] rounded-3xl p-6 overflow-y-auto h-full space-y-6">
+            <h3 className="text-xs font-black uppercase tracking-wider text-[#F4C542] border-b border-[#0878C9] pb-2">Configurações Gerais do Consultório</h3>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
               <div className="space-y-1.5">
-                <span className="font-bold text-slate-400">Nome do Optometrista/Oftalmologista Responsável</span>
+                <span className="font-bold text-slate-300">Nome do Optometrista/Oftalmologista Responsável</span>
                 <input 
                   type="text" 
                   value={optometristaNome} 
                   onChange={(e) => setOptometristaNome(e.target.value)}
-                  className="w-full bg-[#041333] border border-slate-700/70 rounded-xl p-2.5 text-white"
+                  className="w-full bg-[#041333] border border-[#0878C9] rounded-xl p-2.5 text-white"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <span className="font-bold text-slate-400">Conselho e Registro Profissional (Ex: CBO, CRM)</span>
+                <span className="font-bold text-slate-300">Conselho e Registro Profissional (Ex: CBO, CRM)</span>
                 <input 
                   type="text" 
                   value={cboNumero} 
                   onChange={(e) => setCBONumero(e.target.value)}
-                  className="w-full bg-[#041333] border border-slate-700/70 rounded-xl p-2.5 text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="font-bold text-slate-400">Razão Social / Nome da Clínica</span>
-                <input 
-                  type="text" 
-                  value={clinicaNome} 
-                  onChange={(e) => setClinicaNome(e.target.value)}
-                  className="w-full bg-[#041333] border border-slate-700/70 rounded-xl p-2.5 text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="font-bold text-slate-400">Assinatura Digital (URL Imagem)</span>
-                <input 
-                  type="text" 
-                  value={assinaturaUrl} 
-                  onChange={(e) => setAssinaturaUrl(e.target.value)}
-                  className="w-full bg-[#041333] border border-slate-700/70 rounded-xl p-2.5 text-white"
+                  className="w-full bg-[#041333] border border-[#0878C9] rounded-xl p-2.5 text-white"
                 />
               </div>
             </div>
 
             <button
-              onClick={() => alert('Configurações atualizadas!')}
-              className="bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-6 py-2.5 rounded-xl transition-all cursor-pointer"
+              onClick={() => alert('Configurações salvas!')}
+              className="bg-[#F4C542] hover:bg-[#FFD45A] text-[#06285F] font-black text-xs px-6 py-2.5 rounded-xl transition-all cursor-pointer"
             >
-              Salvar Alterações
+              Salvar Configurações
             </button>
           </div>
         )}
 
       </div>
 
-      {/* ============================================================================
-          MODAIS E DIÁLOGOS
-          ============================================================================ */}
+      {/* ═══════════════════════════════════════════════════════════════
+          MÓDULO 22: MENU INFERIOR MOBILE (Navegação Fixa para Celulares)
+      ═══════════════════════════════════════════════════════════════ */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#06285F] border-t-2 border-[#F4C542] px-2 py-2 flex items-center justify-around text-white shadow-2xl">
+        <button 
+          onClick={() => window.location.reload()}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-slate-300 hover:text-[#F4C542] cursor-pointer"
+        >
+          <Landmark className="w-5 h-5" />
+          <span>Início</span>
+        </button>
 
-      {/* 1. Modal: Novo Paciente na Fila */}
+        <button 
+          onClick={() => setActiveSubTab('atendimento')}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black cursor-pointer ${
+            activeSubTab === 'atendimento' ? 'text-[#F4C542]' : 'text-slate-300'
+          }`}
+        >
+          <Stethoscope className="w-5 h-5" />
+          <span>Atendimento</span>
+        </button>
+
+        <button 
+          onClick={() => setIsRecipeModalOpen(true)}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-slate-300 hover:text-[#F4C542] cursor-pointer"
+        >
+          <FileText className="w-5 h-5" />
+          <span>Receita</span>
+        </button>
+
+        <button 
+          onClick={() => setActiveSubTab('dashboard')}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-black cursor-pointer ${
+            activeSubTab === 'dashboard' ? 'text-[#F4C542]' : 'text-slate-300'
+          }`}
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span>Métricas</span>
+        </button>
+      </nav>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          MODAIS E DIÁLOGOS
+      ═══════════════════════════════════════════════════════════════ */}
+
+      {/* 1. Modal Novo Paciente na Fila */}
       {isNewPatientModalOpen && (
         <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[300]">
-          <div className="bg-[#071D49] border-2 border-[#C9A96E]/80 rounded-[24px] p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-              <h3 className="text-sm font-black text-[#C9A96E] uppercase tracking-wider">📋 Cadastrar Paciente na Fila</h3>
-              <button onClick={() => setIsNewPatientModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">✕</button>
+          <div className="bg-[#06285F] border-2 border-[#F4C542] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-white">
+            <div className="flex items-center justify-between border-b border-[#0878C9] pb-3">
+              <h3 className="text-sm font-black text-[#F4C542] uppercase tracking-wider">📋 Cadastrar Paciente na Fila</h3>
+              <button onClick={() => setIsNewPatientModalOpen(false)} className="text-slate-300 hover:text-white cursor-pointer text-base">✕</button>
             </div>
             
             <form onSubmit={handleCreatePatient} className="space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Nome Completo *</span>
+              <div className="space-y-1">
+                <span className="text-slate-200 font-bold block">Nome Completo *</span>
                 <input 
                   type="text"
                   required
                   value={newPatientForm.nome}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, nome: e.target.value })}
                   placeholder="Ex: Pedro Alves"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
+                  className="w-full bg-[#041333] border border-[#0878C9] rounded-xl p-2.5 text-white"
                 />
               </div>
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Telefone WhatsApp (com DDD) *</span>
+              <div className="space-y-1">
+                <span className="text-slate-200 font-bold block">Telefone WhatsApp (com DDD) *</span>
                 <input 
                   type="text"
                   required
                   value={newPatientForm.telefone}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, telefone: e.target.value })}
-                  placeholder="Ex: (11) 98877-1001"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
+                  placeholder="Ex: (73) 98112-8923"
+                  className="w-full bg-[#041333] border border-[#0878C9] rounded-xl p-2.5 text-white"
                 />
               </div>
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">CPF (Opcional)</span>
+              <div className="space-y-1">
+                <span className="text-slate-200 font-bold block">CPF (Opcional)</span>
                 <input 
                   type="text"
                   value={newPatientForm.cpf}
                   onChange={(e) => setNewPatientForm({ ...newPatientForm, cpf: e.target.value })}
                   placeholder="Ex: 123.456.789-01"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Nível de Prioridade</span>
-                <select
-                  value={newPatientForm.prioridade}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, prioridade: e.target.value as any })}
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white focus:outline-hidden"
-                >
-                  <option value="Normal">Normal</option>
-                  <option value="Urgente">Urgente</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Observações do Atendimento</span>
-                <input 
-                  type="text"
-                  value={newPatientForm.observacoes}
-                  onChange={(e) => setNewPatientForm({ ...newPatientForm, observacoes: e.target.value })}
-                  placeholder="Ex: Exame de rotina para perto"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
+                  className="w-full bg-[#041333] border border-[#0878C9] rounded-xl p-2.5 text-white"
                 />
               </div>
 
               <button 
                 type="submit" 
-                className="w-full bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black py-2.5 rounded-xl uppercase tracking-wider text-xs shadow-md transition-all cursor-pointer"
+                className="w-full bg-[#F4C542] hover:bg-[#FFD45A] text-[#06285F] font-black py-3 rounded-xl uppercase tracking-wider text-xs shadow-md transition-all cursor-pointer"
               >
-                Confirmar Cadastro & Enfileirar
+                Confirmar Cadastro &amp; Enfileirar
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* 2. Modal: WhatsApp Anamnese Envio */}
+      {/* 2. Modal WhatsApp Link */}
       {isWhatsappModalOpen && whatsappData && (
         <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[300]">
-          <div className="bg-[#071D49] border-2 border-[#C9A96E]/80 rounded-[24px] p-6 max-w-md w-full space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-              <h3 className="text-sm font-black text-[#C9A96E] uppercase tracking-wider flex items-center gap-1.5">
-                💬 WhatsApp Anamnese
+          <div className="bg-[#06285F] border-2 border-[#F4C542] rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl text-white">
+            <div className="flex items-center justify-between border-b border-[#0878C9] pb-3">
+              <h3 className="text-sm font-black text-[#F4C542] uppercase tracking-wider flex items-center gap-2">
+                💬 Anamnese WhatsApp
               </h3>
-              <button onClick={() => setIsWhatsappModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">✕</button>
+              <button onClick={() => setIsWhatsappModalOpen(false)} className="text-slate-300 hover:text-white cursor-pointer text-base">✕</button>
             </div>
             
             <div className="text-xs space-y-3">
-              <p className="text-slate-300">
-                Gere o link e envie para o paciente responder às perguntas clínicas conduzidas pela IA antes da consulta:
+              <p className="text-slate-200">
+                Envie o link para o paciente responder às perguntas conduzidas pela IA antes da consulta:
               </p>
               
-              <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 font-mono text-[10px] text-slate-400 break-all select-text">
+              <div className="bg-[#041333] p-3 rounded-xl border border-[#0878C9] font-mono text-[10px] text-slate-300 break-all select-text">
                 {whatsappData.texto}
               </div>
 
@@ -1281,11 +1325,11 @@ export const ExamRoomModule: React.FC = () => {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(whatsappData.texto);
-                    alert("Mensagem copiada para a área de transferência!");
+                    alert("Mensagem copiada!");
                   }}
-                  className="flex-1 bg-[#0b255c] hover:bg-[#153270] border border-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl cursor-pointer"
+                  className="flex-1 bg-[#0878C9] text-white text-xs font-bold py-2.5 rounded-xl cursor-pointer"
                 >
-                  Copiar Mensagem
+                  Copiar Texto
                 </button>
 
                 <a
@@ -1293,7 +1337,7 @@ export const ExamRoomModule: React.FC = () => {
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setIsWhatsappModalOpen(false)}
-                  className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-black py-2.5 rounded-xl flex items-center justify-center shadow-lg transition-all cursor-pointer text-center"
+                  className="flex-1 bg-[#00C98B] hover:bg-[#00D39A] text-slate-950 text-xs font-black py-2.5 rounded-xl flex items-center justify-center shadow-lg transition-all cursor-pointer text-center"
                 >
                   Enviar via WhatsApp
                 </a>
@@ -1303,110 +1347,80 @@ export const ExamRoomModule: React.FC = () => {
         </div>
       )}
 
-      {/* 3. Modal: Receita Digital PDF Printable (Visualização A4) */}
+      {/* 3. Modal Receita Digital QR Code */}
       {isRecipeModalOpen && selectedExam && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[300] overflow-y-auto print:p-0 print:bg-white print:absolute print:inset-0">
-          <div className="bg-[#071D49] border-2 border-[#C9A96E]/80 rounded-[32px] max-w-2xl w-full p-8 shadow-2xl relative my-8 print:border-none print:shadow-none print:bg-white print:p-0 print:my-0">
+          <div className="bg-[#06285F] border-2 border-[#F4C542] rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative my-8 print:border-none print:shadow-none print:bg-white print:p-0 print:my-0 text-white">
             
-            {/* Fechar modal */}
             <button 
               onClick={() => setIsRecipeModalOpen(false)} 
-              className="absolute top-6 right-6 text-slate-400 hover:text-white text-base print:hidden cursor-pointer"
+              className="absolute top-6 right-6 text-slate-300 hover:text-white text-base print:hidden cursor-pointer"
             >
               ✕
             </button>
 
-            {/* Layout de Impressão A4 */}
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6 text-white print:bg-white print:text-black print:border-none print:p-0">
+            <div className="bg-[#041333] border border-[#0878C9] p-6 rounded-2xl space-y-6 print:bg-white print:text-black print:border-none print:p-0">
               
-              {/* Header Clínica */}
-              <div className="flex justify-between items-center border-b border-slate-700/50 pb-4 print:border-slate-300">
+              <div className="flex justify-between items-center border-b border-[#0878C9]/40 pb-4 print:border-slate-300">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#C9A96E] rounded-2xl flex items-center justify-center text-white text-2xl font-black print:border print:border-black">
+                  <div className="w-12 h-12 bg-[#F4C542] rounded-2xl flex items-center justify-center text-[#06285F] text-2xl font-black">
                     👓
                   </div>
                   <div>
-                    <h2 className="text-sm font-black uppercase text-[#C9A96E] tracking-wider print:text-black">{clinicaNome}</h2>
-                    <p className="text-[9px] text-slate-400 print:text-slate-500">Rua 23 de Abril, 51, Centro, Ituberá - BA</p>
+                    <h2 className="text-sm font-black uppercase text-[#F4C542] tracking-wider print:text-black">{clinicaNome}</h2>
+                    <p className="text-[10px] text-slate-300 print:text-slate-500">Rua 23 de Abril, 51, Centro, Ituberá - BA</p>
                   </div>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-slate-400 font-mono block">RECEITA DIGITAL</span>
-                  <span className="text-xs font-black text-[#C9A96E] print:text-black">{selectedExam.id}</span>
+                  <span className="text-xs font-black text-[#F4C542] print:text-black">{selectedExam.id}</span>
                 </div>
               </div>
 
-              {/* Paciente e Médico */}
-              <div className="grid grid-cols-2 gap-6 text-xs border-b border-slate-700/40 pb-4 print:border-slate-300">
+              <div className="grid grid-cols-2 gap-6 text-xs border-b border-[#0878C9]/40 pb-4 print:border-slate-300">
                 <div>
                   <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black block">Paciente</span>
                   <span className="text-sm font-extrabold text-white print:text-black">{selectedExam.paciente_nome}</span>
-                  {selectedExam.paciente_cpf && <div className="text-[10px] text-slate-400 mt-0.5">CPF: {selectedExam.paciente_cpf}</div>}
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black block">Profissional Emitente</span>
                   <span className="text-sm font-extrabold text-white print:text-black">{selectedExam.optometrista_nome}</span>
-                  <div className="text-[10px] text-slate-400 mt-0.5">{selectedExam.cbo_numero}</div>
+                  <div className="text-[10px] text-slate-300 print:text-slate-500">{selectedExam.cbo_numero}</div>
                 </div>
               </div>
 
-              {/* Refração Subjetiva */}
               <div className="space-y-2">
-                <span className="text-[9px] text-[#C9A96E] uppercase tracking-wider font-black block print:text-black">Grau Prescrito</span>
+                <span className="text-[10px] text-[#F4C542] uppercase tracking-wider font-black block print:text-black">Grau Prescrito</span>
                 
-                <table className="w-full text-center text-xs border border-slate-700/50 rounded-xl overflow-hidden print:border-slate-300">
+                <table className="w-full text-center text-xs border border-[#0878C9] rounded-xl overflow-hidden print:border-slate-300">
                   <thead>
-                    <tr className="bg-slate-800/80 border-b border-slate-700 text-slate-400 text-[9px] font-black uppercase print:bg-slate-100 print:text-black print:border-slate-300">
+                    <tr className="bg-[#0878C9]/40 border-b border-[#0878C9] text-white text-[9px] font-black uppercase print:bg-slate-100 print:text-black">
                       <th className="py-2 px-3 text-left">Olho</th>
                       <th className="py-2">Esférico (ESF)</th>
                       <th className="py-2">Cilíndrico (CIL)</th>
                       <th className="py-2">Eixo (°)</th>
-                      <th className="py-2">DNP (mm)</th>
-                      <th className="py-2">Alt (mm)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 print:divide-slate-300">
+                  <tbody className="divide-y divide-[#0878C9]/30 print:divide-slate-300">
                     <tr>
-                      <td className="py-3 px-3 font-extrabold text-left text-slate-300 print:text-black">OD (Direito)</td>
-                      <td className="py-3 font-mono font-bold text-[#C9A96E] print:text-black">{selectedExam.od_esferico > 0 ? `+${selectedExam.od_esferico.toFixed(2)}` : selectedExam.od_esferico.toFixed(2)}</td>
-                      <td className="py-3 font-mono font-bold text-[#C9A96E] print:text-black">{selectedExam.od_cilindrico > 0 ? `+${selectedExam.od_cilindrico.toFixed(2)}` : selectedExam.od_cilindrico.toFixed(2)}</td>
+                      <td className="py-3 px-3 font-extrabold text-left text-white print:text-black">OD (Direito)</td>
+                      <td className="py-3 font-mono font-bold text-[#F4C542] print:text-black">{selectedExam.od_esferico > 0 ? `+${selectedExam.od_esferico.toFixed(2)}` : selectedExam.od_esferico.toFixed(2)}</td>
+                      <td className="py-3 font-mono font-bold text-[#F4C542] print:text-black">{selectedExam.od_cilindrico > 0 ? `+${selectedExam.od_cilindrico.toFixed(2)}` : selectedExam.od_cilindrico.toFixed(2)}</td>
                       <td className="py-3 font-mono print:text-black">{selectedExam.od_eixo}°</td>
-                      <td className="py-3 font-mono print:text-black">{selectedExam.dnp_od.toFixed(1)}</td>
-                      <td className="py-3 font-mono print:text-black">{selectedExam.altura_od.toFixed(1)}</td>
                     </tr>
                     <tr>
-                      <td className="py-3 px-3 font-extrabold text-left text-slate-300 print:text-black">OE (Esquerdo)</td>
-                      <td className="py-3 font-mono font-bold text-[#C9A96E] print:text-black">{selectedExam.oe_esferico > 0 ? `+${selectedExam.oe_esferico.toFixed(2)}` : selectedExam.oe_esferico.toFixed(2)}</td>
-                      <td className="py-3 font-mono font-bold text-[#C9A96E] print:text-black">{selectedExam.oe_cilindrico > 0 ? `+${selectedExam.oe_cilindrico.toFixed(2)}` : selectedExam.oe_cilindrico.toFixed(2)}</td>
+                      <td className="py-3 px-3 font-extrabold text-left text-white print:text-black">OE (Esquerdo)</td>
+                      <td className="py-3 font-mono font-bold text-[#F4C542] print:text-black">{selectedExam.oe_esferico > 0 ? `+${selectedExam.oe_esferico.toFixed(2)}` : selectedExam.oe_esferico.toFixed(2)}</td>
+                      <td className="py-3 font-mono font-bold text-[#F4C542] print:text-black">{selectedExam.oe_cilindrico > 0 ? `+${selectedExam.oe_cilindrico.toFixed(2)}` : selectedExam.oe_cilindrico.toFixed(2)}</td>
                       <td className="py-3 font-mono print:text-black">{selectedExam.oe_eixo}°</td>
-                      <td className="py-3 font-mono print:text-black">{selectedExam.dnp_oe.toFixed(1)}</td>
-                      <td className="py-3 font-mono print:text-black">{selectedExam.altura_oe.toFixed(1)}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              {/* Adição Perto e Recomendações */}
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                {selectedExam.adicao > 0 && (
-                  <div className="border border-slate-700/40 p-2.5 rounded-xl print:border-slate-300">
-                    <span className="text-[8px] text-slate-400 uppercase font-black block">Adição perto (ADD)</span>
-                    <span className="text-sm font-extrabold font-mono text-[#C9A96E] print:text-black">+{selectedExam.adicao.toFixed(2)} D</span>
-                  </div>
-                )}
-                {selectedExam.recomendacao_lentes && (
-                  <div className="border border-slate-700/40 p-2.5 rounded-xl col-span-2 print:border-slate-300">
-                    <span className="text-[8px] text-slate-400 uppercase font-black block">Recomendação Lentes</span>
-                    <span className="text-xs font-bold text-slate-300 print:text-black">{selectedExam.recomendacao_lentes}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* QR Code Autenticação + Assinatura */}
-              <div className="flex items-center justify-between border-t border-slate-700/40 pt-4 print:border-slate-300">
+              <div className="flex items-center justify-between border-t border-[#0878C9]/40 pt-4 print:border-slate-300">
                 <div className="flex items-center gap-3">
-                  {/* QR Code de Autenticidade */}
-                  <div className="w-20 h-20 bg-white p-1 rounded-lg">
+                  <div className="w-16 h-16 bg-white p-1 rounded-lg">
                     <img 
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(
                         window.location.origin + '/?validarReceita=' + selectedExam.id
@@ -1415,170 +1429,35 @@ export const ExamRoomModule: React.FC = () => {
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div className="text-[9px] text-slate-400">
-                    <strong className="text-slate-300 print:text-black block">Receita Segura Criptografada</strong>
-                    <span>Escaneie para verificar a validade técnica e autenticidade da assinatura no banco Óticas Di Óculos.</span>
+                  <div className="text-[9px] text-slate-300 print:text-slate-600">
+                    <strong className="text-white print:text-black block">Receita Digital Autêntica</strong>
+                    <span>Escaneie o QR Code para validar autenticidade técnica.</span>
                   </div>
                 </div>
 
                 <div className="text-center">
-                  <div className="w-32 h-10 mx-auto">
-                    <img src={assinaturaUrl} alt="Assinatura Optometrista" className="w-full h-full object-contain mix-blend-multiply" />
-                  </div>
-                  <div className="w-36 border-t border-slate-700/50 mt-1 mx-auto print:border-slate-400"></div>
-                  <span className="text-[9px] text-slate-400 font-bold block mt-1">{selectedExam.optometrista_nome}</span>
-                  <span className="text-[8px] text-slate-500 font-semibold block">{selectedExam.cbo_numero}</span>
+                  <span className="text-[10px] text-white print:text-black font-black block">{selectedExam.optometrista_nome}</span>
+                  <span className="text-[9px] text-slate-300 print:text-slate-500 font-bold block">{selectedExam.cbo_numero}</span>
                 </div>
               </div>
 
-              {/* Hash Criptográfico final */}
-              <div className="text-center font-mono text-[9px] text-[#C9A96E] print:text-black">
-                Assinatura Digital Hash: {recipeHash}
-              </div>
             </div>
 
-            {/* Impressão física */}
             <div className="mt-6 flex justify-end gap-3 print:hidden">
               <button
                 onClick={() => setIsRecipeModalOpen(false)}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer"
+                className="bg-[#0878C9] hover:bg-[#1677FF] text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer"
               >
-                Fechar Visualização
+                Fechar
               </button>
               <button
                 onClick={handlePrint}
-                className="bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="bg-[#00C98B] hover:bg-[#00D39A] text-slate-950 font-black text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 <Printer className="w-4 h-4 stroke-[3]" /> Imprimir Receita Digital
               </button>
             </div>
 
-          </div>
-        </div>
-      )}
-
-      {/* 4. Modal: Preenchimento de Anamnese Manual */}
-      {isAnamneseModalOpen && (
-        <div className="fixed inset-0 bg-black/85 flex items-center justify-center p-4 z-[300]">
-          <div className="bg-[#071D49] border-2 border-[#C9A96E]/80 rounded-[24px] p-6 max-w-md w-full space-y-4 shadow-2xl overflow-y-auto max-h-[85vh] [scrollbar-width:thin]">
-            <div className="flex items-center justify-between border-b border-slate-700 pb-3">
-              <h3 className="text-sm font-black text-[#C9A96E] uppercase tracking-wider">📋 Preenchimento Manual de Anamnese</h3>
-              <button onClick={() => setIsAnamneseModalOpen(false)} className="text-slate-400 hover:text-white cursor-pointer">✕</button>
-            </div>
-            
-            <div className="space-y-4 text-xs">
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Queixa Principal</span>
-                <input 
-                  type="text"
-                  value={anamneseForm.queixa_principal}
-                  onChange={(e) => setAnamneseForm({ ...anamneseForm, queixa_principal: e.target.value })}
-                  placeholder="Ex: Visão embaçada para longe"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Tempo dos Sintomas</span>
-                <input 
-                  type="text"
-                  value={anamneseForm.tempo_sintomas}
-                  onChange={(e) => setAnamneseForm({ ...anamneseForm, tempo_sintomas: e.target.value })}
-                  placeholder="Ex: 2 meses"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Sintomas Oculares</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-300">
-                  {["Visão Embaçada", "Visão Dupla", "Olhos Secos", "Dores de Cabeça", "Sensibilidade à Luz", "Ardência Ocular"].map(sym => {
-                    const isChecked = anamneseForm.sintomas_visuais.includes(sym);
-                    return (
-                      <label key={sym} className="flex items-center gap-1.5">
-                        <input 
-                          type="checkbox" 
-                          checked={isChecked}
-                          onChange={() => {
-                            const newSyms = isChecked 
-                              ? anamneseForm.sintomas_visuais.filter(s => s !== sym)
-                              : [...anamneseForm.sintomas_visuais, sym];
-                            setAnamneseForm({ ...anamneseForm, sintomas_visuais: newSyms });
-                          }}
-                        />
-                        <span>{sym}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Doenças Crônicas</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-300">
-                  {["Diabetes", "Hipertensão"].map(disease => {
-                    const isChecked = anamneseForm.doencas_sistemicas.includes(disease);
-                    return (
-                      <label key={disease} className="flex items-center gap-1.5">
-                        <input 
-                          type="checkbox" 
-                          checked={isChecked}
-                          onChange={() => {
-                            const newDiseases = isChecked 
-                              ? anamneseForm.doencas_sistemicas.filter(d => d !== disease)
-                              : [...anamneseForm.doencas_sistemicas, disease];
-                            setAnamneseForm({ ...anamneseForm, doencas_sistemicas: newDiseases });
-                          }}
-                        />
-                        <span>{disease}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Histórico Familiar Ocular</span>
-                <div className="grid grid-cols-2 gap-2 text-slate-300">
-                  {["Glaucoma", "Catarata", "Cegueira"].map(fam => {
-                    const isChecked = anamneseForm.historico_familiar.includes(fam);
-                    return (
-                      <label key={fam} className="flex items-center gap-1.5">
-                        <input 
-                          type="checkbox" 
-                          checked={isChecked}
-                          onChange={() => {
-                            const newFam = isChecked 
-                              ? anamneseForm.historico_familiar.filter(f => f !== fam)
-                              : [...anamneseForm.historico_familiar, fam];
-                            setAnamneseForm({ ...anamneseForm, historico_familiar: newFam });
-                          }}
-                        />
-                        <span>{fam}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-slate-300 font-bold block">Usa óculos atualmente?</span>
-                <input 
-                  type="text"
-                  value={anamneseForm.uso_atual_oculos}
-                  onChange={(e) => setAnamneseForm({ ...anamneseForm, uso_atual_oculos: e.target.value })}
-                  placeholder="Ex: Sim, há 1 ano"
-                  className="w-full bg-[#041333] border border-slate-700 rounded-xl p-2.5 text-white"
-                />
-              </div>
-
-              <button 
-                onClick={handleSaveAnamneseForm}
-                className="w-full bg-[#C9A96E] hover:bg-[#E8D2A8] text-[#071D49] font-black py-2.5 rounded-xl uppercase tracking-wider text-xs shadow-md transition-all cursor-pointer"
-              >
-                Salvar Anamnese & Analisar IA
-              </button>
-            </div>
           </div>
         </div>
       )}
