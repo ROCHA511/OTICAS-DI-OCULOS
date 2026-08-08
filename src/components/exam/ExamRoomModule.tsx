@@ -323,7 +323,7 @@ export const ExamRoomModule: React.FC = () => {
         cliente_id = novoCliente.id;
       }
 
-      await examSystemApi.createAtendimento({
+      const novoAtendimento = await examSystemApi.createAtendimento({
         tenant_id: '00000000-0000-0000-0000-000000000001',
         paciente_id: cliente_id,
         horario_agendado: new Date().toISOString(),
@@ -333,10 +333,16 @@ export const ExamRoomModule: React.FC = () => {
         observacoes: newPatientForm.observacoes
       });
       
-      alert("Paciente enfileirado com sucesso!");
       setIsNewPatientModalOpen(false);
       setNewPatientForm({ nome: '', telefone: '', cpf: '', prioridade: 'Normal', observacoes: '' });
       await fetchExams();
+
+      // Envia/Abre automaticamente o link de Anamnese no WhatsApp para o novo paciente
+      if (novoAtendimento && novoAtendimento.id) {
+        handleGenerateWhatsappLink(novoAtendimento.id);
+      } else {
+        alert("Paciente enfileirado com sucesso!");
+      }
     } catch (e) {
       console.error(e);
       alert("Erro ao enfileirar paciente.");
@@ -567,6 +573,25 @@ export const ExamRoomModule: React.FC = () => {
                 </div>
               </div>
 
+                {/* Botão de Chamar Próximo Paciente */}
+                {filteredExams.some(e => e.status !== 'concluido') && (
+                  <button
+                    onClick={() => {
+                      const next = filteredExams.find(e => e.status !== 'concluido');
+                      if (next) {
+                        setSelectedExam(next);
+                        alert(`🔔 Chamando próximo paciente para a Sala de Exames: ${next.paciente_nome}`);
+                      }
+                    }}
+                    className="w-full bg-[#00C98B] hover:bg-[#00D39A] text-slate-950 font-black text-xs py-2 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-95"
+                  >
+                    <span>▶ Chamar Próximo Paciente</span>
+                    <span className="bg-[#06285F] text-[#F4C542] text-[10px] px-2 py-0.5 rounded-full font-extrabold">
+                      #{filteredExams.filter(e => e.status !== 'concluido').length} Aguardando
+                    </span>
+                  </button>
+                )}
+
               {/* Lista dos Pacientes Enfileirados */}
               <div className="flex-1 overflow-y-auto p-3 space-y-2.5 [scrollbar-width:thin]">
                 {loading ? (
@@ -574,8 +599,9 @@ export const ExamRoomModule: React.FC = () => {
                 ) : filteredExams.length === 0 ? (
                   <div className="text-center py-12 text-slate-400 text-xs italic">Nenhum paciente na fila.</div>
                 ) : (
-                  filteredExams.map(item => {
+                  filteredExams.map((item, idx) => {
                     const isSelected = selectedExam?.id === item.id;
+                    const isNextInLine = filteredExams.find(e => e.status !== 'concluido')?.id === item.id && item.status !== 'concluido';
                     const initials = item.paciente_nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
                     return (
@@ -585,9 +611,16 @@ export const ExamRoomModule: React.FC = () => {
                         className={`p-3.5 border-2 rounded-2xl flex items-center justify-between gap-3 transition-all cursor-pointer relative group ${
                           isSelected
                             ? 'bg-[#0878C9] border-[#F4C542] shadow-lg'
+                            : isNextInLine
+                            ? 'bg-[#041333] border-[#F4C542] shadow-md ring-2 ring-[#F4C542]/40'
                             : 'bg-[#041333]/80 border-[#0878C9]/30 hover:border-[#0878C9] hover:bg-[#041333]'
                         }`}
                       >
+                        {isNextInLine && (
+                          <span className="absolute -top-2.5 left-3 bg-[#F4C542] text-[#06285F] font-black text-[9px] px-2 py-0.2 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                            ⭐ PRÓXIMO DA FILA (#1)
+                          </span>
+                        )}
                         {item.prioridade === 'Urgente' && (
                           <span className="absolute top-0 left-0 w-3 h-3 bg-rose-500 rounded-br-lg" title="Paciente Urgente" />
                         )}
