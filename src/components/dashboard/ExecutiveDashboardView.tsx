@@ -27,7 +27,6 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { CashFlowEntry, ServiceOrder } from '../../types';
-import { AlitaOticaInteligenteBanner } from '../AlitaOticaInteligenteBanner';
 
 interface ExecutiveDashboardViewProps {
   cashFlow: CashFlowEntry[];
@@ -44,7 +43,7 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
   const shareUrl =
     typeof window !== 'undefined' && window.location.origin
       ? window.location.origin
-      : 'https://ais-dev-qz7lavammczznxwgiawjko-248777919228.us-east5.run.app';
+      : 'https://oticas-di-oculos.vercel.app';
 
   const handleCopyBannerLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -165,391 +164,97 @@ export const ExecutiveDashboardView: React.FC<ExecutiveDashboardViewProps> = ({
     <div className="flex-1 overflow-y-auto bg-[#F8FAFC] p-4 sm:p-6 space-y-6 text-slate-800">
 
       {/* ═══════════════════════════════════════════════════════════════
-          CAPCUT-STYLE HUGE HERO CARD — Destaque Visual Principal (Topo)
+          WIDGET 3×1 HERO CARD — Destaque Visual em 3 Colunas no Topo
       ═══════════════════════════════════════════════════════════════ */}
-      <div className="w-full relative overflow-hidden bg-[#071D49] rounded-3xl border-2 border-[#D4AF37] shadow-[0_10px_40px_rgba(7,29,73,0.5)] text-white p-5 sm:p-8 flex flex-col lg:flex-row items-center justify-between gap-6 group">
-        {/* Glow Effects */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+      <div
+        onClick={() => (onOpenProfessionalsModal ? onOpenProfessionalsModal() : null)}
+        className="w-full relative overflow-hidden bg-gradient-to-r from-[#03060D] via-[#080E1B] to-[#03060D] rounded-3xl border-2 border-[#D4AF37] shadow-[0_15px_50px_rgba(212,175,55,0.25)] text-white p-5 sm:p-8 cursor-pointer group hover:border-amber-300 transition-all duration-300 transform active:scale-[0.99]"
+      >
+        {/* Glow Effects & Metallic Highlights */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#D4AF37]/20 rounded-full blur-3xl pointer-events-none group-hover:bg-[#D4AF37]/30 transition-all" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Left Column: Huge 3D Visual Frame (CapCut Hero Banner) */}
-        <div className="w-full lg:w-3/5 relative flex flex-col items-center justify-center bg-[#090D16] border-2 border-[#D4AF37]/50 rounded-2xl p-4 sm:p-6 shadow-2xl overflow-hidden min-h-[280px] sm:min-h-[340px]">
-          <div className="absolute inset-0 bg-gradient-to-t from-[#090D16] via-transparent to-transparent z-10" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center relative z-10">
           
-          {/* Glasses 3D Display Visual */}
-          <div className="relative z-20 flex flex-col items-center text-center space-y-3">
-            <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-[#D4AF37] via-amber-400 to-[#E8D2A8] p-1 shadow-2xl shadow-[#D4AF37]/40 animate-pulse">
-                <div className="w-full h-full bg-[#071D49] rounded-[22px] flex items-center justify-center">
-                  <Glasses className="w-14 h-14 sm:w-20 sm:h-20 text-[#D4AF37] stroke-[2.5]" />
+          {/* Widget Image / Showcase Frame (3 Columns Banner Visual) */}
+          <div className="lg:col-span-2 relative flex flex-col items-start justify-center space-y-4">
+            
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-500 text-slate-950 font-black text-[11px] uppercase tracking-wider shadow-md">
+                <Sparkles className="w-3.5 h-3.5" /> HERO WIDGET 3×1 VIP
+              </span>
+              <span className="text-xs text-amber-300 font-bold hidden sm:inline">• Ótica Inteligente 2.0</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#E8D2A8] via-[#D4AF37] to-amber-200 tracking-tight leading-tight drop-shadow-md">
+              TECNOLOGIA, ÓCULOS &amp; SOFISTICAÇÃO
+            </h2>
+
+            <p className="text-xs sm:text-sm text-slate-200 font-semibold max-w-xl leading-relaxed">
+              Destaque absoluto com provador 3D, biometria DNP facial, leitor de prescrições por câmera e inteligência artificial Mary.
+            </p>
+
+            {/* Quick Metrics Pills */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="bg-[#0B1528] border border-[#D4AF37]/40 px-3.5 py-1.5 rounded-2xl flex items-center gap-2 text-xs font-bold text-[#E8D2A8] shadow-sm">
+                <Glasses className="w-4 h-4 text-[#D4AF37]" />
+                <span>2.356 Vendas no Mês</span>
+              </div>
+              <div className="bg-[#0B1528] border border-emerald-500/40 px-3.5 py-1.5 rounded-2xl flex items-center gap-2 text-xs font-bold text-emerald-400 shadow-sm">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>IA Mary 100% Ativa</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Visual Element: 3D Luxury Optical Frame */}
+          <div className="lg:col-span-1 relative flex items-center justify-center">
+            <div className="relative group-hover:scale-105 transition-transform duration-500">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-3xl bg-gradient-to-tr from-[#D4AF37] via-amber-400 to-[#E8D2A8] p-1 shadow-2xl shadow-[#D4AF37]/30">
+                <div className="w-full h-full bg-[#050810] rounded-[22px] flex items-center justify-center p-2 relative overflow-hidden">
+                  <img
+                    src="/hero_3x1_widget.jpg"
+                    alt="Ótica Inteligente 3x1 Widget"
+                    className="w-full h-full object-cover rounded-xl opacity-90 group-hover:opacity-100 transition-opacity"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                  <Glasses className="w-20 h-20 text-[#D4AF37] stroke-[2.5] absolute inset-0 m-auto drop-shadow-[0_5px_15px_rgba(212,175,55,0.6)]" />
                 </div>
               </div>
-              <span className="absolute -bottom-2 -right-2 bg-emerald-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full border-2 border-[#090D16]">
-                3D SHOWCASE
+              <span className="absolute -bottom-3 -right-2 bg-gradient-to-r from-[#D4AF37] to-amber-500 text-slate-950 font-black text-[10px] px-3 py-0.5 rounded-full border-2 border-[#050810] shadow-md uppercase">
+                EXCLUSIVO 3×1
               </span>
             </div>
-
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/40 text-xs font-black uppercase tracking-widest">
-                <Sparkles className="w-4 h-4" /> Ótica Inteligente 2.0 VIP
-              </div>
-              <h2 className="text-2xl sm:text-4xl font-black text-[#E8D2A8] tracking-tight drop-shadow-md">
-                TECNOLOGIA & SOFISTICAÇÃO
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-200 font-bold max-w-md">
-                Gestão completa de alta performance, provador 3D e prescrições inteligentes em um só lugar.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Hero Metrics & Fast Actions Grid */}
-        <div className="w-full lg:w-2/5 space-y-4 relative z-20">
-          <div className="bg-[#0B255C]/80 border border-[#C9A96E]/40 rounded-2xl p-4 space-y-3 shadow-lg">
-            <div className="flex items-center justify-between border-b border-white/10 pb-2">
-              <span className="text-[11px] font-black text-[#E8D2A8] uppercase tracking-wider">Bem-vindo, John Rocha!</span>
-              <span className="text-[10px] bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-full font-black">CEO ONLINE</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="bg-white/10 p-3 rounded-xl border border-white/10">
-                <span className="text-[10px] text-slate-300 font-bold block uppercase">Faturamento Mês</span>
-                <span className="text-base font-black text-[#E8D2A8]">R$ 75.430,00</span>
-              </div>
-              <div className="bg-white/10 p-3 rounded-xl border border-white/10">
-                <span className="text-[10px] text-slate-300 font-bold block uppercase">Clientes Ativos</span>
-                <span className="text-base font-black text-emerald-400">1.250</span>
-              </div>
-            </div>
           </div>
 
-          {/* 3 Main Action Buttons Below Hero */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={onOpenProfessionalsModal}
-              className="p-3 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all active:scale-95 text-center cursor-pointer"
-            >
-              + Profissional
-            </button>
-            <button
-              onClick={() => alert('Abrir janela de Novo Cliente')}
-              className="p-3 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-xl transition-all active:scale-95 text-center cursor-pointer border border-white/20"
-            >
-              + Novo Cliente
-            </button>
-            <button
-              onClick={() => alert('Abrir nova venda')}
-              className="p-3 bg-[#0055A5] hover:bg-[#004080] text-white font-bold text-xs rounded-xl transition-all active:scale-95 text-center cursor-pointer"
-            >
-              + Nova Venda
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════
-          BENTO GRID — Primary KPI Cards (4 metrics)
-      ═══════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* KPI Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
           return (
             <div
               key={idx}
-              className="relative overflow-hidden bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all group space-y-1.5"
+              className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-2 hover:shadow-md transition-all"
             >
-              <div className="flex items-start justify-between">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{card.label}</span>
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: `${card.accent}15` }}
-                >
-                  <Icon className="w-4 h-4" style={{ color: card.accent }} />
-                </div>
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                <span>{card.label}</span>
+                <Icon className="w-4 h-4" style={{ color: card.accent }} />
               </div>
-              <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">{card.value}</div>
-              <div
-                className={`flex items-center gap-1 text-[11px] font-bold mt-1 ${card.deltaUp ? 'text-emerald-600' : 'text-rose-600'}`}
-              >
-                {card.deltaUp ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                {card.delta}
+              <div className="text-2xl font-black text-slate-900">{card.value}</div>
+              <div className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                <ArrowUpRight className="w-3.5 h-3.5" /> {card.delta}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* ═══════════════════════════════════════════
-          FINANCE STRIP — Secondary Indicators
-      ═══════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {financeCards.map((card, idx) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={idx}
-              className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md transition-all space-y-2"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{card.label}</span>
-                <Icon className={`w-4 h-4 ${card.color.replace('text-emerald-400', 'text-emerald-600').replace('text-[#D4AF37]', 'text-amber-600').replace('text-rose-400', 'text-rose-600')}`} />
-              </div>
-              <div className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">{card.value}</div>
-              {card.progress !== undefined ? (
-                <div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#D4AF37] to-amber-500 transition-all"
-                      style={{ width: `${card.progress}%` }}
-                    />
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-1">{card.sub}</div>
-                </div>
-              ) : (
-                <div className="text-[10px] text-slate-500">{card.sub}</div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* ═══════════════════════════════════════════
-          ALITA AI — Executive Assistant Banner
-      ═══════════════════════════════════════════ */}
-      <AlitaOticaInteligenteBanner
-        shareUrl={shareUrl}
-        onCopy={handleCopyBannerLink}
-        copied={bannerCopied}
-      />
-
-      {/* ═══════════════════════════════════════════
-          RANKINGS GRID — 3 Column Bento
-      ═══════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-
-        {/* — Ranking Vendedores — */}
-        <div className="bg-[#0F172A] border border-white/8 rounded-2xl p-4 shadow-xl space-y-3 hover:border-[#D4AF37]/20 transition-all">
-          <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-[#D4AF37]/15 flex items-center justify-center">
-                <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
-              </div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Ranking Vendedores</h3>
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium">Comissão 5%</span>
-          </div>
-
-          <div className="space-y-2">
-            {vendedores.map((v, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-2.5 bg-[#161D2A] rounded-xl border border-white/5 text-xs hover:border-[#D4AF37]/20 transition-all"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
-                    style={{
-                      background: i === 0 ? '#D4AF3730' : '#FFFFFF10',
-                      color: i === 0 ? '#D4AF37' : '#94A3B8',
-                    }}
-                  >
-                    {i === 0 ? '🥇' : `#${i + 1}`}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="font-semibold text-white truncate">{v.name}</div>
-                    <div className="text-[10px] text-slate-500">{v.os} OS</div>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <div className="font-bold text-emerald-400 text-xs">{v.vendas}</div>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${v.metaOk ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}
-                  >
-                    {v.meta}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* — Ranking Filiais — */}
-        <div className="bg-[#0F172A] border border-white/8 rounded-2xl p-4 shadow-xl space-y-3 hover:border-[#D4AF37]/20 transition-all">
-          <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-indigo-500/15 flex items-center justify-center">
-                <Building2 className="w-3.5 h-3.5 text-indigo-400" />
-              </div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Ranking Filiais</h3>
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium">3 Unidades</span>
-          </div>
-
-          <div className="space-y-2">
-            {filiais.map((f, i) => {
-              const pct = [108, 95, 88][i];
-              return (
-                <div key={i} className="p-3 bg-[#161D2A] rounded-xl border border-white/5 space-y-2 hover:border-indigo-500/20 transition-all">
-                  <div className="flex items-center justify-between text-xs">
-                    <div>
-                      <div className="font-semibold text-white">{f.name}</div>
-                      <div className="text-[10px] text-slate-500">{f.loc}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-[#D4AF37] text-xs">{f.faturamento}</div>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${f.ok ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}
-                      >
-                        Meta {f.meta}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${f.ok ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-amber-500 to-amber-400'}`}
-                      style={{ width: `${Math.min(pct, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* — Produtos Mais Vendidos — */}
-        <div className="bg-[#0F172A] border border-white/8 rounded-2xl p-4 shadow-xl space-y-3 hover:border-[#D4AF37]/20 transition-all">
-          <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-xl bg-[#D4AF37]/15 flex items-center justify-center">
-                <Glasses className="w-3.5 h-3.5 text-[#D4AF37]" />
-              </div>
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Mais Vendidos</h3>
-            </div>
-            <span className="text-[10px] text-slate-500 font-medium">Lentes & Armações</span>
-          </div>
-
-          <div className="space-y-2">
-            {produtosMaisVendidos.map((p, i) => (
-              <div
-                key={i}
-                className="p-2.5 bg-[#161D2A] rounded-xl border border-white/5 hover:border-[#D4AF37]/15 transition-all"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-base shrink-0">{p.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-white text-[11px] truncate">{p.name}</div>
-                    <div className="flex items-center justify-between mt-0.5">
-                      <span className="text-[10px] text-slate-500">{p.qtd} unid.</span>
-                      <span className="text-[11px] font-bold text-[#D4AF37]">{p.valor}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════
-          GOOGLE BUSINESS PROFILE — Premium Card
-      ═══════════════════════════════════════════ */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#141C2D] to-[#0A0E17] border border-[#D4AF37]/25 rounded-2xl p-4 sm:p-5 shadow-2xl">
-        <div className="absolute -top-12 -right-12 w-56 h-56 bg-[#D4AF37]/8 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-2 min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 uppercase">
-                <ShieldCheck className="w-3 h-3" /> Google Meu Negócio Verificado
-              </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20">
-                SEO Top #1 Ituberá - BA
-              </span>
-            </div>
-            <h2 className="text-sm font-bold text-white flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0" />
-              <span>Óticas Di Óculos — Rua 23 de Abril, 51, Centro, Ituberá - BA</span>
-            </h2>
-            <p className="text-xs text-slate-400">
-              Relevância regional otimizada para "ótica em Ituberá", "óculos de grau" e "exame de vista" no Google.
-            </p>
-          </div>
-
-          {/* Stars & Metrics */}
-          <div className="flex items-center gap-3 bg-[#161D2A] p-3 rounded-xl border border-[#D4AF37]/20 shrink-0">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-[#D4AF37] flex items-center justify-center gap-1">
-                5.0 <Star className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">148 avaliações</div>
-            </div>
-            <div className="h-8 w-px bg-white/10" />
-            <div className="text-center">
-              <div className="text-lg font-bold text-emerald-400">+1.8k</div>
-              <div className="text-[10px] text-slate-400 mt-0.5">Cliques / Mês</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Row */}
-        <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-white/5">
-          <div className="bg-[#161D2A] p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Visualizações Google</span>
-            <span className="font-bold text-white">4.290/mês</span>
-          </div>
-          <div className="bg-[#161D2A] p-2.5 rounded-xl border border-white/5 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Leads WhatsApp</span>
-            <span className="font-bold text-[#D4AF37]">312 clientes</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                const msg = `Obrigado por escolher a Óticas Di Óculos! Poderia nos avaliar com 5 Estrelas no Google? Link: https://maps.google.com/?q=Oticas+Di+Oculos+Itubera`;
-                navigator.clipboard?.writeText(msg);
-                alert('Mensagem de Avaliação 5 Estrelas copiada!');
-              }}
-              className="flex-1 bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:from-[#E5C158] hover:to-amber-400 text-slate-950 font-bold py-2 px-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer text-[11px] active:scale-95"
-            >
-              <Share2 className="w-3.5 h-3.5" /> Pedir Avaliação
-            </button>
-            <a
-              href="https://maps.google.com"
-              target="_blank"
-              rel="noreferrer"
-              className="p-2.5 bg-[#161D2A] hover:bg-[#1E293B] text-[#D4AF37] rounded-xl border border-[#D4AF37]/30 transition-all flex items-center justify-center"
-              title="Abrir Google Meu Negócio"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════
-          QUICK ACTIONS FOOTER BAR
-      ═══════════════════════════════════════════ */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pb-20 sm:pb-4">
-        {[
-          { icon: BarChart3, label: 'Relatórios', color: '#D4AF37', bg: '#D4AF3715' },
-          { icon: MessageSquare, label: 'Chat Equipe', color: '#10B981', bg: '#10B98115' },
-          { icon: Sparkles, label: 'IA Alita', color: '#6366F1', bg: '#6366F115' },
-          { icon: CheckCircle2, label: 'OS Prontas', color: '#D4AF37', bg: '#D4AF3715' },
-        ].map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={idx}
-              className="flex items-center gap-2.5 p-3 rounded-xl border border-white/8 transition-all cursor-pointer active:scale-95 hover:border-white/15"
-              style={{ background: `linear-gradient(135deg, ${item.bg} 0%, #0F172A 100%)` }}
-            >
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${item.color}20` }}>
-                <Icon className="w-4 h-4" style={{ color: item.color }} />
-              </div>
-              <span className="text-xs font-semibold text-white">{item.label}</span>
-            </button>
-          );
-        })}
-      </div>
     </div>
   );
 };
